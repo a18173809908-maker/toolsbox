@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { v2Tokens as T } from '@/lib/tokens';
-import { LANG_COLOR, type Tool, type Category, type RepoItem, type TrendingPeriod, type HomepageStats } from '@/lib/data';
+import { LANG_COLOR, type Tool, type Category, type RepoItem, type TrendingPeriod, type HomepageStats, type NewsItem } from '@/lib/data';
 
 /* ─── Data context ─────────────────────────────────────────────────────────── */
 type DataCtx = {
@@ -10,6 +10,7 @@ type DataCtx = {
   categories: Category[];
   trending: Record<TrendingPeriod, RepoItem[]>;
   stats: HomepageStats;
+  news: NewsItem[];
 };
 const DataContext = React.createContext<DataCtx | null>(null);
 function useData(): DataCtx {
@@ -397,6 +398,42 @@ function CommandPalette({ open, onClose, onOpenTool, fav, recent }: {
   );
 }
 
+/* ─── AI Pulse news card ─────────────────────────────────────────────────── */
+function NewsPulseCard() {
+  const { news } = useData();
+  if (news.length === 0) return null;
+
+  const fmt = (iso?: string) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+  };
+
+  return (
+    <div style={{ background: T.ink, borderRadius: 16, padding: 24, marginTop: 20, color: '#fff' }}>
+      <h3 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 22, margin: '0 0 4px', letterSpacing: '-0.02em' }}>AI Pulse</h3>
+      <p style={{ fontSize: 13, color: '#FFB48B', margin: '0 0 18px' }}>每日 AI 资讯 · daily news</p>
+      {news.slice(0, 5).map((n, i) => (
+        <a key={n.id} href={n.url} target="_blank" rel="noopener noreferrer" style={{
+          display: 'block', paddingBottom: 14, marginBottom: 14,
+          borderBottom: i === Math.min(news.length, 5) - 2 ? 'none' : '1px solid rgba(255,255,255,0.08)',
+          textDecoration: 'none',
+        }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 5 }}>
+            {n.tag && (
+              <span style={{ padding: '2px 7px', borderRadius: 3, background: T.primary, fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#fff' }}>{n.tag}</span>
+            )}
+            <span style={{ fontSize: 11, color: '#A89890' }}>{fmt(n.publishedAt)}</span>
+          </div>
+          <p style={{ fontSize: 13, lineHeight: 1.5, margin: '0 0 3px', color: '#fff' }}>{n.titleZh || n.title}</p>
+          {n.titleZh && <p style={{ fontSize: 11, lineHeight: 1.5, margin: 0, color: '#C8B5A8' }}>{n.title}</p>}
+        </a>
+      ))}
+      <a href="/news" style={{ display: 'block', textAlign: 'center', marginTop: 8, padding: '8px', fontSize: 13, fontWeight: 600, color: T.primary, cursor: 'pointer', textDecoration: 'none' }}>查看全部资讯 →</a>
+    </div>
+  );
+}
+
 /* ─── Footer ──────────────────────────────────────────────────────────────── */
 function Footer() {
   return (
@@ -429,6 +466,7 @@ export default function V2ProHomepage(props: DataCtx) {
 
 function V2ProInner() {
   const { tools: AI_TOOLS, trending: GITHUB_TRENDING, stats } = useData();
+  // news is consumed by NewsPulseCard via context
   const [cat, setCat] = React.useState('all');
   const [query, setQuery] = React.useState('');
   const [period, setPeriod] = React.useState<TrendingPeriod>('today');
@@ -530,6 +568,9 @@ function V2ProInner() {
             </div>
             <a style={{ display: 'block', textAlign: 'center', marginTop: 14, padding: '10px', fontSize: 13, fontWeight: 600, color: T.primary, cursor: 'pointer' }}>查看全部 View all trending →</a>
           </div>
+
+          {/* AI Pulse */}
+          <NewsPulseCard />
         </aside>
       </section>
 

@@ -1,18 +1,26 @@
 import { db } from './index';
-import { categories, tools, githubTrending } from './schema';
-import { desc, asc } from 'drizzle-orm';
-import type { TrendingPeriod, Tool, Category, RepoItem, HomepageStats } from '@/lib/data';
+import { categories, tools, githubTrending, articles, sources } from './schema';
+import { desc, asc, eq } from 'drizzle-orm';
+import type { TrendingPeriod, Tool, Category, RepoItem, HomepageStats, NewsItem } from '@/lib/data';
+
+// ── Homepage ─────────────────────────────────────────────────────────────────
 
 export async function loadHomepageData(): Promise<{
   categories: Category[];
   tools: Tool[];
   trending: Record<TrendingPeriod, RepoItem[]>;
   stats: HomepageStats;
+  news: NewsItem[];
 }> {
-  const [cats, ts, gh] = await Promise.all([
+  const [cats, ts, gh, arts] = await Promise.all([
     db.select().from(categories).orderBy(desc(categories.count)),
     db.select().from(tools).orderBy(desc(tools.publishedAt)),
     db.select().from(githubTrending).orderBy(asc(githubTrending.period), desc(githubTrending.gained)),
+    db.select({ id: articles.id, title: articles.title, titleZh: articles.titleZh, url: articles.url, tag: articles.tag, publishedAt: articles.publishedAt })
+      .from(articles)
+      .where(eq(articles.status, 'published'))
+      .orderBy(desc(articles.publishedAt))
+      .limit(6),
   ]);
 
   const cs: Category[] = cats.map((c) => ({
@@ -55,5 +63,89 @@ export async function loadHomepageData(): Promise<{
     lastUpdatedAt: latestSnapshot?.toISOString(),
   };
 
-  return { categories: cs, tools: tools2, trending, stats };
+  const news: NewsItem[] = arts.map((a) => ({
+    id: a.id,
+    title: a.title,
+    titleZh: a.titleZh ?? undefined,
+    url: a.url,
+    tag: a.tag ?? undefined,
+    publishedAt: a.publishedAt?.toISOString() ?? undefined,
+  }));
+
+  return { categories: cs, tools: tools2, trending, stats, news };
+}
+
+// ── Tool detail ───────────────────────────────────────────────────────────────
+
+export async function loadToolById(id: string): Promise<(Tool & { catEn: string; catZh: string; catIcon: string }) | null> {
+  const rows = await db
+    .select({
+      id: tools.id, name: tools.name, mono: tools.mono, brand: tools.brand,
+      catId: tools.catId, en: tools.en, zh: tools.zh,
+      pricing: tools.pricing, featured: tools.featured, publishedAt: tools.publishedAt,
+      catEn: categories.en, catZh: categories.zh, catIcon: categories.icon,
+    })
+    .from(tools)
+    .innerJoin(categories, eq(tools.catId, categories.id))
+    .where(eq(tools.id, id));
+
+  const row = rows[0];
+  if (!row) return null;
+  return {
+    id: row.id, name: row.name, mono: row.mono, brand: row.brand,
+    cat: row.catId, en: row.en, zh: row.zh,
+    pricing: row.pricing as Tool['pricing'],
+    featured: row.featured, date: row.publishedAt,
+    catEn: row.catEn, catZh: row.catZh, catIcon: row.catIcon,
+  };
+}
+
+export async function loadAllToolIds(): Promise<string[]> {
+  const rows = await db.select({ id: tools.id }).from(tools);
+  return rows.map((r) => r.id);
+}
+
+// ── Articles ──────────────────────────────────────────────────────────────────
+
+export async function loadSources() {
+  return db.select().from(sources).where(eq(sources.active, true));
+}
+
+export async function upsertArticles(items: {
+  sourceId: number;
+  title: string;
+  url: string;
+  tag?: string;
+  publishedAt?: Date;
+}[]): Promise<number> {
+  if (items.length === 0) return 0;
+  let inserted = 0;
+  for (const item of items) {
+    const result = await db.insert(articles).values({
+      sourceId: item.sourceId,
+      title: item.title,
+      url: item.url,
+      tag: item.tag,
+      publishedAt: item.publishedAt,
+    }).onConflictDoNothing();
+    if (result.rowCount && result.rowCount > 0) inserted++;
+  }
+  return inserted;
+}
+
+export async function loadPendingArticles(limit = 20) {
+  return db.select().from(articles)
+    .where(eq(articles.status, 'published'))
+    // rows missing translation
+    .orderBy(desc(articles.publishedAt))
+    .limit(limit);
+}
+
+export async function updateArticleAi(id: number, data: {
+  titleZh?: string;
+  summary?: string;
+  summaryZh?: string;
+  tag?: string;
+}) {
+  await db.update(articles).set(data).where(eq(articles.id, id));
 }

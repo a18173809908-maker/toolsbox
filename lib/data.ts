@@ -43,6 +43,15 @@ export type HomepageStats = {
   lastUpdatedAt?: string;
 };
 
+export type NewsItem = {
+  id: number;
+  title: string;
+  titleZh?: string;
+  url: string;
+  tag?: string;
+  publishedAt?: string;
+};
+
 export const CATEGORIES: Category[] = [
   { id: 'chatbot',      en: 'AI Chatbots',      zh: '智能对话', icon: '💬', count: 142 },
   { id: 'image',        en: 'Image Generation', zh: '图像生成', icon: '🎨', count: 218 },

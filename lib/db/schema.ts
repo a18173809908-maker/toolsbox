@@ -48,6 +48,41 @@ export const githubTrending = pgTable(
   }),
 );
 
+// ── News / Articles ──────────────────────────────────────────────────────────
+
+export const sources = pgTable('sources', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  url: text('url').notNull(),
+  feedUrl: text('feed_url').notNull().unique(),
+  lang: text('lang').notNull().default('en'),
+  active: boolean('active').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const articles = pgTable(
+  'articles',
+  {
+    id: serial('id').primaryKey(),
+    sourceId: integer('source_id').references(() => sources.id),
+    title: text('title').notNull(),
+    titleZh: text('title_zh'),
+    url: text('url').notNull().unique(),
+    summary: text('summary'),
+    summaryZh: text('summary_zh'),
+    tag: text('tag'),
+    publishedAt: timestamp('published_at'),
+    fetchedAt: timestamp('fetched_at').notNull().defaultNow(),
+    status: text('status').notNull().default('published'),
+  },
+  (t) => ({
+    publishedIdx: index('articles_published_idx').on(t.publishedAt),
+    statusIdx: index('articles_status_idx').on(t.status),
+  }),
+);
+
 export type Category = typeof categories.$inferSelect;
 export type Tool = typeof tools.$inferSelect;
 export type RepoItem = typeof githubTrending.$inferSelect;
+export type Source = typeof sources.$inferSelect;
+export type Article = typeof articles.$inferSelect;
