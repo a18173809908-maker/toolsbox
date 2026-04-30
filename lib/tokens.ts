@@ -1,17 +1,17 @@
-// Design tokens for v2-pro light theme.
+// Design tokens — merged V1 editorial + V2 Pro warm palette.
 export const v2Tokens = {
-  bg:        '#FAFAF7',
-  panel:     '#FFFFFF',
-  panel2:    '#F5F2EC',
-  ink:       '#171210',
-  inkSoft:   '#5A4F49',
-  inkMuted:  '#8E8278',
-  rule:      '#EAE3D9',
-  ruleSoft:  '#F0EAE0',
-  primary:   '#E85D2C',
-  primaryBg: '#FCE9DD',
-  accent:    '#9A3412',
-  green:     '#15803D',
+  bg:        '#FFF7ED',   // warm off-white canvas
+  panel:     '#FFFFFF',   // card / sidebar / topbar surface
+  panel2:    '#FEF3E2',   // hover fill
+  ink:       '#1F2937',   // primary text (deep gray)
+  inkSoft:   '#4B5563',   // secondary text
+  inkMuted:  '#9CA3AF',   // placeholder / muted
+  rule:      '#E8D5B7',   // borders (warm)
+  ruleSoft:  '#F3E8D0',   // subtle separators
+  primary:   '#F97316',   // warm orange — primary CTA, active state
+  primaryBg: '#FFEDD5',   // light orange fill for badges / chips
+  accent:    '#C2410C',   // dark orange for text on light bg
+  green:     '#16A34A',   // stars / positive delta
   greenBg:   '#DCFCE7',
 };
 

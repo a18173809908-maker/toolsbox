@@ -4,6 +4,7 @@ import React from 'react';
 import { v2Tokens as T } from '@/lib/tokens';
 import { LANG_COLOR, type Tool, type Category, type RepoItem, type TrendingPeriod, type HomepageStats } from '@/lib/data';
 
+/* ─── Data context ─────────────────────────────────────────────────────────── */
 type DataCtx = {
   tools: Tool[];
   categories: Category[];
@@ -17,160 +18,267 @@ function useData(): DataCtx {
   return v;
 }
 
+/* ─── Helpers ──────────────────────────────────────────────────────────────── */
+function formatNumber(n: number): string { return n.toLocaleString('en-US'); }
+
+/* ─── Tool Logo ───────────────────────────────────────────────────────────── */
 function ToolLogo({ tool, size = 56 }: { tool: Tool; size?: number }) {
   return (
     <div style={{
-      width: size, height: size, borderRadius: size * 0.24,
+      width: size, height: size, borderRadius: Math.round(size * 0.22),
       background: tool.brand, color: '#fff',
       display: 'grid', placeItems: 'center',
-      fontFamily: 'Fraunces, Georgia, serif', fontWeight: 700,
+      fontFamily: 'Georgia, serif', fontWeight: 700,
       fontSize: tool.mono.length === 1 ? size * 0.5 : size * 0.34,
-      flexShrink: 0,
-      letterSpacing: '-0.04em',
+      flexShrink: 0, letterSpacing: '-0.04em',
     }}>{tool.mono}</div>
   );
 }
 
+/* ─── TopBar ──────────────────────────────────────────────────────────────── */
 function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
+  const navItems: [string, boolean][] = [
+    ['首页 Home', true],
+    ['分类 Categories', false],
+    ['GitHub 趋势', false],
+    ['AI 资讯 News', false],
+    ['提交工具 Submit', false],
+  ];
   return (
     <header style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '14px 32px', borderBottom: `1px solid ${T.rule}`,
+      padding: '18px 56px', borderBottom: `1px solid ${T.rule}`,
       background: T.panel, position: 'sticky', top: 0, zIndex: 10,
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-          <div style={{
-            width: 26, height: 26, borderRadius: 7, background: T.ink, color: '#fff',
-            display: 'grid', placeItems: 'center', fontWeight: 800, fontSize: 14,
-            position: 'relative', overflow: 'hidden',
-          }}>
-            <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, transparent 50%, ${T.primary} 50%)` }} />
-            <span style={{ position: 'relative' }}>A</span>
-          </div>
-          <div style={{ fontWeight: 700, fontSize: 16, letterSpacing: '-0.01em', color: T.ink }}>
-            AiToolsBox<span style={{ color: T.inkMuted, fontWeight: 400 }}>/工具集</span>
-          </div>
+      {/* Logo */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{
+          width: 30, height: 30, borderRadius: 8,
+          background: `linear-gradient(135deg, ${T.primary} 0%, #FBBF24 100%)`,
+          display: 'grid', placeItems: 'center', color: '#fff',
+          fontFamily: 'Georgia, serif', fontWeight: 900, fontSize: 17, fontStyle: 'italic',
+        }}>A</div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+          <span style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 18, color: T.ink, letterSpacing: '-0.02em' }}>AiToolsBox</span>
+          <span style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 13, color: T.inkMuted }}>· 工具集</span>
         </div>
-        <nav style={{ display: 'flex', gap: 4, fontSize: 13 }}>
-          {([['Dashboard', '仪表盘', true], ['Tools', '工具', false], ['Trending', '趋势', false], ['News', '资讯', false], ['Submit', '提交', false]] as const).map(([en, zh, active]) => (
-            <a key={en} style={{
-              padding: '6px 12px', borderRadius: 6,
-              background: active ? T.panel2 : 'transparent',
-              color: active ? T.ink : T.inkSoft,
-              fontWeight: active ? 600 : 500, cursor: 'pointer',
-            }}>{en} <span style={{ color: T.inkMuted, fontSize: 11 }}>{zh}</span></a>
-          ))}
-        </nav>
       </div>
+
+      {/* Nav */}
+      <nav style={{ display: 'flex', gap: 4, fontSize: 14 }}>
+        {navItems.map(([label, active]) => (
+          <a key={label} style={{
+            padding: '6px 12px', cursor: 'pointer',
+            color: active ? T.ink : T.inkSoft,
+            fontWeight: active ? 600 : 500,
+            borderBottom: active ? `2px solid ${T.primary}` : '2px solid transparent',
+            textDecoration: 'none',
+          }}
+          onMouseEnter={(e) => { if (!active) { e.currentTarget.style.color = T.ink; e.currentTarget.style.borderBottomColor = T.ruleSoft; } }}
+          onMouseLeave={(e) => { if (!active) { e.currentTarget.style.color = T.inkSoft; e.currentTarget.style.borderBottomColor = 'transparent'; } }}
+          >{label}</a>
+        ))}
+      </nav>
+
+      {/* Right */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <button onClick={onOpenPalette} style={{
-          display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
+          display: 'flex', alignItems: 'center', gap: 8, padding: '7px 13px',
           background: T.bg, borderRadius: 8, border: `1px solid ${T.rule}`,
-          width: 360, fontSize: 13, color: T.inkMuted, cursor: 'pointer',
-          textAlign: 'left', fontFamily: 'inherit',
+          fontSize: 13, color: T.inkMuted, cursor: 'pointer', fontFamily: 'inherit',
         }}>
-          <span style={{ fontSize: 14 }}>⌕</span>
-          <span>搜索 AI 工具、GitHub 仓库、分类…</span>
-          <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 3 }}>
-            <kbd style={{ padding: '2px 6px', background: T.panel, border: `1px solid ${T.rule}`, borderRadius: 4, fontSize: 10, color: T.inkSoft, fontFamily: 'ui-monospace, monospace' }}>⌘</kbd>
-            <kbd style={{ padding: '2px 6px', background: T.panel, border: `1px solid ${T.rule}`, borderRadius: 4, fontSize: 10, color: T.inkSoft, fontFamily: 'ui-monospace, monospace' }}>K</kbd>
+          <span>⌕</span><span>搜索…</span>
+          <span style={{ display: 'inline-flex', gap: 2, marginLeft: 4 }}>
+            <kbd style={{ padding: '1px 5px', background: T.panel, border: `1px solid ${T.rule}`, borderRadius: 3, fontSize: 10, fontFamily: 'ui-monospace, monospace' }}>⌘</kbd>
+            <kbd style={{ padding: '1px 5px', background: T.panel, border: `1px solid ${T.rule}`, borderRadius: 3, fontSize: 10, fontFamily: 'ui-monospace, monospace' }}>K</kbd>
           </span>
         </button>
-        <button style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${T.rule}`, background: T.panel, cursor: 'pointer', fontSize: 13 }}>☾</button>
         <button style={{
-          padding: '7px 14px', borderRadius: 8, border: 'none',
-          background: T.primary, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-        }}>+ Submit tool</button>
+          padding: '8px 20px', borderRadius: 999, border: 'none',
+          background: T.ink, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+        }}>登录 Sign in</button>
       </div>
     </header>
   );
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
+/* ─── Hero ────────────────────────────────────────────────────────────────── */
+function Hero({ query, setQuery, stats, onPopularTag }: {
+  query: string; setQuery: (q: string) => void;
+  stats: HomepageStats; onPopularTag: (tag: string) => void;
+}) {
+  const dateLabel = new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' });
   return (
-    <div style={{ padding: '14px 20px 6px', fontSize: 11, color: T.inkMuted, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>{children}</div>
+    <section style={{ padding: '64px 56px 48px', background: T.bg, position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', right: -100, top: -100, width: 480, height: 480, borderRadius: '50%', background: 'radial-gradient(circle, rgba(249,115,22,0.13) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', left: -60, bottom: -100, width: 340, height: 340, borderRadius: '50%', background: 'radial-gradient(circle, rgba(251,191,36,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'relative', maxWidth: 920 }}>
+        {/* Badge */}
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 999, background: T.primaryBg, color: T.accent, fontSize: 13, fontWeight: 600, marginBottom: 28 }}>
+          <span style={{ width: 6, height: 6, borderRadius: 3, background: T.primary, display: 'inline-block' }} />
+          {formatNumber(stats.toolsTotal)} tools curated &nbsp;·&nbsp; 更新于 {dateLabel}
+        </div>
+        {/* Title */}
+        <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 84, lineHeight: 0.95, color: T.ink, margin: '0 0 26px', letterSpacing: '-0.04em' }}>
+          The thoughtful<br />
+          <span style={{ color: T.primary }}>directory</span> of AI.
+        </h1>
+        {/* Subtitle */}
+        <p style={{ fontSize: 19, color: T.inkSoft, lineHeight: 1.55, margin: '0 0 36px', maxWidth: 620 }}>
+          每天精选最值得收藏的 AI 工具，并实时追踪 GitHub 上的 AI 趋势项目。<br />
+          A hand-picked AI directory and a live pulse of what&rsquo;s trending on GitHub.
+        </p>
+        {/* Search */}
+        <div style={{ display: 'flex', alignItems: 'center', background: T.panel, borderRadius: 14, padding: 6, boxShadow: '0 24px 60px -20px rgba(249,115,22,0.3), 0 4px 12px rgba(31,41,55,0.06)', border: `1px solid ${T.rule}`, maxWidth: 640 }}>
+          <div style={{ padding: '0 14px', color: T.inkMuted, fontSize: 18 }}>⌕</div>
+          <input
+            value={query} onChange={(e) => setQuery(e.target.value)}
+            placeholder="搜索 AI 工具，例如 ChatGPT、Midjourney、Cursor…"
+            style={{ flex: 1, border: 'none', outline: 'none', fontSize: 16, padding: '14px 4px', background: 'transparent', color: T.ink, fontFamily: 'inherit' }}
+          />
+          <button style={{ padding: '12px 22px', borderRadius: 10, border: 'none', background: T.primary, color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Search</button>
+        </div>
+        {/* Popular tags */}
+        <div style={{ display: 'flex', gap: 8, marginTop: 18, fontSize: 13, color: T.inkMuted, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span>热门 Popular:</span>
+          {['Claude', 'Cursor', 'Midjourney', 'Suno', 'v0', 'Perplexity'].map((tag) => (
+            <button key={tag} onClick={() => onPopularTag(tag)} style={{ padding: '4px 12px', borderRadius: 999, background: T.panel, border: `1px solid ${T.rule}`, color: T.inkSoft, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = T.primary; e.currentTarget.style.color = T.accent; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = T.rule; e.currentTarget.style.color = T.inkSoft; }}
+            >{tag}</button>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
-function MiniRow({ tool, onClick }: { tool: Tool; onClick: () => void }) {
+/* ─── Category strip ──────────────────────────────────────────────────────── */
+function CategoryStrip({ cat, setCat }: { cat: string; setCat: (c: string) => void }) {
+  const { categories: CATEGORIES, tools: ALL_TOOLS } = useData();
+  return (
+    <section style={{ background: T.bg, borderBottom: `1px solid ${T.rule}` }}>
+      <div style={{ display: 'flex', gap: 8, padding: '16px 56px', overflowX: 'auto', scrollbarWidth: 'none' } as React.CSSProperties}>
+        <CatPill active={cat === 'all'} onClick={() => setCat('all')}>全部 All · {ALL_TOOLS.length}</CatPill>
+        {CATEGORIES.map((c) => (
+          <CatPill key={c.id} active={cat === c.id} onClick={() => setCat(c.id)}>
+            {c.icon} {c.zh} <span style={{ opacity: 0.5, fontSize: 11 }}>{c.count}</span>
+          </CatPill>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function CatPill({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button onClick={onClick} style={{
-      display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-      padding: '6px 10px', border: 'none', background: 'transparent', cursor: 'pointer',
-      borderRadius: 6, color: T.inkSoft, fontSize: 12, marginBottom: 1,
-      transition: 'background .12s',
+      display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 15px', borderRadius: 999,
+      border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', fontSize: 13,
+      fontWeight: active ? 600 : 500,
+      background: active ? T.ink : T.panel,
+      color: active ? '#fff' : T.inkSoft,
+      outline: `1px solid ${active ? 'transparent' : T.rule}`,
+      boxShadow: active ? 'none' : '0 1px 2px rgba(0,0,0,0.05)',
     }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = T.panel2)}
-      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-    >
-      <ToolLogo tool={tool} size={20} />
-      <span style={{ flex: 1, textAlign: 'left', fontWeight: 500, color: T.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tool.name}</span>
-    </button>
+    onMouseEnter={(e) => { if (!active) { (e.currentTarget as HTMLElement).style.background = T.panel2; (e.currentTarget as HTMLElement).style.outline = `1px solid ${T.primary}`; } }}
+    onMouseLeave={(e) => { if (!active) { (e.currentTarget as HTMLElement).style.background = T.panel; (e.currentTarget as HTMLElement).style.outline = `1px solid ${T.rule}`; } }}
+    >{children}</button>
   );
 }
 
-function Sidebar({ cat, setCat, fav, recent, onOpenTool }: {
-  cat: string; setCat: (c: string) => void;
-  fav: Set<string>; recent: string[];
-  onOpenTool: (t: Tool) => void;
-}) {
-  const { tools: AI_TOOLS, categories: CATEGORIES } = useData();
-  const favTools = AI_TOOLS.filter((t) => fav.has(t.id));
-  const recentTools = recent.map((id) => AI_TOOLS.find((t) => t.id === id)).filter((t): t is Tool => Boolean(t));
-
+/* ─── Featured tool card (Editor's Pick) ─────────────────────────────────── */
+function FeaturedCard({ tool }: { tool: Tool }) {
+  const { categories: CATEGORIES } = useData();
+  const catZh = CATEGORIES.find((c) => c.id === tool.cat)?.zh;
   return (
-    <aside style={{
-      width: 240, borderRight: `1px solid ${T.rule}`, background: T.panel,
-      overflowY: 'auto', display: 'flex', flexDirection: 'column',
-    }}>
-      <SectionLabel>★ 收藏 Favorites · {favTools.length}</SectionLabel>
-      <div style={{ padding: '0 12px 8px' }}>
-        {favTools.length === 0 ? (
-          <div style={{ padding: '6px 10px', fontSize: 11, color: T.inkMuted, fontStyle: 'italic' }}>点击工具卡的 ★ 收藏</div>
-        ) : favTools.slice(0, 5).map((t) => (
-          <MiniRow key={t.id} tool={t} onClick={() => onOpenTool(t)} />
-        ))}
+    <div style={{
+      background: T.panel, borderRadius: 16, padding: 24,
+      border: `1px solid ${T.rule}`, cursor: 'pointer',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+      display: 'flex', flexDirection: 'column', gap: 14, position: 'relative', overflow: 'hidden',
+    }}
+    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 16px 36px -12px rgba(31,41,55,0.15)'; }}
+    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)'; }}
+    >
+      <div style={{ position: 'absolute', top: 14, right: 14, padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', background: T.primaryBg, color: T.accent, textTransform: 'uppercase' }}>Editor&rsquo;s Pick</div>
+      <ToolLogo tool={tool} size={60} />
+      <div>
+        <h3 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 22, margin: '0 0 6px', color: T.ink, letterSpacing: '-0.02em' }}>{tool.name}</h3>
+        <p style={{ fontSize: 13, color: T.inkSoft, lineHeight: 1.55, margin: '0 0 12px' }}>{tool.en}</p>
+        <p style={{ fontSize: 12, color: T.inkMuted, lineHeight: 1.5, margin: 0 }}>{tool.zh}</p>
       </div>
-
-      <SectionLabel>↻ 最近浏览 Recent</SectionLabel>
-      <div style={{ padding: '0 12px 8px' }}>
-        {recentTools.length === 0 ? (
-          <div style={{ padding: '6px 10px', fontSize: 11, color: T.inkMuted, fontStyle: 'italic' }}>暂无浏览记录</div>
-        ) : recentTools.slice(0, 4).map((t) => (
-          <MiniRow key={t.id} tool={t} onClick={() => onOpenTool(t)} />
-        ))}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: 14, borderTop: `1px solid ${T.ruleSoft}` }}>
+        <span style={{ padding: '3px 9px', borderRadius: 4, fontSize: 11, fontWeight: 600, background: T.primaryBg, color: T.accent }}>{catZh}</span>
+        <span style={{ fontSize: 12, color: T.inkMuted }}>{tool.date}</span>
       </div>
-
-      <SectionLabel>分类 Categories</SectionLabel>
-      <div style={{ padding: '0 12px 16px' }}>
-        <button onClick={() => setCat('all')} style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%',
-          padding: '7px 10px', borderRadius: 6, border: 'none', cursor: 'pointer',
-          background: cat === 'all' ? T.primaryBg : 'transparent',
-          color: cat === 'all' ? T.accent : T.inkSoft,
-          fontSize: 13, fontWeight: cat === 'all' ? 600 : 500, marginBottom: 1,
-        }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 14 }}>◎</span>All / 全部</span>
-          <span style={{ fontSize: 11, color: T.inkMuted, fontVariantNumeric: 'tabular-nums' }}>1,428</span>
-        </button>
-        {CATEGORIES.map((c) => (
-          <button key={c.id} onClick={() => setCat(c.id)} style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%',
-            padding: '7px 10px', borderRadius: 6, border: 'none', cursor: 'pointer',
-            background: cat === c.id ? T.primaryBg : 'transparent',
-            color: cat === c.id ? T.accent : T.inkSoft,
-            fontSize: 13, fontWeight: cat === c.id ? 600 : 500, marginBottom: 1,
-          }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 14 }}>{c.icon}</span>{c.zh}</span>
-            <span style={{ fontSize: 11, color: T.inkMuted, fontVariantNumeric: 'tabular-nums' }}>{c.count}</span>
-          </button>
-        ))}
-      </div>
-    </aside>
+    </div>
   );
 }
 
+/* ─── Regular tool card ───────────────────────────────────────────────────── */
+function ToolCard({ tool, fav, toggleFav }: { tool: Tool; fav: boolean; toggleFav: (id: string) => void }) {
+  const { categories: CATEGORIES } = useData();
+  const catZh = CATEGORIES.find((c) => c.id === tool.cat)?.zh;
+  return (
+    <div style={{
+      background: T.panel, borderRadius: 12, padding: 18,
+      border: `1px solid ${T.rule}`, cursor: 'pointer',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+      display: 'flex', gap: 14, transition: 'border-color .15s, box-shadow .15s',
+    }}
+    onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = T.primary; el.style.boxShadow = '0 4px 14px -4px rgba(249,115,22,0.2)'; }}
+    onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = T.rule; el.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'; }}
+    >
+      <ToolLogo tool={tool} size={46} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+          <h4 style={{ fontFamily: 'Georgia, serif', fontWeight: 600, fontSize: 16, margin: 0, color: T.ink }}>{tool.name}</h4>
+          <button onClick={(e) => { e.stopPropagation(); toggleFav(tool.id); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: fav ? T.primary : T.inkMuted, padding: 4 }}>{fav ? '★' : '☆'}</button>
+        </div>
+        <p style={{ fontSize: 13, color: T.inkSoft, lineHeight: 1.5, margin: '0 0 10px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' } as React.CSSProperties}>{tool.en}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
+          <span style={{ padding: '2px 7px', borderRadius: 4, fontWeight: 600, background: T.primaryBg, color: T.accent }}>{catZh}</span>
+          <span style={{ padding: '2px 6px', borderRadius: 4, border: `1px solid ${T.rule}`, color: T.inkMuted, fontWeight: 500 }}>{tool.pricing}</span>
+          <span style={{ color: T.inkMuted, marginLeft: 'auto' }}>{tool.date}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── GitHub trending item ────────────────────────────────────────────────── */
+function GhItem({ item, rank }: { item: RepoItem; rank: number }) {
+  const [owner, name] = item.repo.split('/');
+  return (
+    <div style={{ padding: '13px 0', borderBottom: `1px solid ${T.ruleSoft}`, cursor: 'pointer', display: 'flex', gap: 12 }}
+      onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = T.panel2; el.style.padding = '13px 8px'; el.style.margin = '0 -8px'; el.style.borderRadius = '6px'; }}
+      onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.padding = '13px 0'; el.style.margin = '0'; el.style.borderRadius = '0'; }}
+    >
+      <div style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontWeight: 700, fontSize: rank <= 3 ? 22 : 14, color: rank <= 3 ? T.primary : T.inkMuted, width: 26, lineHeight: 1, flexShrink: 0 }}>{String(rank).padStart(2, '0')}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ marginBottom: 3, fontSize: 13 }}>
+          <span style={{ color: T.inkMuted }}>{owner}</span>
+          <span style={{ color: T.inkMuted }}>/</span>
+          <span style={{ color: T.ink, fontWeight: 600 }}>{name}</span>
+        </div>
+        <p style={{ fontSize: 12, color: T.inkSoft, lineHeight: 1.5, margin: '0 0 7px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' } as React.CSSProperties}>{item.descZh || item.desc}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 11, color: T.inkMuted }}>
+          {item.lang && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ width: 9, height: 9, borderRadius: 5, background: LANG_COLOR[item.lang] || '#888', display: 'inline-block' }} />
+              {item.lang}
+            </span>
+          )}
+          <span>★ {item.stars.toLocaleString()}</span>
+          <span style={{ color: T.green, fontWeight: 600 }}>+{item.gained.toLocaleString()} today</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Command palette ─────────────────────────────────────────────────────── */
 function PaletteSection({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ padding: '8px 0' }}>
@@ -180,15 +288,9 @@ function PaletteSection({ label, children }: { label: string; children: React.Re
   );
 }
 
-function PaletteItem({ icon, title, sub, badge, onClick }: {
-  icon: React.ReactNode; title: string; sub?: string; badge?: string; onClick?: () => void;
-}) {
+function PaletteItem({ icon, title, sub, badge, onClick }: { icon: React.ReactNode; title: string; sub?: string; badge?: string; onClick?: () => void }) {
   return (
-    <button onClick={onClick} style={{
-      display: 'flex', alignItems: 'center', gap: 12, width: '100%',
-      padding: '8px 16px', border: 'none', background: 'transparent',
-      cursor: 'pointer', textAlign: 'left',
-    }}
+    <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '8px 16px', border: 'none', background: 'transparent', cursor: 'pointer', textAlign: 'left' }}
       onMouseEnter={(e) => (e.currentTarget.style.background = T.panel2)}
       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
     >
@@ -202,11 +304,13 @@ function PaletteItem({ icon, title, sub, badge, onClick }: {
   );
 }
 
-function CommandPalette({ open, onClose, onOpenTool }: {
+function CommandPalette({ open, onClose, onOpenTool, fav, recent }: {
   open: boolean; onClose: () => void; onOpenTool: (t: Tool) => void;
+  fav: Set<string>; recent: string[];
 }) {
   const [q, setQ] = React.useState('');
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const { tools: AI_TOOLS, categories: CATEGORIES, trending } = useData();
 
   React.useEffect(() => {
     if (!open) return;
@@ -216,117 +320,60 @@ function CommandPalette({ open, onClose, onOpenTool }: {
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
-  const { tools: AI_TOOLS, categories: CATEGORIES, trending } = useData();
-
   if (!open) return null;
 
   const ql = q.toLowerCase().trim();
-  const matchTools = AI_TOOLS.filter((t) =>
-    !ql || t.name.toLowerCase().includes(ql) || t.en.toLowerCase().includes(ql) || t.zh.includes(q)
-  ).slice(0, 5);
-  const matchRepos = trending.today.filter((r) =>
-    !ql || r.repo.toLowerCase().includes(ql) || r.desc.toLowerCase().includes(ql)
-  ).slice(0, 4);
-  const matchCats = CATEGORIES.filter((c) =>
-    !ql || c.en.toLowerCase().includes(ql) || c.zh.includes(q)
-  ).slice(0, 4);
-
-  const recentSearches = ['ChatGPT', 'Cursor', 'Midjourney', 'Suno'];
-  const popularTags = ['AI Agent', '代码生成', '图像生成', '视频创作', '语音克隆'];
-
-  const empty = !ql && matchTools.length === 0;
+  const matchTools = AI_TOOLS.filter((t) => !ql || t.name.toLowerCase().includes(ql) || t.en.toLowerCase().includes(ql) || t.zh.includes(q)).slice(0, 5);
+  const matchRepos = trending.today.filter((r) => !ql || r.repo.toLowerCase().includes(ql) || r.desc.toLowerCase().includes(ql)).slice(0, 4);
+  const matchCats = CATEGORIES.filter((c) => !ql || c.en.toLowerCase().includes(ql) || c.zh.includes(q)).slice(0, 4);
+  const favTools = AI_TOOLS.filter((t) => fav.has(t.id)).slice(0, 5);
+  const recentTools = recent.map((id) => AI_TOOLS.find((t) => t.id === id)).filter((t): t is Tool => Boolean(t)).slice(0, 4);
+  const empty = !ql;
 
   return (
-    <div onClick={onClose} style={{
-      position: 'fixed', inset: 0, background: 'rgba(15,11,9,0.45)',
-      backdropFilter: 'blur(6px)', zIndex: 200,
-      display: 'flex', justifyContent: 'center', alignItems: 'flex-start',
-      paddingTop: '12vh',
-    }}>
-      <div onClick={(e) => e.stopPropagation()} style={{
-        background: T.panel, width: '100%', maxWidth: 640, borderRadius: 14,
-        boxShadow: '0 30px 80px -20px rgba(0,0,0,0.4)', overflow: 'hidden',
-        border: `1px solid ${T.rule}`,
-        fontFamily: 'ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif',
-      }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(31,41,55,0.4)', backdropFilter: 'blur(6px)', zIndex: 200, display: 'flex', justifyContent: 'center', alignItems: 'flex-start', paddingTop: '12vh' }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: T.panel, width: '100%', maxWidth: 640, borderRadius: 14, boxShadow: '0 30px 80px -20px rgba(0,0,0,0.35)', overflow: 'hidden', border: `1px solid ${T.rule}`, fontFamily: 'inherit' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderBottom: `1px solid ${T.rule}` }}>
           <span style={{ fontSize: 18, color: T.inkMuted }}>⌕</span>
-          <input
-            ref={inputRef}
-            value={q} onChange={(e) => setQ(e.target.value)}
-            placeholder="搜索 AI 工具、GitHub 仓库、分类…"
-            style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 16, color: T.ink, fontFamily: 'inherit' }}
-          />
+          <input ref={inputRef} value={q} onChange={(e) => setQ(e.target.value)} placeholder="搜索 AI 工具、GitHub 仓库、分类…" style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 16, color: T.ink, fontFamily: 'inherit' }} />
           <kbd style={{ padding: '3px 8px', background: T.bg, border: `1px solid ${T.rule}`, borderRadius: 4, fontSize: 11, color: T.inkMuted, fontFamily: 'ui-monospace, monospace' }}>esc</kbd>
         </div>
-
         <div style={{ maxHeight: 460, overflowY: 'auto' }}>
           {empty ? (
             <>
-              <PaletteSection label="最近搜索 · Recent searches">
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '4px 16px 8px' }}>
-                  {recentSearches.map((s) => (
-                    <button key={s} onClick={() => setQ(s)} style={{
-                      padding: '4px 10px', borderRadius: 999, border: `1px solid ${T.rule}`,
-                      background: T.bg, color: T.inkSoft, fontSize: 12, cursor: 'pointer',
-                      display: 'inline-flex', alignItems: 'center', gap: 5,
-                    }}><span style={{ color: T.inkMuted }}>↻</span>{s}</button>
-                  ))}
-                </div>
-              </PaletteSection>
+              {favTools.length > 0 && (
+                <PaletteSection label="★ 我的收藏 · Favorites">
+                  {favTools.map((t) => <PaletteItem key={t.id} icon={<ToolLogo tool={t} size={28} />} title={t.name} sub={t.zh} badge={CATEGORIES.find((c) => c.id === t.cat)?.zh} onClick={() => { onOpenTool(t); onClose(); }} />)}
+                </PaletteSection>
+              )}
+              {recentTools.length > 0 && (
+                <PaletteSection label="↻ 最近浏览 · Recent">
+                  {recentTools.map((t) => <PaletteItem key={t.id} icon={<ToolLogo tool={t} size={28} />} title={t.name} sub={t.zh} badge={CATEGORIES.find((c) => c.id === t.cat)?.zh} onClick={() => { onOpenTool(t); onClose(); }} />)}
+                </PaletteSection>
+              )}
               <PaletteSection label="热门标签 · Popular tags">
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '4px 16px 8px' }}>
-                  {popularTags.map((s) => (
-                    <button key={s} onClick={() => setQ(s)} style={{
-                      padding: '4px 10px', borderRadius: 999, border: 'none',
-                      background: T.primaryBg, color: T.accent, fontSize: 12, fontWeight: 500, cursor: 'pointer',
-                    }}>{s}</button>
+                  {['AI Agent', '代码生成', '图像生成', '视频创作', '语音克隆'].map((s) => (
+                    <button key={s} onClick={() => setQ(s)} style={{ padding: '4px 10px', borderRadius: 999, border: 'none', background: T.primaryBg, color: T.accent, fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>{s}</button>
                   ))}
                 </div>
-              </PaletteSection>
-              <PaletteSection label="快速操作 · Quick actions">
-                <PaletteItem icon={<span style={{ width: 24, height: 24, display: 'grid', placeItems: 'center', borderRadius: 5, background: T.primaryBg, color: T.accent, fontSize: 13 }}>＋</span>} title="Submit a new tool" sub="提交一个新工具" badge="⌘ N" />
-                <PaletteItem icon={<span style={{ width: 24, height: 24, display: 'grid', placeItems: 'center', borderRadius: 5, background: T.panel2, fontSize: 13 }}>★</span>} title="View favorites" sub="查看我的收藏" badge="⌘ B" />
-                <PaletteItem icon={<span style={{ width: 24, height: 24, display: 'grid', placeItems: 'center', borderRadius: 5, background: T.panel2, fontSize: 13 }}>☾</span>} title="Toggle dark mode" sub="切换深色模式" badge="⌘ D" />
               </PaletteSection>
             </>
           ) : (
             <>
               {matchTools.length > 0 && (
                 <PaletteSection label={`AI 工具 · Tools — ${matchTools.length}`}>
-                  {matchTools.map((t) => (
-                    <PaletteItem key={t.id}
-                      icon={<ToolLogo tool={t} size={28} />}
-                      title={t.name}
-                      sub={t.zh}
-                      badge={CATEGORIES.find((c) => c.id === t.cat)?.zh}
-                      onClick={() => { onOpenTool(t); onClose(); }}
-                    />
-                  ))}
+                  {matchTools.map((t) => <PaletteItem key={t.id} icon={<ToolLogo tool={t} size={28} />} title={t.name} sub={t.zh} badge={CATEGORIES.find((c) => c.id === t.cat)?.zh} onClick={() => { onOpenTool(t); onClose(); }} />)}
                 </PaletteSection>
               )}
               {matchRepos.length > 0 && (
                 <PaletteSection label={`GitHub 仓库 · Repos — ${matchRepos.length}`}>
-                  {matchRepos.map((r) => (
-                    <PaletteItem key={r.repo}
-                      icon={<span style={{ width: 28, height: 28, display: 'grid', placeItems: 'center', borderRadius: 5, background: T.ink, color: '#fff', fontFamily: 'ui-monospace, monospace', fontWeight: 700, fontSize: 12 }}>Gh</span>}
-                      title={r.repo}
-                      sub={r.descZh || r.desc}
-                      badge={`★ ${(r.stars / 1000).toFixed(1)}k`}
-                    />
-                  ))}
+                  {matchRepos.map((r) => <PaletteItem key={r.repo} icon={<span style={{ width: 28, height: 28, display: 'grid', placeItems: 'center', borderRadius: 6, background: T.ink, color: '#fff', fontFamily: 'ui-monospace, monospace', fontWeight: 700, fontSize: 12 }}>Gh</span>} title={r.repo} sub={r.descZh || r.desc} badge={`★ ${r.stars >= 1000 ? `${(r.stars / 1000).toFixed(1)}k` : r.stars}`} />)}
                 </PaletteSection>
               )}
               {matchCats.length > 0 && (
                 <PaletteSection label={`分类 · Categories — ${matchCats.length}`}>
-                  {matchCats.map((c) => (
-                    <PaletteItem key={c.id}
-                      icon={<span style={{ width: 28, height: 28, display: 'grid', placeItems: 'center', borderRadius: 5, background: T.primaryBg, fontSize: 14 }}>{c.icon}</span>}
-                      title={`${c.en} · ${c.zh}`}
-                      sub={`${c.count} tools`}
-                      badge="↗"
-                    />
-                  ))}
+                  {matchCats.map((c) => <PaletteItem key={c.id} icon={<span style={{ width: 28, height: 28, display: 'grid', placeItems: 'center', borderRadius: 6, background: T.primaryBg, fontSize: 14 }}>{c.icon}</span>} title={`${c.en} · ${c.zh}`} sub={`${c.count} tools`} badge="↗" />)}
                 </PaletteSection>
               )}
               {matchTools.length === 0 && matchRepos.length === 0 && matchCats.length === 0 && (
@@ -337,17 +384,12 @@ function CommandPalette({ open, onClose, onOpenTool }: {
             </>
           )}
         </div>
-
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '10px 16px', borderTop: `1px solid ${T.rule}`, background: T.bg, fontSize: 11, color: T.inkMuted }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            <kbd style={{ padding: '1px 5px', background: T.panel, border: `1px solid ${T.rule}`, borderRadius: 3, fontFamily: 'ui-monospace, monospace' }}>↑↓</kbd> navigate
-          </span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            <kbd style={{ padding: '1px 5px', background: T.panel, border: `1px solid ${T.rule}`, borderRadius: 3, fontFamily: 'ui-monospace, monospace' }}>↵</kbd> open
-          </span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            <kbd style={{ padding: '1px 5px', background: T.panel, border: `1px solid ${T.rule}`, borderRadius: 3, fontFamily: 'ui-monospace, monospace' }}>esc</kbd> close
-          </span>
+          {[['↑↓', 'navigate'], ['↵', 'open'], ['esc', 'close']].map(([key, label]) => (
+            <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <kbd style={{ padding: '1px 5px', background: T.panel, border: `1px solid ${T.rule}`, borderRadius: 3, fontFamily: 'ui-monospace, monospace' }}>{key}</kbd> {label}
+            </span>
+          ))}
           <span style={{ marginLeft: 'auto' }}>跨工具 + 仓库 + 分类联合搜索</span>
         </div>
       </div>
@@ -355,122 +397,28 @@ function CommandPalette({ open, onClose, onOpenTool }: {
   );
 }
 
-function formatNumber(n: number): string {
-  return n.toLocaleString('en-US');
-}
-
-function formatCompact(n: number): string {
-  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
-}
-
-function formatRelativeTime(iso?: string): string {
-  if (!iso) return 'not yet';
-  const ms = Date.now() - new Date(iso).getTime();
-  if (!Number.isFinite(ms) || ms < 0) return 'just now';
-  const minutes = Math.floor(ms / 60000);
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes} min ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
-}
-
-function StatsBar() {
-  const { stats: s } = useData();
-  const stats = [
-    { label: 'Tools curated', zh: '收录工具', value: formatNumber(s.toolsTotal), delta: `${s.featuredTools} featured` },
-    { label: 'Categories', zh: '分类', value: formatNumber(s.categoriesTotal), delta: `${s.categoriesTotal} active` },
-    { label: 'Repos tracked', zh: '追踪仓库', value: formatNumber(s.reposTracked), delta: `+${formatCompact(s.todayStarsGained)} stars today` },
-    { label: 'Last updated', zh: '更新时间', value: formatRelativeTime(s.lastUpdatedAt), delta: `${s.todayRepos} repos today` },
-  ];
+/* ─── Footer ──────────────────────────────────────────────────────────────── */
+function Footer() {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1, background: T.rule, borderBottom: `1px solid ${T.rule}` }}>
-      {stats.map((s) => (
-        <div key={s.label} style={{ padding: '16px 24px', background: T.panel, display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <div style={{ fontSize: 11, color: T.inkMuted, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{s.label} · {s.zh}</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-            <span style={{ fontSize: 22, fontWeight: 700, color: T.ink, letterSpacing: '-0.02em' }}>{s.value}</span>
-            <span style={{ fontSize: 11, color: T.green, fontWeight: 600 }}>{s.delta}</span>
-          </div>
+    <footer style={{ padding: '48px 56px 36px', background: T.bg, borderTop: `1px solid ${T.rule}`, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+          <div style={{ width: 28, height: 28, borderRadius: 8, background: `linear-gradient(135deg, ${T.primary} 0%, #FBBF24 100%)`, display: 'grid', placeItems: 'center', color: '#fff', fontFamily: 'Georgia, serif', fontWeight: 900, fontSize: 16, fontStyle: 'italic' }}>A</div>
+          <span style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 18, color: T.ink }}>AiToolsBox</span>
         </div>
-      ))}
-    </div>
+        <p style={{ fontSize: 13, color: T.inkMuted, margin: 0, maxWidth: 380, lineHeight: 1.6 }}>
+          A thoughtful directory of AI tools and a live pulse of GitHub. Curated daily.<br />
+          精选 AI 工具与 GitHub 趋势 · 每日更新
+        </p>
+      </div>
+      <div style={{ fontSize: 12, color: T.inkMuted, textAlign: 'right' }}>
+        © 2026 AiToolsBox · 工具集<br />Made with care
+      </div>
+    </footer>
   );
 }
 
-function ToolRow({ tool, onOpen, fav, toggleFav }: {
-  tool: Tool; onOpen: (t: Tool) => void; fav: boolean; toggleFav: (id: string) => void;
-}) {
-  const { categories: CATEGORIES } = useData();
-  return (
-    <div onClick={() => onOpen(tool)} style={{
-      display: 'flex', alignItems: 'center', gap: 14, padding: '14px 24px',
-      borderBottom: `1px solid ${T.ruleSoft}`, cursor: 'pointer', transition: 'background .12s',
-    }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = T.panel2)}
-      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-    >
-      <ToolLogo tool={tool} size={42} />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-          <span style={{ fontWeight: 600, fontSize: 14, color: T.ink }}>{tool.name}</span>
-          <span style={{ padding: '1px 6px', borderRadius: 3, fontSize: 10, fontWeight: 600, background: T.primaryBg, color: T.accent }}>{CATEGORIES.find((c) => c.id === tool.cat)?.zh}</span>
-          <span style={{ fontSize: 10, color: T.inkMuted, padding: '1px 5px', border: `1px solid ${T.rule}`, borderRadius: 3, fontWeight: 500 }}>{tool.pricing}</span>
-        </div>
-        <p style={{ fontSize: 12, color: T.inkSoft, lineHeight: 1.45, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tool.zh}</p>
-      </div>
-      <button onClick={(e) => { e.stopPropagation(); toggleFav(tool.id); }} style={{
-        border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, padding: 4,
-        color: fav ? T.primary : T.inkMuted,
-      }}>{fav ? '★' : '☆'}</button>
-      <span style={{ fontSize: 11, color: T.inkMuted, fontVariantNumeric: 'tabular-nums', minWidth: 64, textAlign: 'right' }}>{tool.date}</span>
-    </div>
-  );
-}
-
-function GhRow({ item, rank, highlight }: { item: RepoItem; rank: number; highlight: boolean }) {
-  const [owner, name] = item.repo.split('/');
-  const max = 1300;
-  const barW = Math.min(100, (item.gained / max) * 100);
-  return (
-    <div style={{
-      display: 'grid', gridTemplateColumns: '32px 1fr auto', gap: 12, alignItems: 'center',
-      padding: '12px 24px',
-      background: highlight ? `linear-gradient(90deg, ${T.primaryBg}88 0%, transparent 60%)` : 'transparent',
-      borderBottom: `1px solid ${T.ruleSoft}`, cursor: 'pointer', transition: 'background .12s',
-    }}
-      onMouseEnter={(e) => { if (!highlight) e.currentTarget.style.background = T.panel2; }}
-      onMouseLeave={(e) => { if (!highlight) e.currentTarget.style.background = 'transparent'; }}
-    >
-      <div style={{
-        fontFamily: 'Fraunces, serif', fontStyle: 'italic', fontWeight: 700, fontSize: rank <= 3 ? 22 : 14,
-        color: rank <= 3 ? T.primary : T.inkMuted, textAlign: 'center', lineHeight: 1,
-      }}>#{rank}</div>
-      <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 13, marginBottom: 4, fontFamily: 'ui-monospace, monospace' }}>
-          <span style={{ color: T.inkMuted }}>{owner}/</span>
-          <span style={{ color: T.ink, fontWeight: 600 }}>{name}</span>
-          {rank === 1 && <span style={{ marginLeft: 8, padding: '1px 6px', borderRadius: 3, background: T.primary, color: '#fff', fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', verticalAlign: 'middle' }}>#1 today</span>}
-        </div>
-        <p style={{ fontSize: 12, color: T.inkSoft, lineHeight: 1.45, margin: '0 0 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.descZh || item.desc}</p>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 11, color: T.inkMuted }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ width: 8, height: 8, borderRadius: 4, background: LANG_COLOR[item.lang] || '#888' }} />
-            {item.lang}
-          </span>
-          <span>★ {item.stars.toLocaleString()}</span>
-        </div>
-      </div>
-      <div style={{ textAlign: 'right', minWidth: 90 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: T.green, fontVariantNumeric: 'tabular-nums', marginBottom: 4 }}>+{item.gained.toLocaleString()}</div>
-        <div style={{ width: 80, height: 4, background: T.ruleSoft, borderRadius: 2, marginLeft: 'auto', overflow: 'hidden' }}>
-          <div style={{ width: `${barW}%`, height: '100%', background: T.green, borderRadius: 2 }} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
+/* ─── Root export ─────────────────────────────────────────────────────────── */
 export default function V2ProHomepage(props: DataCtx) {
   return (
     <DataContext.Provider value={props}>
@@ -482,124 +430,113 @@ export default function V2ProHomepage(props: DataCtx) {
 function V2ProInner() {
   const { tools: AI_TOOLS, trending: GITHUB_TRENDING, stats } = useData();
   const [cat, setCat] = React.useState('all');
+  const [query, setQuery] = React.useState('');
   const [period, setPeriod] = React.useState<TrendingPeriod>('today');
-  const [lang, setLang] = React.useState('all');
-  const [sort, setSort] = React.useState<'popular' | 'newest' | 'rating'>('newest');
+  const [sort, setSort] = React.useState<'popular' | 'newest'>('newest');
   const [paletteOpen, setPaletteOpen] = React.useState(false);
   const [fav, setFav] = React.useState<Set<string>>(new Set(['claude', 'cursor', 'midjourney']));
   const [recent, setRecent] = React.useState<string[]>(['chatgpt', 'cursor', 'suno', 'v0']);
 
-  const toggleFav = (id: string) => setFav((s) => {
-    const n = new Set(s);
-    if (n.has(id)) n.delete(id); else n.add(id);
-    return n;
-  });
-  const handleOpenTool = (t: Tool) => {
-    setRecent((r) => [t.id, ...r.filter((x) => x !== t.id)].slice(0, 6));
-  };
+  const toggleFav = (id: string) => setFav((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const handleOpenTool = (t: Tool) => setRecent((r) => [t.id, ...r.filter((x) => x !== t.id)].slice(0, 6));
 
   React.useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setPaletteOpen(true);
-      }
-    };
+    const onKey = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setPaletteOpen(true); } };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  let tools = AI_TOOLS.filter((t) => cat === 'all' || t.cat === cat);
+  // Filter + sort
+  let tools = AI_TOOLS.filter((t) =>
+    (cat === 'all' || t.cat === cat) &&
+    (!query || t.name.toLowerCase().includes(query.toLowerCase()) || t.en.toLowerCase().includes(query.toLowerCase()) || t.zh.includes(query))
+  );
   if (sort === 'newest') tools = [...tools].sort((a, b) => b.date.localeCompare(a.date));
 
-  let trending: RepoItem[] = GITHUB_TRENDING[period];
-  if (lang !== 'all') trending = trending.filter((t) => t.lang === lang);
-  trending = trending.slice(0, 10);
-
-  const langs = ['all', 'Python', 'TypeScript', 'Rust', 'C++'];
+  const featured = tools.filter((t) => t.featured).slice(0, 3);
+  const rest = tools.filter((t) => !t.featured || featured.length < 3);
+  const trending = GITHUB_TRENDING[period].slice(0, 10);
 
   return (
-    <div style={{ minHeight: '100vh', background: T.bg, color: T.ink, fontFamily: 'ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: T.bg, color: T.ink, fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif' }}>
       <TopBar onOpenPalette={() => setPaletteOpen(true)} />
-      <StatsBar />
-      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        <Sidebar cat={cat} setCat={setCat} fav={fav} recent={recent} onOpenTool={handleOpenTool} />
-        <main style={{ flex: 1, padding: 24, overflowY: 'auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-          <section style={{ background: T.panel, borderRadius: 12, border: `1px solid ${T.rule}`, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '20px 24px 12px', borderBottom: `1px solid ${T.ruleSoft}` }}>
-              <div>
-                <div style={{ fontSize: 11, color: T.primary, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>AI Tools</div>
-                <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', color: T.ink }}>Curated directory <span style={{ color: T.inkMuted, fontWeight: 400, fontSize: 16 }}>精选工具</span></h2>
-              </div>
-              <div style={{ display: 'flex', gap: 4, padding: 3, background: T.bg, borderRadius: 6, border: `1px solid ${T.rule}`, fontSize: 12 }}>
-                {(['popular', 'newest', 'rating'] as const).map((k) => {
-                  const labels: Record<typeof k, string> = { popular: '热门', newest: '最新', rating: '评分' };
-                  return (
-                    <button key={k} onClick={() => setSort(k)} style={{
-                      padding: '4px 10px', borderRadius: 4, border: 'none', cursor: 'pointer',
-                      background: sort === k ? T.panel : 'transparent',
-                      color: sort === k ? T.ink : T.inkSoft, fontWeight: 500,
-                      boxShadow: sort === k ? '0 1px 1px rgba(0,0,0,0.04)' : 'none',
-                    }}>{labels[k]}</button>
-                  );
-                })}
-              </div>
-            </div>
-            <div style={{ flex: 1, overflowY: 'auto' }}>
-              {tools.map((t) => <ToolRow key={t.id} tool={t} onOpen={handleOpenTool} fav={fav.has(t.id)} toggleFav={toggleFav} />)}
-            </div>
-            <div style={{ padding: '12px 24px', borderTop: `1px solid ${T.ruleSoft}`, fontSize: 12, color: T.inkMuted, display: 'flex', justifyContent: 'space-between' }}>
-              <span>显示 {tools.length} / {formatNumber(stats.toolsTotal)}</span>
-              <a style={{ color: T.primary, fontWeight: 600, cursor: 'pointer' }}>Browse all →</a>
-            </div>
-          </section>
+      <Hero query={query} setQuery={setQuery} stats={stats} onPopularTag={(tag) => { setQuery(tag); setCat('all'); }} />
+      <CategoryStrip cat={cat} setCat={setCat} />
 
-          <section style={{ background: T.panel, borderRadius: 12, border: `1px solid ${T.rule}`, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '20px 24px 12px', borderBottom: `1px solid ${T.ruleSoft}` }}>
-              <div>
-                <div style={{ fontSize: 11, color: T.primary, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>GitHub Trending</div>
-                <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', color: T.ink }}>What&rsquo;s hot <span style={{ color: T.inkMuted, fontWeight: 400, fontSize: 16 }}>开源趋势</span></h2>
+      {/* Main: V1 two-column layout */}
+      <section style={{ padding: '48px 56px', display: 'grid', gridTemplateColumns: '1fr 360px', gap: 48 }}>
+
+        {/* Left: tools */}
+        <div>
+          {/* Editor's Picks */}
+          {featured.length > 0 && (
+            <>
+              <div style={{ marginBottom: 28 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 4 }}>
+                  <h2 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 34, margin: 0, color: T.ink, letterSpacing: '-0.02em' }}>Editor&rsquo;s Picks</h2>
+                  <span style={{ fontSize: 14, color: T.inkMuted }}>· 编辑精选</span>
+                </div>
+                <p style={{ fontSize: 14, color: T.inkSoft, margin: 0 }}>本周值得一试的 AI 工具，由编辑团队精选。</p>
               </div>
-              <div style={{ display: 'flex', gap: 4, padding: 3, background: T.bg, borderRadius: 6, border: `1px solid ${T.rule}`, fontSize: 12 }}>
-                {(['today', 'week', 'month'] as const).map((k) => {
-                  const labels: Record<typeof k, string> = { today: '今日', week: '本周', month: '本月' };
-                  return (
-                    <button key={k} onClick={() => setPeriod(k)} style={{
-                      padding: '4px 10px', borderRadius: 4, border: 'none', cursor: 'pointer',
-                      background: period === k ? T.panel : 'transparent',
-                      color: period === k ? T.ink : T.inkSoft, fontWeight: 500,
-                      boxShadow: period === k ? '0 1px 1px rgba(0,0,0,0.04)' : 'none',
-                    }}>{labels[k]}</button>
-                  );
-                })}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, marginBottom: 52 }}>
+                {featured.map((t) => <FeaturedCard key={t.id} tool={t} />)}
               </div>
+            </>
+          )}
+
+          {/* Latest additions */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+            <div>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 30, margin: 0, color: T.ink, letterSpacing: '-0.02em' }}>Latest additions</h2>
+              <p style={{ fontSize: 13, color: T.inkSoft, margin: '4px 0 0' }}>最新收录 · {rest.length} tools</p>
             </div>
-            <div style={{ display: 'flex', gap: 6, padding: '12px 24px', borderBottom: `1px solid ${T.ruleSoft}`, alignItems: 'center', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 11, color: T.inkMuted, fontWeight: 600, marginRight: 4 }}>语言:</span>
-              {langs.map((l) => (
-                <button key={l} onClick={() => setLang(l)} style={{
-                  padding: '3px 9px', borderRadius: 999, border: `1px solid ${lang === l ? T.ink : T.rule}`,
-                  background: lang === l ? T.ink : 'transparent', color: lang === l ? '#fff' : T.inkSoft,
-                  fontSize: 11, fontWeight: 500, cursor: 'pointer',
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                }}>
-                  {l !== 'all' && <span style={{ width: 7, height: 7, borderRadius: 4, background: LANG_COLOR[l] }} />}
-                  {l === 'all' ? 'All' : l}
+            <div style={{ display: 'flex', gap: 4, padding: 4, background: T.panel, borderRadius: 8, border: `1px solid ${T.rule}`, fontSize: 12 }}>
+              {(['newest', 'popular'] as const).map((k) => (
+                <button key={k} onClick={() => setSort(k)} style={{ padding: '5px 12px', borderRadius: 5, border: 'none', cursor: 'pointer', background: sort === k ? T.ink : 'transparent', color: sort === k ? '#fff' : T.inkSoft, fontWeight: 500 }}>
+                  {k === 'newest' ? 'Newest' : 'Popular'}
                 </button>
               ))}
             </div>
-            <div style={{ flex: 1, overflowY: 'auto' }}>
-              {trending.map((it, i) => <GhRow key={it.repo + i} item={it} rank={i + 1} highlight={i === 0} />)}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
+            {rest.map((t) => <ToolCard key={t.id} tool={t} fav={fav.has(t.id)} toggleFav={toggleFav} />)}
+          </div>
+          {rest.length === 0 && (
+            <div style={{ padding: '40px 0', textAlign: 'center', color: T.inkMuted, fontSize: 14 }}>没有找到匹配的工具</div>
+          )}
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 36 }}>
+            <button style={{ padding: '11px 28px', borderRadius: 999, border: `1px solid ${T.rule}`, background: T.panel, color: T.ink, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Load more · 加载更多</button>
+          </div>
+        </div>
+
+        {/* Right: GitHub trending rail */}
+        <aside style={{ position: 'sticky', top: 90, alignSelf: 'start' }}>
+          <div style={{ background: T.panel, borderRadius: 16, padding: 24, border: `1px solid ${T.rule}`, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <div style={{ marginBottom: 4 }}>
+              <h3 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 22, margin: 0, color: T.ink, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ display: 'inline-grid', placeItems: 'center', width: 26, height: 26, borderRadius: 6, background: T.ink, color: '#fff', fontSize: 12, fontStyle: 'normal', fontWeight: 700 }}>Gh</span>
+                Trending
+              </h3>
             </div>
-            <div style={{ padding: '12px 24px', borderTop: `1px solid ${T.ruleSoft}`, fontSize: 12, color: T.inkMuted, display: 'flex', justifyContent: 'space-between' }}>
-              <span>{trending.length} repos · {period}</span>
-              <a style={{ color: T.primary, fontWeight: 600, cursor: 'pointer' }}>View all trending →</a>
+            <p style={{ fontSize: 13, color: T.inkSoft, margin: '0 0 14px' }}>GitHub 趋势项目 · live pulse</p>
+            {/* Period tabs */}
+            <div style={{ display: 'flex', gap: 3, padding: 3, background: T.primaryBg, borderRadius: 8, marginBottom: 4 }}>
+              {([['today', '今日'], ['week', '本周'], ['month', '本月']] as const).map(([k, label]) => (
+                <button key={k} onClick={() => setPeriod(k)} style={{ flex: 1, padding: '6px 8px', borderRadius: 5, border: 'none', cursor: 'pointer', background: period === k ? T.panel : 'transparent', color: period === k ? T.ink : T.inkSoft, fontWeight: 600, fontSize: 12, boxShadow: period === k ? '0 1px 2px rgba(0,0,0,0.06)' : 'none' }}>{label}</button>
+              ))}
             </div>
-          </section>
-        </main>
-      </div>
+            <div>
+              {trending.map((it, i) => <GhItem key={it.repo} item={it} rank={i + 1} />)}
+            </div>
+            <a style={{ display: 'block', textAlign: 'center', marginTop: 14, padding: '10px', fontSize: 13, fontWeight: 600, color: T.primary, cursor: 'pointer' }}>查看全部 View all trending →</a>
+          </div>
+        </aside>
+      </section>
+
+      <Footer />
+
       {paletteOpen && (
-        <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} onOpenTool={handleOpenTool} />
+        <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} onOpenTool={handleOpenTool} fav={fav} recent={recent} />
       )}
     </div>
   );
