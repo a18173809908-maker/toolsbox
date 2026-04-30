@@ -38,12 +38,9 @@ function ToolLogo({ tool, size = 56 }: { tool: Tool; size?: number }) {
 
 /* ─── TopBar ──────────────────────────────────────────────────────────────── */
 function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
-  const navItems: [string, boolean][] = [
-    ['首页 Home', true],
-    ['分类 Categories', false],
-    ['GitHub 趋势', false],
-    ['AI 资讯 News', false],
-    ['提交工具 Submit', false],
+  const navItems: [string, string][] = [
+    ['首页 Home', '/'],
+    ['AI 资讯 News', '/news'],
   ];
   return (
     <header style={{
@@ -67,18 +64,21 @@ function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
 
       {/* Nav */}
       <nav style={{ display: 'flex', gap: 4, fontSize: 14 }}>
-        {navItems.map(([label, active]) => (
-          <a key={label} style={{
-            padding: '6px 12px', cursor: 'pointer',
-            color: active ? T.ink : T.inkSoft,
-            fontWeight: active ? 600 : 500,
-            borderBottom: active ? `2px solid ${T.primary}` : '2px solid transparent',
-            textDecoration: 'none',
-          }}
-          onMouseEnter={(e) => { if (!active) { e.currentTarget.style.color = T.ink; e.currentTarget.style.borderBottomColor = T.ruleSoft; } }}
-          onMouseLeave={(e) => { if (!active) { e.currentTarget.style.color = T.inkSoft; e.currentTarget.style.borderBottomColor = 'transparent'; } }}
-          >{label}</a>
-        ))}
+        {navItems.map(([label, href]) => {
+          const active = typeof window !== 'undefined' ? window.location.pathname === href : href === '/';
+          return (
+            <a key={href} href={href} style={{
+              padding: '6px 12px', cursor: 'pointer',
+              color: active ? T.ink : T.inkSoft,
+              fontWeight: active ? 600 : 500,
+              borderBottom: active ? `2px solid ${T.primary}` : '2px solid transparent',
+              textDecoration: 'none',
+            }}
+            onMouseEnter={(e) => { if (!active) { e.currentTarget.style.color = T.ink; e.currentTarget.style.borderBottomColor = T.ruleSoft; } }}
+            onMouseLeave={(e) => { if (!active) { e.currentTarget.style.color = T.inkSoft; e.currentTarget.style.borderBottomColor = 'transparent'; } }}
+            >{label}</a>
+          );
+        })}
       </nav>
 
       {/* Right */}
@@ -162,7 +162,7 @@ function CategoryStrip({ cat, setCat }: { cat: string; setCat: (c: string) => vo
       <div style={{ display: 'flex', gap: 8, padding: '16px 56px', overflowX: 'auto', scrollbarWidth: 'none' } as React.CSSProperties}>
         <CatPill active={cat === 'all'} onClick={() => setCat('all')}>全部 All · {ALL_TOOLS.length}</CatPill>
         {CATEGORIES.map((c) => (
-          <CatPill key={c.id} active={cat === c.id} onClick={() => setCat(c.id)}>
+          <CatPill key={c.id} active={cat === c.id} onClick={() => setCat(c.id)} href={`/categories/${c.id}`}>
             {c.icon} {c.zh} <span style={{ opacity: 0.5, fontSize: 11 }}>{c.count}</span>
           </CatPill>
         ))}
@@ -171,21 +171,25 @@ function CategoryStrip({ cat, setCat }: { cat: string; setCat: (c: string) => vo
   );
 }
 
-function CatPill({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button onClick={onClick} style={{
-      display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 15px', borderRadius: 999,
-      border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', fontSize: 13,
-      fontWeight: active ? 600 : 500,
-      background: active ? T.ink : T.panel,
-      color: active ? '#fff' : T.inkSoft,
-      outline: `1px solid ${active ? 'transparent' : T.rule}`,
-      boxShadow: active ? 'none' : '0 1px 2px rgba(0,0,0,0.05)',
-    }}
-    onMouseEnter={(e) => { if (!active) { (e.currentTarget as HTMLElement).style.background = T.panel2; (e.currentTarget as HTMLElement).style.outline = `1px solid ${T.primary}`; } }}
-    onMouseLeave={(e) => { if (!active) { (e.currentTarget as HTMLElement).style.background = T.panel; (e.currentTarget as HTMLElement).style.outline = `1px solid ${T.rule}`; } }}
-    >{children}</button>
-  );
+function CatPill({ active, onClick, href, children }: { active: boolean; onClick: () => void; href?: string; children: React.ReactNode }) {
+  const style: React.CSSProperties = {
+    display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 15px', borderRadius: 999,
+    border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', fontSize: 13,
+    fontWeight: active ? 600 : 500,
+    background: active ? T.ink : T.panel,
+    color: active ? '#fff' : T.inkSoft,
+    outline: `1px solid ${active ? 'transparent' : T.rule}`,
+    boxShadow: active ? 'none' : '0 1px 2px rgba(0,0,0,0.05)',
+    textDecoration: 'none',
+  };
+  const handlers = {
+    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => { if (!active) { e.currentTarget.style.background = T.panel2; e.currentTarget.style.outline = `1px solid ${T.primary}`; } },
+    onMouseLeave: (e: React.MouseEvent<HTMLElement>) => { if (!active) { e.currentTarget.style.background = T.panel; e.currentTarget.style.outline = `1px solid ${T.rule}`; } },
+  };
+  if (href) {
+    return <a href={href} onClick={(e) => { e.preventDefault(); onClick(); }} style={style} {...handlers}>{children}</a>;
+  }
+  return <button onClick={onClick} style={style} {...handlers}>{children}</button>;
 }
 
 /* ─── Featured tool card (Editor's Pick) ─────────────────────────────────── */
