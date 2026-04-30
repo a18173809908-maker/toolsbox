@@ -87,20 +87,14 @@ function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   );
 }
 
-function Sidebar({ cat, setCat, fav, recent, onOpenTool }: {
-  cat: string; setCat: (c: string) => void;
-  fav: Set<string>; recent: string[];
-  onOpenTool: (t: Tool) => void;
-}) {
-  const { tools: AI_TOOLS, categories: CATEGORIES } = useData();
-  const favTools = AI_TOOLS.filter((t) => fav.has(t.id));
-  const recentTools = recent.map((id) => AI_TOOLS.find((t) => t.id === id)).filter((t): t is Tool => Boolean(t));
-
-  const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
     <div style={{ padding: '14px 20px 6px', fontSize: 11, color: T.inkMuted, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>{children}</div>
   );
+}
 
-  const MiniRow = ({ tool, onClick }: { tool: Tool; onClick: () => void }) => (
+function MiniRow({ tool, onClick }: { tool: Tool; onClick: () => void }) {
+  return (
     <button onClick={onClick} style={{
       display: 'flex', alignItems: 'center', gap: 8, width: '100%',
       padding: '6px 10px', border: 'none', background: 'transparent', cursor: 'pointer',
@@ -114,6 +108,16 @@ function Sidebar({ cat, setCat, fav, recent, onOpenTool }: {
       <span style={{ flex: 1, textAlign: 'left', fontWeight: 500, color: T.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tool.name}</span>
     </button>
   );
+}
+
+function Sidebar({ cat, setCat, fav, recent, onOpenTool }: {
+  cat: string; setCat: (c: string) => void;
+  fav: Set<string>; recent: string[];
+  onOpenTool: (t: Tool) => void;
+}) {
+  const { tools: AI_TOOLS, categories: CATEGORIES } = useData();
+  const favTools = AI_TOOLS.filter((t) => fav.has(t.id));
+  const recentTools = recent.map((id) => AI_TOOLS.find((t) => t.id === id)).filter((t): t is Tool => Boolean(t));
 
   return (
     <aside style={{
@@ -167,6 +171,37 @@ function Sidebar({ cat, setCat, fav, recent, onOpenTool }: {
   );
 }
 
+function PaletteSection({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ padding: '8px 0' }}>
+      <div style={{ padding: '4px 16px', fontSize: 10, color: T.inkMuted, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>{label}</div>
+      {children}
+    </div>
+  );
+}
+
+function PaletteItem({ icon, title, sub, badge, onClick }: {
+  icon: React.ReactNode; title: string; sub?: string; badge?: string; onClick?: () => void;
+}) {
+  return (
+    <button onClick={onClick} style={{
+      display: 'flex', alignItems: 'center', gap: 12, width: '100%',
+      padding: '8px 16px', border: 'none', background: 'transparent',
+      cursor: 'pointer', textAlign: 'left',
+    }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = T.panel2)}
+      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+    >
+      {icon}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, color: T.ink, fontWeight: 500, marginBottom: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</div>
+        {sub && <div style={{ fontSize: 11, color: T.inkMuted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</div>}
+      </div>
+      {badge && <span style={{ fontSize: 10, color: T.inkMuted, padding: '2px 6px', border: `1px solid ${T.rule}`, borderRadius: 4, fontWeight: 500 }}>{badge}</span>}
+    </button>
+  );
+}
+
 function CommandPalette({ open, onClose, onOpenTool }: {
   open: boolean; onClose: () => void; onOpenTool: (t: Tool) => void;
 }) {
@@ -175,7 +210,6 @@ function CommandPalette({ open, onClose, onOpenTool }: {
 
   React.useEffect(() => {
     if (!open) return;
-    setQ('');
     setTimeout(() => inputRef.current?.focus(), 50);
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
@@ -199,33 +233,6 @@ function CommandPalette({ open, onClose, onOpenTool }: {
 
   const recentSearches = ['ChatGPT', 'Cursor', 'Midjourney', 'Suno'];
   const popularTags = ['AI Agent', '代码生成', '图像生成', '视频创作', '语音克隆'];
-
-  const Section = ({ label, children }: { label: string; children: React.ReactNode }) => (
-    <div style={{ padding: '8px 0' }}>
-      <div style={{ padding: '4px 16px', fontSize: 10, color: T.inkMuted, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>{label}</div>
-      {children}
-    </div>
-  );
-
-  const Item = ({ icon, title, sub, badge, onClick }: {
-    icon: React.ReactNode; title: string; sub?: string; badge?: string; onClick?: () => void;
-  }) => (
-    <button onClick={onClick} style={{
-      display: 'flex', alignItems: 'center', gap: 12, width: '100%',
-      padding: '8px 16px', border: 'none', background: 'transparent',
-      cursor: 'pointer', textAlign: 'left',
-    }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = T.panel2)}
-      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-    >
-      {icon}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, color: T.ink, fontWeight: 500, marginBottom: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</div>
-        {sub && <div style={{ fontSize: 11, color: T.inkMuted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</div>}
-      </div>
-      {badge && <span style={{ fontSize: 10, color: T.inkMuted, padding: '2px 6px', border: `1px solid ${T.rule}`, borderRadius: 4, fontWeight: 500 }}>{badge}</span>}
-    </button>
-  );
 
   const empty = !ql && matchTools.length === 0;
 
@@ -256,7 +263,7 @@ function CommandPalette({ open, onClose, onOpenTool }: {
         <div style={{ maxHeight: 460, overflowY: 'auto' }}>
           {empty ? (
             <>
-              <Section label="最近搜索 · Recent searches">
+              <PaletteSection label="最近搜索 · Recent searches">
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '4px 16px 8px' }}>
                   {recentSearches.map((s) => (
                     <button key={s} onClick={() => setQ(s)} style={{
@@ -266,8 +273,8 @@ function CommandPalette({ open, onClose, onOpenTool }: {
                     }}><span style={{ color: T.inkMuted }}>↻</span>{s}</button>
                   ))}
                 </div>
-              </Section>
-              <Section label="热门标签 · Popular tags">
+              </PaletteSection>
+              <PaletteSection label="热门标签 · Popular tags">
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '4px 16px 8px' }}>
                   {popularTags.map((s) => (
                     <button key={s} onClick={() => setQ(s)} style={{
@@ -276,19 +283,19 @@ function CommandPalette({ open, onClose, onOpenTool }: {
                     }}>{s}</button>
                   ))}
                 </div>
-              </Section>
-              <Section label="快速操作 · Quick actions">
-                <Item icon={<span style={{ width: 24, height: 24, display: 'grid', placeItems: 'center', borderRadius: 5, background: T.primaryBg, color: T.accent, fontSize: 13 }}>＋</span>} title="Submit a new tool" sub="提交一个新工具" badge="⌘ N" />
-                <Item icon={<span style={{ width: 24, height: 24, display: 'grid', placeItems: 'center', borderRadius: 5, background: T.panel2, fontSize: 13 }}>★</span>} title="View favorites" sub="查看我的收藏" badge="⌘ B" />
-                <Item icon={<span style={{ width: 24, height: 24, display: 'grid', placeItems: 'center', borderRadius: 5, background: T.panel2, fontSize: 13 }}>☾</span>} title="Toggle dark mode" sub="切换深色模式" badge="⌘ D" />
-              </Section>
+              </PaletteSection>
+              <PaletteSection label="快速操作 · Quick actions">
+                <PaletteItem icon={<span style={{ width: 24, height: 24, display: 'grid', placeItems: 'center', borderRadius: 5, background: T.primaryBg, color: T.accent, fontSize: 13 }}>＋</span>} title="Submit a new tool" sub="提交一个新工具" badge="⌘ N" />
+                <PaletteItem icon={<span style={{ width: 24, height: 24, display: 'grid', placeItems: 'center', borderRadius: 5, background: T.panel2, fontSize: 13 }}>★</span>} title="View favorites" sub="查看我的收藏" badge="⌘ B" />
+                <PaletteItem icon={<span style={{ width: 24, height: 24, display: 'grid', placeItems: 'center', borderRadius: 5, background: T.panel2, fontSize: 13 }}>☾</span>} title="Toggle dark mode" sub="切换深色模式" badge="⌘ D" />
+              </PaletteSection>
             </>
           ) : (
             <>
               {matchTools.length > 0 && (
-                <Section label={`AI 工具 · Tools — ${matchTools.length}`}>
+                <PaletteSection label={`AI 工具 · Tools — ${matchTools.length}`}>
                   {matchTools.map((t) => (
-                    <Item key={t.id}
+                    <PaletteItem key={t.id}
                       icon={<ToolLogo tool={t} size={28} />}
                       title={t.name}
                       sub={t.zh}
@@ -296,31 +303,31 @@ function CommandPalette({ open, onClose, onOpenTool }: {
                       onClick={() => { onOpenTool(t); onClose(); }}
                     />
                   ))}
-                </Section>
+                </PaletteSection>
               )}
               {matchRepos.length > 0 && (
-                <Section label={`GitHub 仓库 · Repos — ${matchRepos.length}`}>
+                <PaletteSection label={`GitHub 仓库 · Repos — ${matchRepos.length}`}>
                   {matchRepos.map((r) => (
-                    <Item key={r.repo}
+                    <PaletteItem key={r.repo}
                       icon={<span style={{ width: 28, height: 28, display: 'grid', placeItems: 'center', borderRadius: 5, background: T.ink, color: '#fff', fontFamily: 'ui-monospace, monospace', fontWeight: 700, fontSize: 12 }}>Gh</span>}
                       title={r.repo}
                       sub={r.descZh || r.desc}
                       badge={`★ ${(r.stars / 1000).toFixed(1)}k`}
                     />
                   ))}
-                </Section>
+                </PaletteSection>
               )}
               {matchCats.length > 0 && (
-                <Section label={`分类 · Categories — ${matchCats.length}`}>
+                <PaletteSection label={`分类 · Categories — ${matchCats.length}`}>
                   {matchCats.map((c) => (
-                    <Item key={c.id}
+                    <PaletteItem key={c.id}
                       icon={<span style={{ width: 28, height: 28, display: 'grid', placeItems: 'center', borderRadius: 5, background: T.primaryBg, fontSize: 14 }}>{c.icon}</span>}
                       title={`${c.en} · ${c.zh}`}
                       sub={`${c.count} tools`}
                       badge="↗"
                     />
                   ))}
-                </Section>
+                </PaletteSection>
               )}
               {matchTools.length === 0 && matchRepos.length === 0 && matchCats.length === 0 && (
                 <div style={{ padding: '40px 20px', textAlign: 'center', color: T.inkMuted, fontSize: 13 }}>
@@ -591,7 +598,9 @@ function V2ProInner() {
           </section>
         </main>
       </div>
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} onOpenTool={handleOpenTool} />
+      {paletteOpen && (
+        <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} onOpenTool={handleOpenTool} />
+      )}
     </div>
   );
 }
