@@ -2,12 +2,13 @@
 
 import React from 'react';
 import { v2Tokens as T } from '@/lib/tokens';
-import { LANG_COLOR, type Tool, type Category, type RepoItem, type TrendingPeriod } from '@/lib/data';
+import { LANG_COLOR, type Tool, type Category, type RepoItem, type TrendingPeriod, type HomepageStats } from '@/lib/data';
 
 type DataCtx = {
   tools: Tool[];
   categories: Category[];
   trending: Record<TrendingPeriod, RepoItem[]>;
+  stats: HomepageStats;
 };
 const DataContext = React.createContext<DataCtx | null>(null);
 function useData(): DataCtx {
@@ -347,12 +348,33 @@ function CommandPalette({ open, onClose, onOpenTool }: {
   );
 }
 
+function formatNumber(n: number): string {
+  return n.toLocaleString('en-US');
+}
+
+function formatCompact(n: number): string {
+  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
+}
+
+function formatRelativeTime(iso?: string): string {
+  if (!iso) return 'not yet';
+  const ms = Date.now() - new Date(iso).getTime();
+  if (!Number.isFinite(ms) || ms < 0) return 'just now';
+  const minutes = Math.floor(ms / 60000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
 function StatsBar() {
+  const { stats: s } = useData();
   const stats = [
-    { label: 'Tools curated', zh: '收录工具', value: '1,428', delta: '+12 today' },
-    { label: 'Categories', zh: '分类', value: '14', delta: '14 active' },
-    { label: 'Repos tracked', zh: '追踪仓库', value: '8,629', delta: '+247 / week' },
-    { label: 'Last updated', zh: '更新时间', value: '2 min ago', delta: 'live' },
+    { label: 'Tools curated', zh: '收录工具', value: formatNumber(s.toolsTotal), delta: `${s.featuredTools} featured` },
+    { label: 'Categories', zh: '分类', value: formatNumber(s.categoriesTotal), delta: `${s.categoriesTotal} active` },
+    { label: 'Repos tracked', zh: '追踪仓库', value: formatNumber(s.reposTracked), delta: `+${formatCompact(s.todayStarsGained)} stars today` },
+    { label: 'Last updated', zh: '更新时间', value: formatRelativeTime(s.lastUpdatedAt), delta: `${s.todayRepos} repos today` },
   ];
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1, background: T.rule, borderBottom: `1px solid ${T.rule}` }}>
@@ -451,7 +473,7 @@ export default function V2ProHomepage(props: DataCtx) {
 }
 
 function V2ProInner() {
-  const { tools: AI_TOOLS, trending: GITHUB_TRENDING } = useData();
+  const { tools: AI_TOOLS, trending: GITHUB_TRENDING, stats } = useData();
   const [cat, setCat] = React.useState('all');
   const [period, setPeriod] = React.useState<TrendingPeriod>('today');
   const [lang, setLang] = React.useState('all');
@@ -520,7 +542,7 @@ function V2ProInner() {
               {tools.map((t) => <ToolRow key={t.id} tool={t} onOpen={handleOpenTool} fav={fav.has(t.id)} toggleFav={toggleFav} />)}
             </div>
             <div style={{ padding: '12px 24px', borderTop: `1px solid ${T.ruleSoft}`, fontSize: 12, color: T.inkMuted, display: 'flex', justifyContent: 'space-between' }}>
-              <span>显示 {tools.length} / 1,428</span>
+              <span>显示 {tools.length} / {formatNumber(stats.toolsTotal)}</span>
               <a style={{ color: T.primary, fontWeight: 600, cursor: 'pointer' }}>Browse all →</a>
             </div>
           </section>

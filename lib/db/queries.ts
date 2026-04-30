@@ -1,12 +1,13 @@
 import { db } from './index';
 import { categories, tools, githubTrending } from './schema';
-import { desc, asc, eq } from 'drizzle-orm';
-import type { TrendingPeriod, Tool, Category, RepoItem } from '@/lib/data';
+import { desc, asc } from 'drizzle-orm';
+import type { TrendingPeriod, Tool, Category, RepoItem, HomepageStats } from '@/lib/data';
 
 export async function loadHomepageData(): Promise<{
   categories: Category[];
   tools: Tool[];
   trending: Record<TrendingPeriod, RepoItem[]>;
+  stats: HomepageStats;
 }> {
   const [cats, ts, gh] = await Promise.all([
     db.select().from(categories).orderBy(desc(categories.count)),
@@ -37,5 +38,22 @@ export async function loadHomepageData(): Promise<{
     });
   }
 
-  return { categories: cs, tools: tools2, trending };
+  const uniqueRepos = new Set(gh.map((r) => r.repo));
+  const todayRows = gh.filter((r) => r.period === 'today');
+  const latestSnapshot = gh.reduce<Date | null>((latest, r) => {
+    if (!latest || r.snapshotDate > latest) return r.snapshotDate;
+    return latest;
+  }, null);
+
+  const stats: HomepageStats = {
+    toolsTotal: tools2.length,
+    featuredTools: tools2.filter((t) => t.featured).length,
+    categoriesTotal: cs.length,
+    reposTracked: uniqueRepos.size,
+    todayRepos: todayRows.length,
+    todayStarsGained: todayRows.reduce((sum, r) => sum + r.gained, 0),
+    lastUpdatedAt: latestSnapshot?.toISOString(),
+  };
+
+  return { categories: cs, tools: tools2, trending, stats };
 }

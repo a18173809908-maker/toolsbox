@@ -33,6 +33,16 @@ export type RepoItem = {
 
 export type TrendingPeriod = 'today' | 'week' | 'month';
 
+export type HomepageStats = {
+  toolsTotal: number;
+  featuredTools: number;
+  categoriesTotal: number;
+  reposTracked: number;
+  todayRepos: number;
+  todayStarsGained: number;
+  lastUpdatedAt?: string;
+};
+
 export const CATEGORIES: Category[] = [
   { id: 'chatbot',      en: 'AI Chatbots',      zh: '智能对话', icon: '💬', count: 142 },
   { id: 'image',        en: 'Image Generation', zh: '图像生成', icon: '🎨', count: 218 },
