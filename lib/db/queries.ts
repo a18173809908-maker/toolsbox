@@ -136,9 +136,61 @@ export async function upsertArticles(items: {
 export async function loadPendingArticles(limit = 20) {
   return db.select().from(articles)
     .where(eq(articles.status, 'published'))
-    // rows missing translation
     .orderBy(desc(articles.publishedAt))
     .limit(limit);
+}
+
+export async function loadArticlesPage(page = 1, pageSize = 30, tag?: string) {
+  const offset = (page - 1) * pageSize;
+  const base = db
+    .select({
+      id: articles.id,
+      title: articles.title,
+      titleZh: articles.titleZh,
+      url: articles.url,
+      summary: articles.summary,
+      summaryZh: articles.summaryZh,
+      tag: articles.tag,
+      publishedAt: articles.publishedAt,
+      sourceName: sources.name,
+    })
+    .from(articles)
+    .leftJoin(sources, eq(articles.sourceId, sources.id))
+    .where(eq(articles.status, 'published'))
+    .orderBy(desc(articles.publishedAt));
+
+  // Tag filter applied after the fact (drizzle dynamic where)
+  const rows = await base.limit(pageSize).offset(offset);
+  const filtered = tag ? rows.filter((r) => r.tag === tag) : rows;
+  return filtered;
+}
+
+export async function loadArticleTags(): Promise<string[]> {
+  const rows = await db
+    .selectDistinct({ tag: articles.tag })
+    .from(articles)
+    .where(eq(articles.status, 'published'));
+  return rows.map((r) => r.tag).filter((t): t is string => Boolean(t)).sort();
+}
+
+// ── Categories ────────────────────────────────────────────────────────────────
+
+export async function loadAllCategoryIds(): Promise<string[]> {
+  const rows = await db.select({ id: categories.id }).from(categories);
+  return rows.map((r) => r.id);
+}
+
+export async function loadCategoryById(id: string) {
+  const rows = await db.select().from(categories).where(eq(categories.id, id));
+  return rows[0] ?? null;
+}
+
+export async function loadToolsByCategory(catId: string) {
+  return db
+    .select()
+    .from(tools)
+    .where(eq(tools.catId, catId))
+    .orderBy(desc(tools.publishedAt));
 }
 
 export async function updateArticleAi(id: number, data: {
