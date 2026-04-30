@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AiToolsBox — AI 工具集 + GitHub 趋势</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400;1,9..144,700;1,9..144,900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    html, body, #root { margin: 0; padding: 0; height: 100%; }
+    body { font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; -webkit-font-smoothing: antialiased; }
+    button, input { font-family: inherit; }
+    a { text-decoration: none; }
+    /* hide scrollbars on horizontal strips */
+    *::-webkit-scrollbar { width: 8px; height: 8px; }
+    *::-webkit-scrollbar-thumb { background: #00000022; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="data.jsx"></script>
+  <script type="text/babel" src="v1-editorial.jsx"></script>
+  <script type="text/babel" src="v2-dashboard.jsx"></script>
+  <script type="text/babel" src="v3-dark.jsx"></script>
+  <script type="text/babel" src="v2-pro.jsx"></script>
+  <script type="text/babel" src="detail-and-category.jsx"></script>
+
+  <script type="text/babel">
+    const { DesignCanvas, DCSection, DCArtboard } = window;
+
+    function App() {
+      const [tool, setTool] = React.useState(null);
+      const [modalTheme, setModalTheme] = React.useState('light');
+
+      const openTool = (theme) => (t) => { setTool(t); setModalTheme(theme); };
+
+      return (
+        <>
+          <DesignCanvas>
+            <DCSection id="recommended" title="✦ Recommended · 推荐方向" subtitle="V2 Pro — shortest path to find a tool · ⌘K command palette + favorites + recent">
+              <DCArtboard id="v2pro" label="V2 Pro · ⌘K palette + favorites/recent sidebar (recommended)" width={1440} height={1100} data-screen-label="V2 Pro Recommended">
+                <window.V2ProHomepage onOpen={openTool('light')} />
+              </DCArtboard>
+            </DCSection>
+
+            <DCSection id="homepage" title="Other directions · 其他方向" subtitle="The original three — kept for comparison">
+              <DCArtboard id="v2" label="V2 · Split Dashboard (base, before Pro upgrade)" width={1440} height={1100} data-screen-label="V2 Split Dashboard">
+                <window.V2Homepage onOpen={openTool('light')} />
+              </DCArtboard>
+              <DCArtboard id="v1" label="V1 · Editorial Warm — magazine layout, AI tools dominant" width={1440} height={2400} data-screen-label="V1 Editorial Warm">
+                <window.V1Homepage onOpen={openTool('light')} />
+              </DCArtboard>
+              <DCArtboard id="v3" label="V3 · Dark Immersive — GitHub trending hero, masonry feed" width={1440} height={2700} data-screen-label="V3 Dark Immersive">
+                <window.V3Homepage onOpen={openTool('dark')} />
+              </DCArtboard>
+            </DCSection>
+
+            <DCSection id="detail-pages" title="Detail & Category" subtitle="Tool detail modal and category browse page · 工具详情与分类页">
+              <DCArtboard id="modal-light" label="Tool detail modal · light theme" width={900} height={780} data-screen-label="Tool Detail Light">
+                <div style={{ background: '#FFF7F0', height: '100%', position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', inset: 0, background: 'rgba(15,11,9,0.6)', display: 'grid', placeItems: 'center', padding: 32 }}>
+                    <window.ToolDetailInline tool={window.AITB.AI_TOOLS[0]} theme="light" />
+                  </div>
+                </div>
+              </DCArtboard>
+              <DCArtboard id="modal-dark" label="Tool detail modal · dark theme" width={900} height={780} data-screen-label="Tool Detail Dark">
+                <div style={{ background: '#0F0B09', height: '100%', position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', inset: 0, background: 'rgba(15,11,9,0.6)', display: 'grid', placeItems: 'center', padding: 32 }}>
+                    <window.ToolDetailInline tool={window.AITB.AI_TOOLS[2]} theme="dark" />
+                  </div>
+                </div>
+              </DCArtboard>
+              <DCArtboard id="category" label="Category page · Image Generation" width={1440} height={1400} data-screen-label="Category Page">
+                <window.CategoryPage catId="image" onOpen={openTool('light')} onBack={() => {}} />
+              </DCArtboard>
+            </DCSection>
+          </DesignCanvas>
+
+          {tool && <window.ToolDetailModal tool={tool} onClose={() => setTool(null)} theme={modalTheme} />}
+        </>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
