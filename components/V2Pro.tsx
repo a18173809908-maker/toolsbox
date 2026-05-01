@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { v2Tokens as T } from '@/lib/tokens';
 import { LANG_COLOR, type Tool, type Category, type RepoItem, type TrendingPeriod, type HomepageStats, type NewsItem } from '@/lib/data';
 
@@ -309,11 +310,18 @@ function PaletteItem({ icon, title, sub, badge, onClick }: { icon: React.ReactNo
   );
 }
 
+type SearchResult = {
+  tools: { id: string; name: string; mono: string; brand: string; en: string; zh: string; pricing: string; catId: string }[];
+  articles: { id: number; title: string; titleZh: string | null; url: string; tag: string | null; publishedAt: Date | null }[];
+};
+
 function CommandPalette({ open, onClose, onOpenTool, fav, recent }: {
   open: boolean; onClose: () => void; onOpenTool: (t: Tool) => void;
   fav: Set<string>; recent: string[];
 }) {
   const [q, setQ] = React.useState('');
+  const [apiResults, setApiResults] = React.useState<SearchResult | null>(null);
+  const [loading, setLoading] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const { tools: AI_TOOLS, categories: CATEGORIES, trending } = useData();
 
@@ -325,22 +333,54 @@ function CommandPalette({ open, onClose, onOpenTool, fav, recent }: {
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
+  // Debounced API search
+  React.useEffect(() => {
+    const trimmed = q.trim();
+    if (trimmed.length < 2) return;
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`);
+        const data: SearchResult = await res.json();
+        setApiResults(data);
+      } catch {
+        setApiResults(null);
+      } finally {
+        setLoading(false);
+      }
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [q]);
+
+  // Clear stale results when query is too short
+  const activeApiResults = q.trim().length >= 2 ? apiResults : null;
+
   if (!open) return null;
 
   const ql = q.toLowerCase().trim();
-  const matchTools = AI_TOOLS.filter((t) => !ql || t.name.toLowerCase().includes(ql) || t.en.toLowerCase().includes(ql) || t.zh.includes(q)).slice(0, 5);
+  const empty = !ql;
+
+  // For categories and repos — still local (fast, no API needed)
   const matchRepos = trending.today.filter((r) => !ql || r.repo.toLowerCase().includes(ql) || r.desc.toLowerCase().includes(ql)).slice(0, 4);
   const matchCats = CATEGORIES.filter((c) => !ql || c.en.toLowerCase().includes(ql) || c.zh.includes(q)).slice(0, 4);
+
+  // Tools & articles from API; fall back to local while loading
+  const apiTools = activeApiResults?.tools ?? [];
+  const apiArticles = activeApiResults?.articles ?? [];
+  const localTools = AI_TOOLS.filter((t) => t.name.toLowerCase().includes(ql) || t.en.toLowerCase().includes(ql) || t.zh.includes(q)).slice(0, 5);
+  const matchTools = activeApiResults ? apiTools : (loading ? [] : localTools);
+
   const favTools = AI_TOOLS.filter((t) => fav.has(t.id)).slice(0, 5);
   const recentTools = recent.map((id) => AI_TOOLS.find((t) => t.id === id)).filter((t): t is Tool => Boolean(t)).slice(0, 4);
-  const empty = !ql;
+
+  const hasResults = matchTools.length > 0 || matchRepos.length > 0 || matchCats.length > 0 || apiArticles.length > 0;
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(31,41,55,0.4)', backdropFilter: 'blur(6px)', zIndex: 200, display: 'flex', justifyContent: 'center', alignItems: 'flex-start', paddingTop: '12vh' }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: T.panel, width: '100%', maxWidth: 640, borderRadius: 14, boxShadow: '0 30px 80px -20px rgba(0,0,0,0.35)', overflow: 'hidden', border: `1px solid ${T.rule}`, fontFamily: 'inherit' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderBottom: `1px solid ${T.rule}` }}>
-          <span style={{ fontSize: 18, color: T.inkMuted }}>⌕</span>
-          <input ref={inputRef} value={q} onChange={(e) => setQ(e.target.value)} placeholder="搜索 AI 工具、GitHub 仓库、分类…" style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 16, color: T.ink, fontFamily: 'inherit' }} />
+          <span style={{ fontSize: 18, color: loading ? T.primary : T.inkMuted, transition: 'color .2s' }}>⌕</span>
+          <input ref={inputRef} value={q} onChange={(e) => setQ(e.target.value)} placeholder="搜索 AI 工具、资讯、分类…" style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 16, color: T.ink, fontFamily: 'inherit' }} />
           <kbd style={{ padding: '3px 8px', background: T.bg, border: `1px solid ${T.rule}`, borderRadius: 4, fontSize: 11, color: T.inkMuted, fontFamily: 'ui-monospace, monospace' }}>esc</kbd>
         </div>
         <div style={{ maxHeight: 460, overflowY: 'auto' }}>
@@ -368,20 +408,36 @@ function CommandPalette({ open, onClose, onOpenTool, fav, recent }: {
             <>
               {matchTools.length > 0 && (
                 <PaletteSection label={`AI 工具 · Tools — ${matchTools.length}`}>
-                  {matchTools.map((t) => <PaletteItem key={t.id} icon={<ToolLogo tool={t} size={28} />} title={t.name} sub={t.zh} badge={CATEGORIES.find((c) => c.id === t.cat)?.zh} onClick={() => { onOpenTool(t); onClose(); }} />)}
+                  {matchTools.map((t) => {
+                    const tool = AI_TOOLS.find((at) => at.id === t.id) ?? { ...t, cat: (t as {catId?: string}).catId ?? '', date: '', featured: false };
+                    return <PaletteItem key={t.id} icon={<ToolLogo tool={tool as Tool} size={28} />} title={t.name} sub={t.zh} badge={CATEGORIES.find((c) => c.id === ((t as {catId?: string}).catId ?? (tool as Tool).cat))?.zh} onClick={() => { if (AI_TOOLS.find(at => at.id === t.id)) { onOpenTool(tool as Tool); onClose(); } else { window.location.href = `/tools/${t.id}`; onClose(); } }} />;
+                  })}
+                </PaletteSection>
+              )}
+              {apiArticles.length > 0 && (
+                <PaletteSection label={`AI 资讯 · News — ${apiArticles.length}`}>
+                  {apiArticles.map((a) => (
+                    <PaletteItem key={a.id}
+                      icon={<span style={{ width: 28, height: 28, display: 'grid', placeItems: 'center', borderRadius: 6, background: T.primaryBg, fontSize: 14 }}>📰</span>}
+                      title={a.titleZh || a.title}
+                      sub={a.titleZh ? a.title : ''}
+                      badge={a.tag ?? undefined}
+                      onClick={() => { window.open(a.url, '_blank'); onClose(); }}
+                    />
+                  ))}
                 </PaletteSection>
               )}
               {matchRepos.length > 0 && (
                 <PaletteSection label={`GitHub 仓库 · Repos — ${matchRepos.length}`}>
-                  {matchRepos.map((r) => <PaletteItem key={r.repo} icon={<span style={{ width: 28, height: 28, display: 'grid', placeItems: 'center', borderRadius: 6, background: T.ink, color: '#fff', fontFamily: 'ui-monospace, monospace', fontWeight: 700, fontSize: 12 }}>Gh</span>} title={r.repo} sub={r.descZh || r.desc} badge={`★ ${r.stars >= 1000 ? `${(r.stars / 1000).toFixed(1)}k` : r.stars}`} />)}
+                  {matchRepos.map((r) => <PaletteItem key={r.repo} icon={<span style={{ width: 28, height: 28, display: 'grid', placeItems: 'center', borderRadius: 6, background: T.ink, color: '#fff', fontFamily: 'ui-monospace, monospace', fontWeight: 700, fontSize: 12 }}>Gh</span>} title={r.repo} sub={r.descZh || r.desc} badge={`★ ${r.stars >= 1000 ? `${(r.stars / 1000).toFixed(1)}k` : r.stars}`} onClick={() => { window.open(`https://github.com/${r.repo}`, '_blank'); onClose(); }} />)}
                 </PaletteSection>
               )}
               {matchCats.length > 0 && (
                 <PaletteSection label={`分类 · Categories — ${matchCats.length}`}>
-                  {matchCats.map((c) => <PaletteItem key={c.id} icon={<span style={{ width: 28, height: 28, display: 'grid', placeItems: 'center', borderRadius: 6, background: T.primaryBg, fontSize: 14 }}>{c.icon}</span>} title={`${c.en} · ${c.zh}`} sub={`${c.count} tools`} badge="↗" />)}
+                  {matchCats.map((c) => <PaletteItem key={c.id} icon={<span style={{ width: 28, height: 28, display: 'grid', placeItems: 'center', borderRadius: 6, background: T.primaryBg, fontSize: 14 }}>{c.icon}</span>} title={`${c.en} · ${c.zh}`} sub={`${c.count} tools`} badge="↗" onClick={() => { window.location.href = `/categories/${c.id}`; onClose(); }} />)}
                 </PaletteSection>
               )}
-              {matchTools.length === 0 && matchRepos.length === 0 && matchCats.length === 0 && (
+              {!loading && !hasResults && (
                 <div style={{ padding: '40px 20px', textAlign: 'center', color: T.inkMuted, fontSize: 13 }}>
                   没有找到 &ldquo;{q}&rdquo; 的结果<br /><span style={{ fontSize: 12 }}>No results for &ldquo;{q}&rdquo;</span>
                 </div>
@@ -395,7 +451,7 @@ function CommandPalette({ open, onClose, onOpenTool, fav, recent }: {
               <kbd style={{ padding: '1px 5px', background: T.panel, border: `1px solid ${T.rule}`, borderRadius: 3, fontFamily: 'ui-monospace, monospace' }}>{key}</kbd> {label}
             </span>
           ))}
-          <span style={{ marginLeft: 'auto' }}>跨工具 + 仓库 + 分类联合搜索</span>
+          <span style={{ marginLeft: 'auto' }}>工具 + 资讯 + 分类全库搜索</span>
         </div>
       </div>
     </div>
@@ -433,7 +489,7 @@ function NewsPulseCard() {
           {n.titleZh && <p style={{ fontSize: 11, lineHeight: 1.5, margin: 0, color: '#C8B5A8' }}>{n.title}</p>}
         </a>
       ))}
-      <a href="/news" style={{ display: 'block', textAlign: 'center', marginTop: 8, padding: '8px', fontSize: 13, fontWeight: 600, color: T.primary, cursor: 'pointer', textDecoration: 'none' }}>查看全部资讯 →</a>
+      <Link href="/news" style={{ display: 'block', textAlign: 'center', marginTop: 8, padding: '8px', fontSize: 13, fontWeight: 600, color: T.primary, cursor: 'pointer', textDecoration: 'none' }}>查看全部资讯 →</Link>
     </div>
   );
 }

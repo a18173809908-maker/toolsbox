@@ -1,6 +1,6 @@
 import { db } from './index';
 import { categories, tools, githubTrending, articles, sources } from './schema';
-import { desc, asc, eq } from 'drizzle-orm';
+import { desc, asc, eq, ilike, or } from 'drizzle-orm';
 import type { TrendingPeriod, Tool, Category, RepoItem, HomepageStats, NewsItem } from '@/lib/data';
 
 // ── Homepage ─────────────────────────────────────────────────────────────────
@@ -171,6 +171,49 @@ export async function loadArticleTags(): Promise<string[]> {
     .from(articles)
     .where(eq(articles.status, 'published'));
   return rows.map((r) => r.tag).filter((t): t is string => Boolean(t)).sort();
+}
+
+// ── Search ────────────────────────────────────────────────────────────────────
+
+export async function searchTools(q: string, limit = 20) {
+  const pattern = `%${q}%`;
+  return db
+    .select({
+      id: tools.id, name: tools.name, mono: tools.mono, brand: tools.brand,
+      en: tools.en, zh: tools.zh, pricing: tools.pricing, catId: tools.catId,
+    })
+    .from(tools)
+    .where(or(ilike(tools.name, pattern), ilike(tools.en, pattern), ilike(tools.zh, pattern)))
+    .limit(limit);
+}
+
+export async function searchArticles(q: string, limit = 10) {
+  const pattern = `%${q}%`;
+  return db
+    .select({
+      id: articles.id, title: articles.title, titleZh: articles.titleZh,
+      url: articles.url, tag: articles.tag, publishedAt: articles.publishedAt,
+    })
+    .from(articles)
+    .where(
+      or(ilike(articles.title, pattern), ilike(articles.titleZh, pattern))
+    )
+    .orderBy(desc(articles.publishedAt))
+    .limit(limit);
+}
+
+export async function loadArticleById(id: number) {
+  const rows = await db
+    .select({
+      id: articles.id, title: articles.title, titleZh: articles.titleZh,
+      url: articles.url, summary: articles.summary, summaryZh: articles.summaryZh,
+      tag: articles.tag, publishedAt: articles.publishedAt,
+      sourceName: sources.name, sourceUrl: sources.url,
+    })
+    .from(articles)
+    .leftJoin(sources, eq(articles.sourceId, sources.id))
+    .where(eq(articles.id, id));
+  return rows[0] ?? null;
 }
 
 // ── Categories ────────────────────────────────────────────────────────────────

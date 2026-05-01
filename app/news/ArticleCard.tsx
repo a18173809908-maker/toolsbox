@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 const C = {
   panel: '#FFFFFF', ink: '#1F2937', inkSoft: '#4B5563',
   inkMuted: '#9CA3AF', rule: '#E8D5B7', ruleSoft: '#F3E8D0',
@@ -31,15 +33,15 @@ export type ArticleRow = {
 
 export function ArticleCard({ art }: { art: ArticleRow }) {
   return (
-    <a href={art.url} target="_blank" rel="noopener noreferrer" style={{
+    <Link href={`/news/${art.id}`} style={{
       display: 'flex', flexDirection: 'column', gap: 12,
       background: C.panel, borderRadius: 12, padding: 22,
       border: `1px solid ${C.rule}`, textDecoration: 'none',
       boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
       transition: 'box-shadow .15s, border-color .15s',
     }}
-    onMouseEnter={(e) => { const el = e.currentTarget; el.style.boxShadow = '0 6px 20px -4px rgba(249,115,22,0.18)'; el.style.borderColor = C.primary; }}
-    onMouseLeave={(e) => { const el = e.currentTarget; el.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'; el.style.borderColor = C.rule; }}
+    onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.boxShadow = '0 6px 20px -4px rgba(249,115,22,0.18)'; el.style.borderColor = C.primary; }}
+    onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'; el.style.borderColor = C.rule; }}
     >
       {/* Meta row */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -70,6 +72,6 @@ export function ArticleCard({ art }: { art: ArticleRow }) {
           来源 · {art.sourceName} ↗
         </div>
       )}
-    </a>
+    </Link>
   );
 }
