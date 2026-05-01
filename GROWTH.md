@@ -12,7 +12,7 @@
 |---|---|
 | 站点名称 | AiToolsBox / aiboxpro |
 | 域名 | `aiboxpro.cn`（已注册，2026-05-01，阿里云）|
-| 当前部署 | Vercel（`toolsbox-six.vercel.app`，开发期临时域名）|
+| 当前部署 | Vercel（代码中 BASE URL 已切换为 `aiboxpro.cn`，DNS 绑定待操作）|
 | 目标用户 | 中国大陆 AI 从业者、开发者、内容创作者、普通用户 |
 | 变现规划 | 百度联盟广告（需备案）+ 付费推荐位 + CPS |
 
