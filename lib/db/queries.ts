@@ -13,7 +13,7 @@ export async function loadHomepageData(): Promise<{
   news: NewsItem[];
 }> {
   const [cats, ts, gh, arts] = await Promise.all([
-    db.select().from(categories).orderBy(desc(categories.count)),
+    db.select().from(categories),
     db.select().from(tools).orderBy(desc(tools.publishedAt)),
     db.select().from(githubTrending).orderBy(asc(githubTrending.period), desc(githubTrending.gained)),
     db.select({ id: articles.id, title: articles.title, titleZh: articles.titleZh, url: articles.url, tag: articles.tag, publishedAt: articles.publishedAt })
@@ -22,10 +22,6 @@ export async function loadHomepageData(): Promise<{
       .orderBy(desc(articles.publishedAt))
       .limit(6),
   ]);
-
-  const cs: Category[] = cats.map((c) => ({
-    id: c.id, en: c.en, zh: c.zh, icon: c.icon, count: c.count,
-  }));
 
   const tools2: Tool[] = ts.map((t) => ({
     id: t.id, name: t.name, mono: t.mono, brand: t.brand,
@@ -47,6 +43,21 @@ export async function loadHomepageData(): Promise<{
     featured: t.featured,
     date: t.publishedAt,
   }));
+
+  const countByCat = new Map<string, number>();
+  for (const tool of tools2) {
+    countByCat.set(tool.cat, (countByCat.get(tool.cat) ?? 0) + 1);
+  }
+
+  const cs: Category[] = cats
+    .map((c) => ({
+      id: c.id,
+      en: c.en,
+      zh: c.zh,
+      icon: c.icon,
+      count: countByCat.get(c.id) ?? 0,
+    }))
+    .sort((a, b) => b.count - a.count);
 
   const trending: Record<TrendingPeriod, RepoItem[]> = { today: [], week: [], month: [] };
   for (const r of gh) {

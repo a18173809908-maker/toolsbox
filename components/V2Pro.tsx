@@ -538,9 +538,6 @@ function V2ProInner() {
           {rest.length === 0 && (
             <div style={{ padding: '40px 0', textAlign: 'center', color: T.inkMuted, fontSize: 14 }}>没有找到匹配的工具</div>
           )}
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 36 }}>
-            <button style={{ padding: '11px 28px', borderRadius: 999, border: `1px solid ${T.rule}`, background: T.panel, color: T.ink, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Load more · 加载更多</button>
-          </div>
         </div>
 
         {/* Right: GitHub trending rail */}
