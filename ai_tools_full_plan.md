@@ -122,14 +122,45 @@
 ### 2-B 内容增强
 
 - ⬜ GitHub 详情页接入 GitHub API
-  - README 渲染（Markdown → HTML，`react-markdown` 或服务端渲染）
+  - README 渲染（Markdown → HTML，`marked` + `sanitize-html`）
   - Topics / License / 语言分布条形图
-  - 贡献者头像（最多 10 位）
-  - ⚠️ 注意：未认证 API 60 req/h，需缓存（Redis 或 Vercel KV）
+  - ⚠️ 注意：未认证 API 60 req/h，用 `next: { revalidate: 3600 }` 缓存
 - ⬜ 工具详情页功能亮点列表（`features[]` 字段 → bullet 列表）
 - ⬜ 工具详情页「平替工具」模块（alternatives 字段 → 卡片组）
 - ⬜ 资讯详情页「相关工具」推荐（按标签匹配）
 - ⬜ 分类页加分类介绍段落 + 使用场景引导
+
+### 2-F 工具使用技巧内容体系（新）
+
+> 设计详情见 GROWTH.md 第十四章
+
+**核心逻辑：** 不爬取全文（版权风险），只存「标题 + 编辑摘要 + 来源跳链」。
+
+- ⬜ 建 `tool_tips` 表
+  ```sql
+  CREATE TABLE tool_tips (
+    id          SERIAL PRIMARY KEY,
+    tool_id     TEXT NOT NULL REFERENCES tools(id),
+    title       TEXT NOT NULL,
+    summary     TEXT NOT NULL,      -- 编辑自写 100-200 字，非转载全文
+    source_name TEXT NOT NULL,      -- 「少数派」「刘晓义」等
+    source_url  TEXT NOT NULL,
+    platform    TEXT NOT NULL,      -- 'wechat'|'xiaohongshu'|'zhihu'|'bilibili'|'other'
+    tip_type    TEXT NOT NULL DEFAULT 'tutorial',
+    featured    BOOLEAN NOT NULL DEFAULT FALSE,
+    published_at TIMESTAMP,
+    created_at  TIMESTAMP DEFAULT NOW()
+  );
+  ```
+- ⬜ `loadTipsByTool(toolId, limit)` 查询函数
+- ⬜ 工具详情页底部 Tips section（有数据才渲染，空则不显示区块）
+- ⬜ 后台录入 API（`POST /api/admin/tips`，需 CRON_SECRET 鉴权）
+- ⬜ `/learn` 全站技巧汇总页（SSG + ISR）
+- ⬜ `/learn/[tool-id]` 工具技巧页（SSG + ISR，SEO 重点）
+
+**运营启动（不需要等开发）：**
+- 先手动整理 50 条链接（ChatGPT / Claude / Midjourney / Cursor 各 10-15 条）
+- 后台 API 上线后批量导入
 
 ### 2-C 发现与搜索
 

@@ -632,6 +632,114 @@ export async function loadToolsPage(opts: {
 
 ---
 
+### Task 8 — 工具使用技巧体系（P2，依赖 Task 1）
+
+**为什么：** 用户进详情页不只想知道「这是什么」，更想知道「怎么用好它」。
+技巧内容页同时截获「ChatGPT 使用技巧」「Midjourney 教程」等高搜索量词。
+
+**版权边界（重要）：** 不存储全文，只存标题 + 编辑自写摘要（100-200字）+ 原文跳链。合理引用，无版权风险。
+
+#### 8.1 建表
+
+```sql
+CREATE TABLE tool_tips (
+  id           SERIAL PRIMARY KEY,
+  tool_id      TEXT NOT NULL REFERENCES tools(id),
+  title        TEXT NOT NULL,
+  summary      TEXT NOT NULL,       -- 编辑自写，非转载原文
+  source_name  TEXT NOT NULL,       -- 如「少数派」「B站-设计师阿杰」
+  source_url   TEXT NOT NULL UNIQUE,
+  platform     TEXT NOT NULL,       -- 'wechat'|'xiaohongshu'|'zhihu'|'bilibili'|'other'
+  tip_type     TEXT NOT NULL DEFAULT 'tutorial',
+  -- 'tutorial'|'usecase'|'prompt'|'comparison'
+  featured     BOOLEAN NOT NULL DEFAULT FALSE,
+  published_at TIMESTAMP,
+  created_at   TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX ON tool_tips (tool_id, published_at DESC);
+```
+
+Drizzle schema 对应追加在 `lib/db/schema.ts`。
+
+#### 8.2 新增查询函数（lib/db/queries.ts）
+
+```typescript
+export async function loadTipsByTool(toolId: string, limit = 5) {
+  return db
+    .select()
+    .from(toolTips)
+    .where(eq(toolTips.toolId, toolId))
+    .orderBy(desc(toolTips.publishedAt))
+    .limit(limit);
+}
+
+export async function loadLatestTips(limit = 20) {
+  // 用于 /learn 汇总页
+  return db.select().from(toolTips).orderBy(desc(toolTips.publishedAt)).limit(limit);
+}
+```
+
+#### 8.3 工具详情页 Tips Section（app/tools/[slug]/page.tsx）
+
+在相关工具区块**之前**插入，有数据才渲染：
+
+```tsx
+{tips.length > 0 && (
+  <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', padding: '32px 40px', marginBottom: 24 }}>
+    <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 20px' }}>
+      使用技巧 · Tutorials
+    </h2>
+    {tips.map((tip) => (
+      <a key={tip.id} href={tip.sourceUrl} target="_blank" rel="noopener noreferrer"
+        style={{ display: 'block', padding: '14px 0', borderBottom: '1px solid #F3E8D0', textDecoration: 'none' }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: '#1F2937', marginBottom: 4 }}>
+          {PLATFORM_ICON[tip.platform]} {tip.title}
+        </div>
+        <p style={{ fontSize: 13, color: '#4B5563', margin: '0 0 4px', lineHeight: 1.55 }}>{tip.summary}</p>
+        <span style={{ fontSize: 11, color: '#9CA3AF' }}>{tip.sourceName} · 阅读原文 ↗</span>
+      </a>
+    ))}
+  </div>
+)}
+```
+
+平台图标映射：
+```typescript
+const PLATFORM_ICON: Record<string, string> = {
+  wechat: '🟩', xiaohongshu: '❤️', zhihu: '🔵',
+  bilibili: '📺', other: '📖',
+};
+```
+
+#### 8.4 后台录入 API（app/api/admin/tips/route.ts）
+
+```typescript
+// POST /api/admin/tips
+// Header: Authorization: Bearer {CRON_SECRET}
+// Body: { toolId, title, summary, sourceUrl, sourceName, platform, tipType, publishedAt }
+export async function POST(req: NextRequest) {
+  const auth = req.headers.get('Authorization');
+  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const body = await req.json();
+  await db.insert(toolTips).values(body).onConflictDoNothing();
+  return NextResponse.json({ ok: true });
+}
+```
+
+#### 8.5 /learn 页面（新建 app/learn/page.tsx）
+
+SSG + ISR，展示全站最新技巧，按工具分组。
+`generateMetadata` title: `「AI 工具使用技巧大全 — 教程、提示词、实战案例」`
+
+#### 8.6 /learn/[tool-id] 页面（新建 app/learn/[id]/page.tsx）
+
+SSG（`generateStaticParams` 来自 `loadAllToolIds`）+ ISR。
+这是 SEO 重点页面，`title` 格式：`{工具名} 使用技巧 — 教程 · 提示词 · 实战 | AiToolsBox`
+
+---
+
 ## 8. 环境变量
 
 | 变量名 | 用途 | 必须 |
