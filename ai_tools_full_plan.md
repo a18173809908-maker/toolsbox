@@ -35,7 +35,7 @@
 - ✅ `articles` 表（title, titleZh, url, summary, summaryZh, tag, source, publishedAt）
 - ✅ `githubTrending` 表（repo, lang, stars, gained, period, scrapedAt）
 - ✅ `sources` 表（RSS 源管理）
-- ⬜ **tools 表扩展字段**（影响「国内可用」核心差异化，优先级：高）
+- ✅ **tools 表扩展字段**（url, chinaAccess, chineseUi, freeQuota, apiAvailable, openSource, githubRepo, features, pricingDetail, alternatives, upvotes, downvotes）
   ```sql
   ALTER TABLE tools ADD COLUMN url              TEXT;
   ALTER TABLE tools ADD COLUMN china_access     TEXT DEFAULT 'unknown';
@@ -120,19 +120,18 @@
 
 ### 2-A 「国内可用」体系（最高优先，核心差异化）
 
-- ⬜ tools 表扩展字段落地（见 1-A Schema 部分）
-- ⬜ 工具卡片加「国内可用 ✓」/ 「需梯子」标签（首页 + 分类页）
-- ⬜ 工具详情页加「国内可访问」信息块 + 中文 UI 标签 + 免费额度说明
+- ✅ tools 表扩展字段落地（Schema + lib/tool-meta.ts + scripts/update-tool-meta.ts）
+- ✅ 工具详情页：国内可用 badge、真实官网 URL、功能亮点列表、信息格扩展
+- ⬜ 工具卡片加「国内可用 ✓」/ 「需梯子」小标签（首页 + 分类页卡片）
 - ⬜ 首页筛选器加「仅看国内可用」开关
 - ⬜ 运营 SOP：新工具收录时必填 china_access 字段
 
 ### 2-B 内容增强
 
-- ⬜ GitHub 详情页接入 GitHub API
-  - README 渲染（Markdown → HTML，`marked` + `sanitize-html`）
-  - Topics / License / 语言分布条形图
-  - ⚠️ 注意：未认证 API 60 req/h，用 `next: { revalidate: 3600 }` 缓存
-- ⬜ 工具详情页功能亮点列表（`features[]` 字段 → bullet 列表）
+- ⬜ GitHub 详情页接入 GitHub API（Task 4，见 CODEX.md）
+  - README 渲染（`marked` + `sanitize-html`）
+  - Topics / License / 语言分布
+  - ⚠️ 未认证 60 req/h，用 `next: { revalidate: 3600 }` 缓存
 - ⬜ 工具详情页「平替工具」模块（alternatives 字段 → 卡片组）
 - ⬜ 资讯详情页「相关工具」推荐（按标签匹配）
 - ⬜ 分类页加分类介绍段落 + 使用场景引导
@@ -209,11 +208,11 @@
 
 > 这些是运营/DevOps 任务，与代码开发并行推进。
 
-- ⬜ **DNS 配置**：`aiboxpro.cn` → Vercel（添加 CNAME/A 记录）
-- ⬜ **Vercel 域名绑定**：在 Vercel Dashboard 添加自定义域名
+- ✅ **代码中 BASE URL 全局替换** → `aiboxpro.cn`（10 个文件）
+- ✅ **DNS 配置**：`aiboxpro.cn` → Vercel（已完成，域名正常解析）
+- ✅ **Vercel 域名绑定**：已完成
 - ⬜ **ICP 备案申请**（阿里云代备案，需准备：营业执照或个人身份证、域名证书、网站截图、主办单位信息）
-- ⬜ **代码中 BASE URL 全局替换**（见 1-F 域名切换）
-- ⬜ Cloudflare 接入（CDN + WAF + 防爬，国内用户用国内节点）
+- ⬜ Cloudflare 接入（CDN + WAF，国内访问加速）
 - ⬜ Vercel KV / Upstash Redis（GitHub API 响应缓存，防超限）
 
 ---
@@ -228,21 +227,23 @@
 
 ---
 
-## 近期行动优先级（按 ROI 排序）
+## 近期行动优先级（最新）
 
-| 优先级 | 任务 | 原因 |
+| 优先级 | 任务 | 状态 |
 |---|---|---|
-| 🔴 P0 | `/trending` 列表页 | 导航有入口但页面不存在，影响 SEO 和用户体验 |
-| 🔴 P0 | 导航栏扩展（4 个入口）| 当前只有 2 项，用户无法发现全站内容 |
-| 🔴 P0 | 域名切换 `aiboxpro.cn` | SEO 积累要从正式域名开始，越早越好 |
-| 🟠 P1 | tools 表 Schema 扩展 | 「国内可用」是核心差异化，字段不加无法展示 |
-| 🟠 P1 | `robots.txt` + 百度验证 | 百度不收录 = 国内用户找不到 |
-| 🟠 P1 | `<AdSlot />` 占位组件 | 备案期间先埋点，备案完成立即开广告 |
-| 🟡 P2 | 工具详情页 v2 | 接真实官网 URL + 国内可用标签 |
-| 🟡 P2 | GitHub 详情页 v2 | README 渲染，增加停留时长 |
-| 🟡 P2 | ICP 备案流程 | 无备案无法开百度联盟 |
-| 🟢 P3 | 移动端响应式 | 国内用户 70%+ 手机访问 |
-| 🟢 P3 | 收藏功能（localStorage 版）| 零后端成本，先给用户一个留下来的理由 |
+| 🔴 P0 | `/trending` 列表页 | ✅ 完成 |
+| 🔴 P0 | 导航栏扩展（3 个入口）+ usePathname | ✅ 完成 |
+| 🔴 P0 | 域名 `aiboxpro.cn` 上线 | ✅ 完成（DNS + 代码） |
+| 🟠 P1 | tools 表 Schema 扩展 + 工具详情页 v2 | ✅ 完成 |
+| 🟠 P1 | `robots.txt` + Baiduspider 规则 | ✅ 完成 |
+| 🟠 P1 | 资讯中文源补录 + AI 处理分支 | ⬜ 待 Codex（Task 9） |
+| 🟠 P1 | `<AdSlot />` 占位组件 | ⬜ 待 Codex（Task 2） |
+| 🟡 P2 | GitHub 详情页 v2（README + Topics） | ⬜ 待 Codex（Task 4） |
+| 🟡 P2 | **移动端响应式** | ⬜ 待 Codex（Task 5）|
+| 🟡 P2 | 首页工具卡片加国内可用小标签 | ⬜ 待 Codex |
+| 🟡 P2 | ICP 备案（运营任务） | ⬜ 需要操作 |
+| 🟢 P3 | `/tools` 独立工具列表页 | ⬜ 待 Codex（Task 6） |
+| 🟢 P3 | 百度统计接入 | ⬜ 备案后（Task 7） |
 
 ---
 
@@ -252,7 +253,7 @@
 |---|---|---|
 | 首页 UI（工具+Trending+资讯） | ✅ 完成 | V2Pro 组件 |
 | ⌘K 全站搜索 | ✅ 完成 | 实时 API，250ms 防抖 |
-| 工具详情页 | ✅ 基础版 | 缺 url/国内可用字段 |
+| 工具详情页 v2 | ✅ 完成 | 真实 URL + 国内可用 badge + 功能亮点 |
 | GitHub 仓库详情页 | ✅ 基础版 | 缺 README/Topics |
 | 资讯列表页 | ✅ 完成 | 标签筛选 + 卡片 |
 | 资讯详情页 | ✅ 完成 | 双语 + JSON-LD |
@@ -260,11 +261,13 @@
 | 动态 OG 图 | ✅ 完成 | 三种模板 |
 | sitemap.xml | ✅ 完成 | 工具+资讯+分类 |
 | GitHub Trending 爬虫 | ✅ 完成 | today/week/month |
-| RSS 采集 + AI 摘要 | ✅ 完成 | 中英双语 |
-| Trending 列表页 | ❌ 未做 | 仅有详情页 |
-| 导航栏（完整版） | ❌ 未做 | 仅 2 项 |
-| 国内可用标签体系 | ❌ 未做 | Schema 待扩展 |
-| 百度 SEO 适配 | 🚧 进行中 | 缺 robots.txt、百度验证 |
-| 域名绑定 `aiboxpro.cn` | ❌ 未做 | DNS 配置待操作 |
+| RSS 采集 + AI 摘要 | 🚧 进行中 | 英文为主，中文源补录中（Task 9） |
+| Trending 列表页 | ✅ 完成 | 今日/本周/本月三 tab |
+| 导航栏（3 项）| ✅ 完成 | 首页/GitHub趋势/AI资讯 |
+| 国内可用标签体系 | ✅ 完成 | Schema + 详情页展示 |
+| 百度 SEO 适配 | 🚧 进行中 | robots.txt ✅，百度验证待补 |
+| 域名 `aiboxpro.cn` | ✅ 完成 | DNS 已解析，正常访问 |
+| 移动端响应式 | ❌ 未做 | 设计稿见 CODEX.md Task 5 |
+| GitHub 详情页 v2 | ❌ 未做 | README/Topics，见 CODEX.md Task 4 |
 
 ---
