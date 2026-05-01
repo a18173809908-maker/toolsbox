@@ -234,12 +234,13 @@
 | 🔴 P0 | `/trending` 列表页 | ✅ 完成 |
 | 🔴 P0 | 导航栏扩展（3 个入口）+ usePathname | ✅ 完成 |
 | 🔴 P0 | 域名 `aiboxpro.cn` 上线 | ✅ 完成（DNS + 代码） |
+| 🔴 **P0** | **全局共用顶栏 `SiteHeader`** | ⬜ **待 Codex（Task 0）— 内页导航缺失** |
 | 🟠 P1 | tools 表 Schema 扩展 + 工具详情页 v2 | ✅ 完成 |
 | 🟠 P1 | `robots.txt` + Baiduspider 规则 | ✅ 完成 |
 | 🟠 P1 | 资讯中文源补录 + AI 处理分支 | ⬜ 待 Codex（Task 9） |
 | 🟠 P1 | `<AdSlot />` 占位组件 | ⬜ 待 Codex（Task 2） |
 | 🟡 P2 | GitHub 详情页 v2（README + Topics） | ⬜ 待 Codex（Task 4） |
-| 🟡 P2 | **移动端响应式** | ⬜ 待 Codex（Task 5）|
+| 🟡 P2 | **移动端响应式** | ⬜ 待 Codex（Task 5） |
 | 🟡 P2 | 首页工具卡片加国内可用小标签 | ⬜ 待 Codex |
 | 🟡 P2 | ICP 备案（运营任务） | ⬜ 需要操作 |
 | 🟢 P3 | `/tools` 独立工具列表页 | ⬜ 待 Codex（Task 6） |

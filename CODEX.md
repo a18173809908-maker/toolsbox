@@ -5,6 +5,125 @@
 
 ---
 
+## 0. 最高优先级紧急修复 🚨
+
+### Task 0 — 全局共用顶栏（所有内页导航缺失）
+
+**问题：** 用户进入 `/trending`、`/trending/[repo]`、`/tools/[slug]`、`/news/[id]`、`/categories/[id]` 后，顶部只有面包屑（如「AiToolsBox / GitHub 趋势」），**没有完整导航栏**。用户无法快速切换到其他频道，体验极差，等同于被困在孤岛里。
+
+**截图描述：** GitHub 趋势列表页顶栏只显示「A AiToolsBox / GitHub 趋势」，没有「首页 / GitHub趋势 / AI资讯」三个导航入口。
+
+**目标：** 所有页面顶栏统一为完整导航，与首页一致：
+
+```
+[Logo AiToolsBox]   首页   GitHub 趋势   AI 资讯   [⌘K 搜索]
+```
+
+#### 解决方案
+
+**新建 `components/SiteHeader.tsx`（`'use client'`）**
+
+把首页 `V2Pro.tsx` 中 `TopBar` 组件的逻辑提取为独立文件，供所有页面共用。
+
+```typescript
+// components/SiteHeader.tsx
+'use client';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { v2Tokens as T } from '@/lib/tokens';
+
+export function SiteHeader({ onOpenPalette }: { onOpenPalette?: () => void }) {
+  const pathname = usePathname();
+  const navItems: [string, string][] = [
+    ['首页', '/'],
+    ['GitHub 趋势', '/trending'],
+    ['AI 资讯', '/news'],
+  ];
+  const isActive = (href: string) =>
+    href === '/' ? pathname === '/' : pathname.startsWith(href);
+
+  return (
+    <header style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '16px 48px', borderBottom: `1px solid ${T.rule}`,
+      background: T.panel, position: 'sticky', top: 0, zIndex: 10,
+    }}>
+      {/* Logo */}
+      <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+        <div style={{
+          width: 30, height: 30, borderRadius: 8,
+          background: `linear-gradient(135deg, ${T.primary} 0%, #FBBF24 100%)`,
+          display: 'grid', placeItems: 'center', color: '#fff',
+          fontFamily: 'Georgia, serif', fontWeight: 900, fontSize: 17, fontStyle: 'italic',
+        }}>A</div>
+        <span style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 18, color: T.ink }}>AiToolsBox</span>
+      </Link>
+
+      {/* Nav */}
+      <nav style={{ display: 'flex', gap: 4, fontSize: 14 }}>
+        {navItems.map(([label, href]) => {
+          const active = isActive(href);
+          return (
+            <Link key={href} href={href} style={{
+              padding: '6px 14px', borderRadius: 6, textDecoration: 'none',
+              color: active ? T.ink : T.inkSoft,
+              fontWeight: active ? 600 : 500,
+              background: active ? T.primaryBg : 'transparent',
+            }}>{label}</Link>
+          );
+        })}
+      </nav>
+
+      {/* Search */}
+      {onOpenPalette ? (
+        <button onClick={onOpenPalette} style={{
+          display: 'flex', alignItems: 'center', gap: 8, padding: '7px 13px',
+          background: T.bg, borderRadius: 8, border: `1px solid ${T.rule}`,
+          fontSize: 13, color: T.inkMuted, cursor: 'pointer', fontFamily: 'inherit',
+        }}>
+          <span>⌕</span><span>搜索…</span>
+          <span style={{ marginLeft: 4, fontSize: 11, color: T.inkMuted }}>⌘K</span>
+        </button>
+      ) : (
+        <Link href="/" style={{
+          display: 'flex', alignItems: 'center', gap: 6, padding: '7px 13px',
+          background: T.bg, borderRadius: 8, border: `1px solid ${T.rule}`,
+          fontSize: 13, color: T.inkMuted, textDecoration: 'none',
+        }}>⌕ 搜索</Link>
+        // 内页点搜索跳回首页，首页再打开 ⌘K（简单方案，无需复杂状态）
+      )}
+    </header>
+  );
+}
+```
+
+#### 各页面替换
+
+用 `<SiteHeader />` 替换以下页面中现有的简化 header：
+
+| 文件 | 当前 header | 改为 |
+|---|---|---|
+| `app/trending/page.tsx` | `<header>` 含面包屑 | `<SiteHeader />` |
+| `app/trending/[...slug]/page.tsx` | `<header>` 含面包屑 | `<SiteHeader />` + 面包屑移到 `<main>` 内 |
+| `app/tools/[slug]/page.tsx` | `<header>` 含面包屑 | `<SiteHeader />` + 面包屑移到 `<main>` 内 |
+| `app/news/page.tsx` | `<header>` 含面包屑 | `<SiteHeader />` |
+| `app/news/[id]/page.tsx` | `<header>` 含面包屑 | `<SiteHeader />` + 面包屑移到 `<main>` 内 |
+| `app/categories/[id]/page.tsx` | `<header>` 含面包屑 | `<SiteHeader />` + 面包屑移到 `<main>` 内 |
+
+面包屑不删，移到 `<main>` 顶部作为页面内的位置提示（小字灰色）。
+
+#### V2Pro.tsx 同步
+
+`V2Pro.tsx` 中的 `TopBar` 组件改为直接渲染 `<SiteHeader onOpenPalette={onOpenPalette} />`，不再重复写导航逻辑。
+
+#### 注意事项
+
+- `SiteHeader` 是 `'use client'`（用了 `usePathname`），可以直接在 Server Component 页面中 import 使用
+- 搜索按钮：首页传 `onOpenPalette` 回调打开 ⌘K 面板；内页不传，点击用 `<Link href="/">` 跳回首页（用户在首页可以立即用 ⌘K）
+- `position: sticky; top: 0` 保持所有页面顶栏固定
+
+---
+
 ## 1. 项目基本信息
 
 | 项目 | 内容 |
