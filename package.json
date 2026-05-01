@@ -14,8 +14,11 @@
     "translate:trending": "tsx --env-file=.env.local scripts/translate-trending.ts",
     "seed:sources": "tsx --env-file=.env.local scripts/seed-sources.ts",
     "fetch:articles": "tsx --env-file=.env.local scripts/fetch-articles.ts",
-    "process:articles": "tsx --env-file=.env.local scripts/process-articles.ts"
-    ,"update:tool-meta": "tsx --env-file=.env.local scripts/update-tool-meta.ts"
+    "process:articles": "tsx --env-file=.env.local scripts/process-articles.ts",
+    "seed:tool-sources": "tsx --env-file=.env.local scripts/seed-tool-sources.ts",
+    "fetch:tool-candidates": "tsx --env-file=.env.local scripts/fetch-tool-candidates.ts",
+    "process:tool-candidates": "tsx --env-file=.env.local scripts/process-tool-candidates.ts",
+    "update:tool-meta": "tsx --env-file=.env.local scripts/update-tool-meta.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

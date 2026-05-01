@@ -67,10 +67,37 @@ export const sources = pgTable('sources', {
   name: text('name').notNull(),
   url: text('url').notNull(),
   feedUrl: text('feed_url').notNull().unique(),
+  type: text('type').notNull().default('news'),
   lang: text('lang').notNull().default('en'),
   active: boolean('active').notNull().default(true),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
+
+export const toolCandidates = pgTable(
+  'tool_candidates',
+  {
+    id: serial('id').primaryKey(),
+    name: text('name').notNull(),
+    url: text('url').notNull().unique(),
+    description: text('description'),
+    slug: text('slug').unique(),
+    zh: text('zh'),
+    catId: text('cat_id').references(() => categories.id),
+    chinaAccess: text('china_access').notNull().default('unknown'),
+    pricing: text('pricing').notNull().default('Freemium'),
+    features: text('features').array(),
+    sourceName: text('source_name').notNull(),
+    sourceType: text('source_type').notNull().default('rss'),
+    votes: integer('votes').notNull().default(0),
+    status: text('status').notNull().default('pending'),
+    fetchedAt: timestamp('fetched_at').notNull().defaultNow(),
+    publishedAt: timestamp('published_at'),
+  },
+  (t) => ({
+    statusIdx: index('tool_candidates_status_idx').on(t.status),
+    fetchedIdx: index('tool_candidates_fetched_idx').on(t.fetchedAt),
+  }),
+);
 
 export const articles = pgTable(
   'articles',
@@ -97,4 +124,5 @@ export type Category = typeof categories.$inferSelect;
 export type Tool = typeof tools.$inferSelect;
 export type RepoItem = typeof githubTrending.$inferSelect;
 export type Source = typeof sources.$inferSelect;
+export type ToolCandidate = typeof toolCandidates.$inferSelect;
 export type Article = typeof articles.$inferSelect;

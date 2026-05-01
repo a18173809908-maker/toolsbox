@@ -1,6 +1,6 @@
 import { db } from './index';
-import { categories, tools, githubTrending, articles, sources } from './schema';
-import { desc, asc, eq, ilike, or, isNull, count, max } from 'drizzle-orm';
+import { categories, tools, githubTrending, articles, sources, toolCandidates } from './schema';
+import { desc, asc, eq, ilike, or, isNull, count, max, and } from 'drizzle-orm';
 import type { TrendingPeriod, Tool, Category, RepoItem, HomepageStats, NewsItem } from '@/lib/data';
 
 // ── Homepage ─────────────────────────────────────────────────────────────────
@@ -147,8 +147,8 @@ export async function loadAllToolIds(): Promise<string[]> {
 
 // ── Articles ──────────────────────────────────────────────────────────────────
 
-export async function loadSources() {
-  return db.select().from(sources).where(eq(sources.active, true));
+export async function loadSources(type = 'news') {
+  return db.select().from(sources).where(and(eq(sources.active, true), eq(sources.type, type)));
 }
 
 export async function upsertArticles(items: {
@@ -171,6 +171,81 @@ export async function upsertArticles(items: {
     if (result.rowCount && result.rowCount > 0) inserted++;
   }
   return inserted;
+}
+
+// ── Tool auto discovery ─────────────────────────────────────────────────────
+
+export async function upsertToolCandidates(items: {
+  name: string;
+  url: string;
+  description?: string;
+  sourceName: string;
+  votes?: number;
+}[]): Promise<number> {
+  if (items.length === 0) return 0;
+  let inserted = 0;
+  for (const item of items) {
+    const result = await db.insert(toolCandidates).values({
+      name: item.name,
+      url: item.url,
+      description: item.description,
+      sourceName: item.sourceName,
+      votes: item.votes ?? 0,
+    }).onConflictDoNothing();
+    if (result.rowCount && result.rowCount > 0) inserted++;
+  }
+  return inserted;
+}
+
+export async function loadPendingToolCandidates(limit = 8) {
+  return db
+    .select()
+    .from(toolCandidates)
+    .where(eq(toolCandidates.status, 'pending'))
+    .orderBy(desc(toolCandidates.fetchedAt))
+    .limit(limit);
+}
+
+export async function markToolCandidateRejected(id: number) {
+  await db.update(toolCandidates).set({ status: 'rejected' }).where(eq(toolCandidates.id, id));
+}
+
+export async function publishToolCandidate(id: number, data: {
+  slug: string;
+  name: string;
+  en: string;
+  zh: string;
+  catId: string;
+  pricing: Tool['pricing'];
+  url: string;
+  chinaAccess: Tool['chinaAccess'];
+  features?: string[];
+}) {
+  await db.insert(tools).values({
+    id: data.slug,
+    name: data.name,
+    mono: data.name.slice(0, 2).toUpperCase(),
+    brand: '#111827',
+    catId: data.catId,
+    en: data.en,
+    zh: data.zh,
+    pricing: data.pricing,
+    url: data.url,
+    chinaAccess: data.chinaAccess ?? 'unknown',
+    features: data.features,
+    publishedAt: new Date().toISOString().slice(0, 10),
+  }).onConflictDoNothing();
+
+  await db.update(toolCandidates).set({
+    slug: data.slug,
+    zh: data.zh,
+    catId: data.catId,
+    chinaAccess: data.chinaAccess ?? 'unknown',
+    pricing: data.pricing,
+    features: data.features,
+    status: 'published',
+    publishedAt: new Date(),
+  }).where(eq(toolCandidates.id, id));
 }
 
 export async function loadPendingArticles(limit = 20) {
