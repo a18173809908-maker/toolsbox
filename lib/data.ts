@@ -20,6 +20,18 @@ export type Tool = {
   date: string;
   featured?: boolean;
   pricing: 'Free' | 'Freemium' | 'Paid';
+  url?: string;
+  chinaAccess?: 'accessible' | 'vpn-required' | 'blocked' | 'unknown';
+  chineseUi?: boolean;
+  freeQuota?: string;
+  apiAvailable?: boolean;
+  openSource?: boolean;
+  githubRepo?: string;
+  features?: string[];
+  pricingDetail?: string;
+  alternatives?: string[];
+  upvotes?: number;
+  downvotes?: number;
 };
 
 export type RepoItem = {

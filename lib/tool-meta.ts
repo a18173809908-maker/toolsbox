@@ -1,16 +1,4 @@
-import { config } from 'dotenv';
-config({ path: '.env.local' });
-
-import { neon } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-http';
-import { categories, tools, githubTrending } from './schema';
-import {
-  CATEGORIES,
-  AI_TOOLS,
-  GITHUB_TRENDING,
-} from '../data';
-
-const TOOL_META: Record<string, {
+export type ToolMeta = {
   url: string;
   chinaAccess: 'accessible' | 'vpn-required' | 'blocked' | 'unknown';
   chineseUi?: boolean;
@@ -20,7 +8,9 @@ const TOOL_META: Record<string, {
   githubRepo?: string;
   features?: string[];
   pricingDetail?: string;
-}> = {
+};
+
+export const TOOL_META: Record<string, ToolMeta> = {
   claude: { url: 'https://claude.ai', chinaAccess: 'vpn-required', freeQuota: '每天有限免费额度', apiAvailable: true, features: ['长文本理解', '代码辅助', '多轮对话'] },
   chatgpt: { url: 'https://chat.openai.com', chinaAccess: 'vpn-required', freeQuota: '每天有限免费额度', apiAvailable: true, features: ['多模态对话', '代码生成', '文件分析'] },
   midjourney: { url: 'https://midjourney.com', chinaAccess: 'vpn-required', freeQuota: '无免费额度', features: ['高质量图像生成', '风格控制', '社区画廊'] },
@@ -38,7 +28,7 @@ const TOOL_META: Record<string, {
   krea: { url: 'https://www.krea.ai', chinaAccess: 'accessible', freeQuota: '免费版可用', features: ['实时画布', '图像生成', '视频生成'] },
   devin: { url: 'https://devin.ai', chinaAccess: 'unknown', features: ['自主编程', '任务规划', 'PR 交付'] },
   replicate: { url: 'https://replicate.com', chinaAccess: 'accessible', apiAvailable: true, features: ['云端模型运行', 'API 调用', '开源模型'] },
-  huggingface: { url: 'https://huggingface.co', chinaAccess: 'accessible', chineseUi: false, apiAvailable: true, openSource: true, githubRepo: 'huggingface/transformers', features: ['模型托管', '数据集', 'Spaces'] },
+  huggingface: { url: 'https://huggingface.co', chinaAccess: 'accessible', apiAvailable: true, openSource: true, githubRepo: 'huggingface/transformers', features: ['模型托管', '数据集', 'Spaces'] },
   'spline-ai': { url: 'https://spline.design/ai', chinaAccess: 'accessible', features: ['3D 生成', '场景编辑', '动画'] },
   tldraw: { url: 'https://www.tldraw.com', chinaAccess: 'accessible', openSource: true, githubRepo: 'tldraw/tldraw', features: ['白板绘图', '原型草图', '协作'] },
   pika: { url: 'https://pika.art', chinaAccess: 'accessible', freeQuota: '免费版可用', features: ['文生视频', '音效', '口型同步'] },
@@ -46,54 +36,3 @@ const TOOL_META: Record<string, {
   gemini: { url: 'https://gemini.google.com', chinaAccess: 'vpn-required', freeQuota: '免费版可用', apiAvailable: true, features: ['多模态问答', 'Workspace 集成', '长上下文'] },
   v0: { url: 'https://v0.dev', chinaAccess: 'accessible', freeQuota: '免费版可用', features: ['React UI 生成', 'Tailwind 代码', '原型生成'] },
 };
-
-async function main() {
-  if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL missing');
-  const sql = neon(process.env.DATABASE_URL);
-  const db = drizzle(sql);
-
-  console.log('clearing existing rows…');
-  await db.delete(githubTrending);
-  await db.delete(tools);
-  await db.delete(categories);
-
-  console.log(`inserting ${CATEGORIES.length} categories…`);
-  await db.insert(categories).values(CATEGORIES);
-
-  console.log(`inserting ${AI_TOOLS.length} tools…`);
-  await db.insert(tools).values(
-    AI_TOOLS.map((t) => ({
-      id: t.id,
-      name: t.name,
-      mono: t.mono,
-      brand: t.brand,
-      catId: t.cat,
-      en: t.en,
-      zh: t.zh,
-      pricing: t.pricing,
-      ...(TOOL_META[t.id] ?? {}),
-      featured: t.featured ?? false,
-      publishedAt: t.date,
-    })),
-  );
-
-  const ghRows = (['today', 'week', 'month'] as const).flatMap((period) =>
-    GITHUB_TRENDING[period].map((r) => ({
-      period,
-      repo: r.repo,
-      description: r.desc,
-      lang: r.lang,
-      stars: r.stars,
-      gained: r.gained,
-    })),
-  );
-  console.log(`inserting ${ghRows.length} github_trending rows…`);
-  await db.insert(githubTrending).values(ghRows);
-
-  console.log('✓ seed done');
-}
-
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});

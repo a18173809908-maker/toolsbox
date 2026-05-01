@@ -18,12 +18,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const tool = await loadToolById(slug);
   if (!tool) return { title: 'Not Found' };
+  const access = tool.chinaAccess ? ACCESS_BADGE[tool.chinaAccess] : undefined;
+  const titlePrefix = tool.chinaAccess === 'accessible' ? '国内可用 ' : '';
   return {
     title: `${tool.name} — ${tool.catZh} AI 工具`,
-    description: tool.en,
+    description: [tool.zh, access?.label].filter(Boolean).join('。').slice(0, 120),
     openGraph: {
-      title: `${tool.name} | AiToolsBox`,
-      description: tool.en,
+      title: `${tool.name} | ${titlePrefix}AiToolsBox`,
+      description: [tool.zh, access?.label].filter(Boolean).join('。').slice(0, 120),
       url: `${BASE}/tools/${tool.id}`,
       type: 'website',
       images: [`${BASE}/og?type=tool&name=${encodeURIComponent(tool.name)}&sub=${encodeURIComponent(tool.en.slice(0, 60))}&brand=${encodeURIComponent(tool.brand)}&mono=${encodeURIComponent(tool.mono)}`],
@@ -39,6 +41,17 @@ const PRICING_STYLE: Record<string, { bg: string; color: string }> = {
   Freemium: { bg: '#FFEDD5', color: '#C2410C' },
   Paid:     { bg: '#F3F4F6', color: '#374151' },
 };
+
+const ACCESS_BADGE: Record<string, { label: string; bg: string; color: string }> = {
+  accessible: { label: '国内直连', bg: '#DCFCE7', color: '#166534' },
+  'vpn-required': { label: '需要 VPN', bg: '#FEF3C7', color: '#92400E' },
+  blocked: { label: '无法访问', bg: '#FEE2E2', color: '#991B1B' },
+  unknown: { label: '访问未知', bg: '#F3F4F6', color: '#6B7280' },
+};
+
+function fallbackToolUrl(name: string) {
+  return `https://www.google.com/search?q=${encodeURIComponent(name + ' AI tool')}`;
+}
 
 export default async function ToolDetailPage({ params }: Props) {
   const { slug } = await params;
@@ -62,10 +75,12 @@ export default async function ToolDetailPage({ params }: Props) {
       priceCurrency: 'USD',
       availability: 'https://schema.org/InStock',
     },
-    url: `${BASE}/tools/${tool.id}`,
+    url: tool.url ?? `${BASE}/tools/${tool.id}`,
   };
 
   const ps = PRICING_STYLE[tool.pricing] ?? PRICING_STYLE['Paid'];
+  const access = ACCESS_BADGE[tool.chinaAccess ?? 'unknown'];
+  const officialUrl = tool.url ?? fallbackToolUrl(tool.name);
 
   return (
     <>
@@ -100,6 +115,9 @@ export default async function ToolDetailPage({ params }: Props) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
                   <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 34, margin: 0, color: '#1F2937', letterSpacing: '-0.02em' }}>{tool.name}</h1>
                   <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, background: ps.bg, color: ps.color }}>{tool.pricing}</span>
+                  {tool.chinaAccess && tool.chinaAccess !== 'unknown' && (
+                    <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, background: access.bg, color: access.color }}>{access.label}</span>
+                  )}
                   {tool.featured && <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: '#FFEDD5', color: '#C2410C', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Editor&rsquo;s Pick</span>}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#9CA3AF', marginBottom: 20 }}>
@@ -111,7 +129,7 @@ export default async function ToolDetailPage({ params }: Props) {
                 </div>
                 {/* CTA */}
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                  <a href={`https://www.google.com/search?q=${encodeURIComponent(tool.name + ' AI tool')}`} target="_blank" rel="noopener noreferrer"
+                  <a href={officialUrl} target="_blank" rel="noopener noreferrer"
                     style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 999, background: '#F97316', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
                     访问工具官网 ↗
                   </a>
@@ -134,12 +152,29 @@ export default async function ToolDetailPage({ params }: Props) {
           </div>
 
           {/* ── Info grid ── */}
+          {tool.features && tool.features.length > 0 && (
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: '28px 40px', marginBottom: 24 }}>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 16px', letterSpacing: '-0.01em' }}>功能亮点</h2>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                {tool.features.map((feature) => (
+                  <span key={feature} style={{ padding: '8px 12px', borderRadius: 999, background: '#FFF7ED', color: '#4B5563', border: '1px solid #F3E8D0', fontSize: 13, fontWeight: 600 }}>
+                    ✓ {feature}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
             {[
               { label: '定价模式', value: tool.pricing, badge: true },
               { label: '所属分类', value: `${tool.catIcon} ${tool.catZh} · ${tool.catEn}` },
               { label: '收录日期', value: tool.date },
               { label: '编辑推荐', value: tool.featured ? '✅ Editor\'s Pick' : '—' },
+              { label: '国内访问', value: access.label },
+              { label: '免费额度', value: tool.freeQuota ?? '—' },
+              { label: '中文界面', value: tool.chineseUi ? '是' : '—' },
+              { label: 'API 可用', value: tool.apiAvailable ? '是' : '—' },
             ].map(({ label, value, badge }) => (
               <div key={label} style={{ background: '#fff', borderRadius: 12, border: '1px solid #E8D5B7', padding: '18px 22px' }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{label}</div>

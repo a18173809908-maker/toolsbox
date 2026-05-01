@@ -533,33 +533,100 @@ GitHub API 无 token 时 60 次/小时。用 `next: { revalidate: 3600 }` 做 Ne
 
 ### Task 5 — 移动端响应式
 
-**为什么：** 国内用户 70%+ 手机访问。当前所有页面用固定 `padding: '16px 48px'` 和固定宽度，手机上严重溢出。
+**为什么：** 国内用户 70%+ 手机访问。当前所有页面用固定 `padding: '18px 56px'` 等硬编码值，手机上内容严重溢出。
 
-**策略：** 用 CSS media query 或在 client 组件中读取窗口宽度。推荐方案是为共用 header/layout 创建响应式版本。
+**技术策略：**
+- `V2Pro.tsx` 已是 `'use client'`，用 `useIsMobile()` hook（监听 `window.innerWidth < 768`）控制样式分支
+- 各详情页是 Server Component，用 CSS `clamp()` 值处理 padding/font-size，无需 JS
+- 布局折叠（两列→单列）在 `app/globals.css` 用 `@media` 实现
 
-#### 5.1 TopBar 响应式（V2Pro.tsx 和各详情页 header）
+**断点：** 手机 `< 768px`，平板 `768px ~ 1024px`，桌面 `> 1024px`
 
-手机端（< 768px）：
-- padding 改为 `16px 20px`
-- 导航收折为汉堡菜单（三条横线按钮），点击展开 dropdown
-- 搜索按钮只保留图标，隐藏文字
-- 「登录」按钮隐藏
+---
 
-#### 5.2 详情页 header
+#### 5.1 `components/V2Pro.tsx` 改动清单
 
-各详情页（`tools/[slug]`，`trending/[...slug]`，`news/[id]`）的 header 当前有 `padding: '16px 48px'`，改为：
-
+在文件顶部加 `useIsMobile` hook：
 ```typescript
-padding: 'clamp(12px, 4vw, 48px) clamp(16px, 5vw, 48px)'
-// 或在 client 组件中用 useMediaQuery hook
+function useIsMobile() {
+  const [mobile, setMobile] = React.useState(false);
+  React.useEffect(() => {
+    const check = () => setMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+  return mobile;
+}
 ```
 
-#### 5.3 关键断点
+**TopBar**（当前 `padding: '18px 56px'`）：
+- 手机：`padding: '14px 20px'`
+- 手机：导航 `<nav>` 隐藏，换成汉堡按钮 `☰`，点击展开一个全宽 dropdown
+- 手机：搜索按钮只保留 `⌕` 图标，隐藏文字和 `⌘K` 提示
+- 手机：「登录」按钮隐藏
 
-- `max-width: 768px`：单列布局，padding 收窄
-- `max-width: 480px`：字号缩小，Hero 标题行高调整
+**Hero section**（当前 `padding: '64px 56px 48px'`，h1 `fontSize: 84`）：
+- 手机：`padding: '36px 20px 28px'`
+- 手机：h1 `fontSize: 40`，`lineHeight: 1.1`
+- 手机：副标题 `fontSize: 15`，隐藏英文副标题那行
+- 手机：搜索框 `maxWidth: '100%'`，Search 按钮改为图标
 
-**注意：** 各详情页是 Server Component，不能用 JS 读窗口宽度。改用 CSS 方案（`@media` 或 `clamp()`），或将 header 提取到 `'use client'` 子组件。
+**CategoryStrip**（当前 `padding: '16px 56px'`）：
+- 手机：`padding: '12px 16px'`
+- 横向滚动保留，加 `-webkit-overflow-scrolling: touch`
+
+**主内容区**（当前 `padding: '48px 56px'`，`gridTemplateColumns: '1fr 360px'`）：
+- 手机：`padding: '20px 16px'`
+- 手机：`gridTemplateColumns: '1fr'`（单列，右侧 GitHub 趋势栏移到工具列表下方）
+
+**Featured 卡片网格**（当前 `gridTemplateColumns: 'repeat(3, 1fr)'`）：
+- 手机：`gridTemplateColumns: '1fr'`
+- 平板：`gridTemplateColumns: 'repeat(2, 1fr)'`
+
+**Footer**（当前 `padding: '48px 56px 36px'`，横排两列）：
+- 手机：`padding: '32px 20px 24px'`，改为纵向排列（`flexDirection: 'column'`，`gap: 16`）
+
+---
+
+#### 5.2 详情页（Server Components）改动清单
+
+**所有详情页 header**（`tools/[slug]`、`trending/[...slug]`、`news/[id]`、`trending/page.tsx`）
+当前：`padding: '16px 48px'`
+改为：`padding: 'clamp(12px, 2vw, 16px) clamp(16px, 5vw, 48px)'`
+
+**所有详情页 `<main>`**（当前 `padding: '0 24px 64px'`）
+这个值手机上 OK，不用改。
+
+**Hero 卡片内部**（当前 `padding: '36px 40px'`）
+改为：`padding: 'clamp(20px, 4vw, 36px) clamp(16px, 5vw, 40px)'`
+
+**Info grid**（当前 `gridTemplateColumns: '1fr 1fr'`）
+在 `app/globals.css` 加：
+```css
+@media (max-width: 480px) {
+  .info-grid { grid-template-columns: 1fr !important; }
+}
+```
+或直接改为 `gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))'`（无需 media query）
+
+---
+
+#### 5.3 `app/globals.css` 补充
+
+```css
+/* 移动端基础重置 */
+@media (max-width: 768px) {
+  /* 防止横向溢出 */
+  body { overflow-x: hidden; }
+}
+
+/* README 渲染区（GitHub 详情页）手机端处理 */
+@media (max-width: 768px) {
+  .readme-content pre { font-size: 12px; }
+  .readme-content table { display: block; overflow-x: auto; }
+}
+```
 
 ---
 

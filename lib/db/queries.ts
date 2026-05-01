@@ -32,6 +32,18 @@ export async function loadHomepageData(): Promise<{
     cat: t.catId,
     en: t.en, zh: t.zh,
     pricing: t.pricing as Tool['pricing'],
+    url: t.url ?? undefined,
+    chinaAccess: t.chinaAccess as Tool['chinaAccess'],
+    chineseUi: t.chineseUi,
+    freeQuota: t.freeQuota ?? undefined,
+    apiAvailable: t.apiAvailable,
+    openSource: t.openSource,
+    githubRepo: t.githubRepo ?? undefined,
+    features: t.features ?? undefined,
+    pricingDetail: t.pricingDetail ?? undefined,
+    alternatives: t.alternatives ?? undefined,
+    upvotes: t.upvotes,
+    downvotes: t.downvotes,
     featured: t.featured,
     date: t.publishedAt,
   }));
@@ -82,7 +94,12 @@ export async function loadToolById(id: string): Promise<(Tool & { catEn: string;
     .select({
       id: tools.id, name: tools.name, mono: tools.mono, brand: tools.brand,
       catId: tools.catId, en: tools.en, zh: tools.zh,
-      pricing: tools.pricing, featured: tools.featured, publishedAt: tools.publishedAt,
+      pricing: tools.pricing, url: tools.url, chinaAccess: tools.chinaAccess,
+      chineseUi: tools.chineseUi, freeQuota: tools.freeQuota, apiAvailable: tools.apiAvailable,
+      openSource: tools.openSource, githubRepo: tools.githubRepo, features: tools.features,
+      pricingDetail: tools.pricingDetail, alternatives: tools.alternatives,
+      upvotes: tools.upvotes, downvotes: tools.downvotes,
+      featured: tools.featured, publishedAt: tools.publishedAt,
       catEn: categories.en, catZh: categories.zh, catIcon: categories.icon,
     })
     .from(tools)
@@ -95,6 +112,18 @@ export async function loadToolById(id: string): Promise<(Tool & { catEn: string;
     id: row.id, name: row.name, mono: row.mono, brand: row.brand,
     cat: row.catId, en: row.en, zh: row.zh,
     pricing: row.pricing as Tool['pricing'],
+    url: row.url ?? undefined,
+    chinaAccess: row.chinaAccess as Tool['chinaAccess'],
+    chineseUi: row.chineseUi,
+    freeQuota: row.freeQuota ?? undefined,
+    apiAvailable: row.apiAvailable,
+    openSource: row.openSource,
+    githubRepo: row.githubRepo ?? undefined,
+    features: row.features ?? undefined,
+    pricingDetail: row.pricingDetail ?? undefined,
+    alternatives: row.alternatives ?? undefined,
+    upvotes: row.upvotes,
+    downvotes: row.downvotes,
     featured: row.featured, date: row.publishedAt,
     catEn: row.catEn, catZh: row.catZh, catIcon: row.catIcon,
   };
@@ -192,6 +221,7 @@ export async function searchTools(q: string, limit = 20) {
     .select({
       id: tools.id, name: tools.name, mono: tools.mono, brand: tools.brand,
       en: tools.en, zh: tools.zh, pricing: tools.pricing, catId: tools.catId,
+      chinaAccess: tools.chinaAccess,
     })
     .from(tools)
     .where(or(ilike(tools.name, pattern), ilike(tools.en, pattern), ilike(tools.zh, pattern)))
