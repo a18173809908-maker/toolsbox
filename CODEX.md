@@ -632,7 +632,123 @@ export async function loadToolsPage(opts: {
 
 ---
 
-### Task 8 — 工具使用技巧体系（P2，依赖 Task 1）
+### Task 8 — 工具使用技巧体系 ⛔ 跳过，功能预留
+
+> **决策：暂不开发，待日活稳定后再启动。设计存档见 GROWTH.md 第十四章。**
+
+---
+
+### Task 9 — AI 资讯中文优先（P1）
+
+**为什么：** 面向国内用户，资讯必须以中文呈现。当前全部来自英文 RSS，国内重要 AI 动态（字节/百度/阿里/腾讯）完全缺失，翻译质量也不稳定。
+
+#### 9.1 补录中文媒体源
+
+在 Neon 控制台执行（执行前先验证 RSS URL 可访问）：
+
+```sql
+INSERT INTO sources (name, url, feed_url, lang, active) VALUES
+  ('量子位',    'https://www.qbitai.com',     'https://www.qbitai.com/feed',     'zh', true),
+  ('机器之心',  'https://www.jiqizhixin.com',  'https://www.jiqizhixin.com/rss',  'zh', true),
+  ('少数派',    'https://sspai.com',           'https://sspai.com/feed',          'zh', true),
+  ('InfoQ中文', 'https://www.infoq.cn',        'https://www.infoq.cn/feed',       'zh', true),
+  ('极客公园',  'https://www.geekpark.net',    'https://www.geekpark.net/rss',    'zh', true),
+  ('36氪',      'https://36kr.com',            'https://36kr.com/feed',           'zh', true)
+ON CONFLICT (feed_url) DO NOTHING;
+```
+
+#### 9.2 更新 `lib/jobs/process-articles.ts`
+
+当前 prompt 假设所有文章都是英文，需要按 `lang` 字段分支：
+
+**查询改动**（需 join sources 获取 lang）：
+
+```typescript
+const pending = await db
+  .select({
+    id: articles.id,
+    title: articles.title,
+    lang: sources.lang,          // 新增：获取来源语言
+  })
+  .from(articles)
+  .leftJoin(sources, eq(articles.sourceId, sources.id))
+  .where(and(eq(articles.status, 'published'), isNull(articles.titleZh)))
+  .limit(BATCH);
+```
+
+**分支处理逻辑：**
+
+```typescript
+// 中文来源：不翻译标题，只生成中文摘要 + 分类标签
+const ZH_PROMPT = (title: string) =>
+  `你是一位 AI 科技编辑。根据以下中文文章标题，返回 JSON：
+- "summaryZh": 一句话中文摘要（≤ 60 字，直接可读，不要「本文」开头）
+- "tag": 从以下选一个最匹配的：模型发布、工具更新、行业动态、技术研究、开发者、产品评测、国内动态
+
+只返回 JSON，不要 markdown。
+
+标题：${title}`;
+
+// 英文来源：翻译 + 摘要 + 标签
+const EN_PROMPT = (title: string) =>
+  `You are a bilingual AI tech editor. Given an English headline, return JSON:
+- "titleZh": Chinese translation (≤ 25 chars, natural Chinese phrasing)
+- "summaryZh": Chinese summary 1-2 sentences (≤ 60 chars)
+- "tag": pick one: 模型发布、工具更新、行业动态、技术研究、开发者、产品评测、国内动态
+
+Return ONLY valid JSON.
+
+Headline: ${title}`;
+
+// 处理逻辑
+if (lang === 'zh') {
+  const result = await processZh(art.title);   // 调 ZH_PROMPT
+  await db.update(articles).set({
+    titleZh: art.title,                          // 直接复制，不翻译
+    summaryZh: result.summaryZh,
+    tag: result.tag,
+  }).where(eq(articles.id, art.id));
+} else {
+  const result = await processEn(art.title);    // 调 EN_PROMPT（现有逻辑）
+  await db.update(articles).set({
+    titleZh: result.titleZh,
+    summaryZh: result.summaryZh,
+    tag: result.tag,
+  }).where(eq(articles.id, art.id));
+}
+```
+
+#### 9.3 更新资讯展示
+
+**`app/news/[id]/page.tsx`**（资讯详情页）：
+
+```typescript
+// h1 始终用中文标题
+<h1>{art.titleZh ?? art.title}</h1>
+
+// 英文副标题：仅英文来源 且 有翻译时才显示
+{art.titleZh && art.title !== art.titleZh && (
+  <p style={{ color: '#9CA3AF', fontSize: 14 }}>{art.title}</p>
+)}
+
+// 摘要区：只显示中文，去掉英文 summary
+<p>{art.summaryZh ?? art.title}</p>
+```
+
+**`app/news/page.tsx`** 和 **`components/V2Pro.tsx`** 的资讯卡片：
+- 标题：`titleZh ?? title`
+- 摘要：`summaryZh`（不显示英文 summary）
+
+#### 9.4 标签体系统一为中文
+
+现有 tag 字段来自 `src.name`（媒体名），更新 AI prompt 后改为内容分类。
+历史数据可暂时保留，新抓取数据将使用新标签体系。
+
+资讯列表页筛选标签显示中文分类名（而不是媒体名）。
+
+---
+
+## 8. 环境变量
 
 **为什么：** 用户进详情页不只想知道「这是什么」，更想知道「怎么用好它」。
 技巧内容页同时截获「ChatGPT 使用技巧」「Midjourney 教程」等高搜索量词。

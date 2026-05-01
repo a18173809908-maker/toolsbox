@@ -558,7 +558,9 @@ CREATE INDEX ON comments (target_type, target_id, status);
 
 ---
 
-## 十四、工具使用技巧内容体系
+## 十四、工具使用技巧内容体系（预留，暂不开发）
+
+> **决策：功能预留，待日活稳定后启动。** 以下为设计存档，Codex 跳过此章节。
 
 ### 14.1 核心价值
 
@@ -708,5 +710,162 @@ CREATE INDEX ON tool_tips (tool_id, published_at DESC);
 
 ---
 
+## 十六、AI 资讯模块 — 中文优先策略
+
+> **核心决策：资讯面向国内用户，内容以中文为主。英文资讯作为补充，不作为主体。**
+
+### 16.1 问题诊断
+
+当前资讯模块全部来自英文 RSS 源，流程是：
+```
+英文 RSS → 抓取标题 → AI 翻译成中文标题 + 中文摘要 → 展示
+```
+
+问题：
+- 内容来源全是境外媒体视角，与国内用户关切不完全匹配
+- 翻译质量参差不齐，标题读起来不地道
+- 国内 AI 动态（如字节/百度/腾讯/阿里的模型更新）完全缺失
+- 百度收录内容越中文越好，英文原标题对 SEO 帮助有限
+
+### 16.2 目标资讯源分层
+
+#### 第一层：中文原生源（主力，优先展示）
+
+| 媒体 | RSS / 抓取方式 | 方向 |
+|---|---|---|
+| 量子位 | `https://www.qbitai.com/feed` | AI 行业动态，国内外兼顾 |
+| 机器之心 | `https://www.jiqizhixin.com/rss` | 技术深度，学术 + 产业 |
+| 36氪 AI频道 | `https://36kr.com/feed` （需筛 tag=AI） | 商业视角，创业/融资 |
+| 少数派 | `https://sspai.com/feed` （需筛 tag=AI） | 产品评测，工具使用向 |
+| InfoQ 中文 | `https://www.infoq.cn/feed` | 技术开发者视角 |
+| 极客公园 | `https://www.geekpark.net/rss` | 科技产品，偏消费者视角 |
+| AI科技评论 | `https://aitechreview.com/feed`（待确认）| 学术 + 产业综合 |
+
+> ⚠️ 以上 RSS 地址需上线前逐一验证可用性，部分媒体 RSS 可能已失效或需付费。
+
+#### 第二层：英文补充源（保留，但降低权重）
+
+| 媒体 | 保留原因 |
+|---|---|
+| TechCrunch AI | 国际重大融资/发布第一手来源 |
+| The Verge AI | 消费级 AI 产品报道 |
+| Hacker News (AI tag) | 开发者视角，与 GitHub Trending 呼应 |
+| OpenAI / Anthropic Blog | 模型发布公告，必须收录 |
+
+英文文章**必须**经过 AI 处理生成中文标题 + 中文摘要后才展示（现有流程已支持）。
+
+### 16.3 sources 表处理逻辑调整
+
+现有 `sources` 表已有 `lang` 字段。需要更新 AI 处理流程：
+
+```
+lang = 'zh'（中文源）：
+  → 标题直接使用，无需翻译
+  → 只需 AI 生成：中文摘要（summaryZh）+ 标签（tag）
+  → titleZh = title（直接复制）
+
+lang = 'en'（英文源）：
+  → 现有流程：AI 翻译 titleZh + 生成 summary + summaryZh
+  → 保持不变
+```
+
+对应 `process-articles.ts` 的 prompt 需要分支处理（见 CODEX.md Task 9）。
+
+### 16.4 展示优先级
+
+| 场景 | 显示逻辑 |
+|---|---|
+| 资讯列表页标题 | 优先 `titleZh`，无则 `title` |
+| 资讯列表页摘要 | 只显示 `summaryZh`（不显示英文摘要） |
+| 资讯详情页 h1 | `titleZh`（大标题） |
+| 资讯详情页副标题 | `title`（英文原标题，仅英文来源显示） |
+| 资讯详情页正文 | `summaryZh` 为主，`summary` 为辅 |
+| OG/Twitter 图 | 用中文标题生成 |
+
+**关键原则：用户全程看到的是中文，英文原文仅供参考。**
+
+### 16.5 标签（tag）体系中文化
+
+当前 tag 来自 `src.name`（媒体名），改为内容分类标签，统一用中文：
+
+| 中文标签 | 对应内容 |
+|---|---|
+| 模型发布 | 新模型/新版本发布公告 |
+| 工具更新 | AI 工具功能更新 |
+| 行业动态 | 融资、收购、政策 |
+| 技术研究 | 论文、技术突破 |
+| 开发者 | 开源项目、API、SDK |
+| 产品评测 | 工具使用体验 |
+| 国内动态 | 国内 AI 厂商相关 |
+
+AI 处理 prompt 中加入标签分类指令，从以上标签中选一个最匹配的。
+
+### 16.6 CODEX 开发任务（Task 9）
+
+> 优先级：**P1**，与 Task 3（工具详情页 v2）并行
+
+**A. 更新 `lib/jobs/process-articles.ts`**
+
+根据文章来源 `lang` 分支处理：
+
+```typescript
+// 中文文章 prompt
+const ZH_PROMPT = `你是一位 AI 科技编辑。根据以下中文文章标题，返回 JSON：
+- "summaryZh": 一句话中文摘要（≤ 60 字，直接可读，不要"本文"开头）
+- "tag": 从以下标签中选最匹配的一个：模型发布、工具更新、行业动态、技术研究、开发者、产品评测、国内动态
+
+只返回 JSON，不要 markdown。
+
+标题：${title}`;
+
+// 英文文章 prompt（现有逻辑调整）
+const EN_PROMPT = `You are a bilingual AI tech editor. Given an English headline, return JSON:
+- "titleZh": Chinese translation (≤ 25 chars, natural Chinese, not literal translation)
+- "summaryZh": Chinese summary in 1-2 sentences (≤ 60 chars)
+- "tag": pick one from: 模型发布、工具更新、行业动态、技术研究、开发者、产品评测、国内动态
+
+Return ONLY valid JSON.
+
+Headline: ${title}`;
+```
+
+查询时需要 join sources 表获取 `lang` 字段：
+
+```typescript
+const pending = await db
+  .select({ id: articles.id, title: articles.title, lang: sources.lang })
+  .from(articles)
+  .leftJoin(sources, eq(articles.sourceId, sources.id))
+  .where(and(eq(articles.status, 'published'), isNull(articles.titleZh)))
+  .limit(BATCH);
+```
+
+中文文章处理后：`titleZh = title`（直接赋值，不翻译）。
+
+**B. 在 `sources` 表补录中文媒体**
+
+通过 SQL 或 seed 脚本插入第一层中文源（lang = 'zh'）：
+
+```sql
+INSERT INTO sources (name, url, feed_url, lang, active) VALUES
+  ('量子位',   'https://www.qbitai.com',      'https://www.qbitai.com/feed',          'zh', true),
+  ('机器之心', 'https://www.jiqizhixin.com',   'https://www.jiqizhixin.com/rss',       'zh', true),
+  ('少数派',   'https://sspai.com',            'https://sspai.com/feed',               'zh', true),
+  ('InfoQ中文','https://www.infoq.cn',         'https://www.infoq.cn/feed',            'zh', true),
+  ('极客公园', 'https://www.geekpark.net',     'https://www.geekpark.net/rss',         'zh', true),
+  ('36氪',     'https://36kr.com',             'https://36kr.com/feed',               'zh', true)
+ON CONFLICT (feed_url) DO NOTHING;
+```
+
+> ⚠️ Codex 执行前需验证上述 RSS URL 实际可访问，不可用的跳过。
+
+**C. 资讯详情页 `app/news/[id]/page.tsx` 展示调整**
+
+- `<h1>`: 始终显示 `titleZh`
+- 副标题: 仅当 `art.title !== art.titleZh`（即英文来源）时显示英文原标题
+- 摘要区：只显示 `summaryZh`，去掉英文 `summary` 显示
+
+---
+
 *最后更新：2026-05-01*
-*文档状态：v4 — 新增域名信息、导航栏设计、工具详情页/GitHub详情页完整设计方案*
+*文档状态：v5 — 新增资讯中文优先策略（第十六章）、工具使用技巧预留（第十四章）*
