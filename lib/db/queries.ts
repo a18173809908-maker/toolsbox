@@ -173,6 +173,17 @@ export async function loadArticleTags(): Promise<string[]> {
   return rows.map((r) => r.tag).filter((t): t is string => Boolean(t)).sort();
 }
 
+// ── GitHub Trending ───────────────────────────────────────────────────────────
+
+export async function loadRepoDetail(repo: string) {
+  const rows = await db
+    .select()
+    .from(githubTrending)
+    .where(eq(githubTrending.repo, repo))
+    .orderBy(asc(githubTrending.period));
+  return rows;
+}
+
 // ── Search ────────────────────────────────────────────────────────────────────
 
 export async function searchTools(q: string, limit = 20) {

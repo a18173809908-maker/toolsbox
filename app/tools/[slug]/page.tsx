@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { loadToolById, loadAllToolIds } from '@/lib/db/queries';
+import { loadToolById, loadAllToolIds, loadToolsByCategory } from '@/lib/db/queries';
 
 export const revalidate = 3600; // ISR — regenerate hourly
 
@@ -45,6 +45,10 @@ export default async function ToolDetailPage({ params }: Props) {
   const tool = await loadToolById(slug);
   if (!tool) notFound();
 
+  const related = (await loadToolsByCategory(tool.cat))
+    .filter((t) => t.id !== tool.id)
+    .slice(0, 4);
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
@@ -82,53 +86,96 @@ export default async function ToolDetailPage({ params }: Props) {
           <span style={{ color: '#1F2937', fontSize: 14, fontWeight: 500 }}>{tool.name}</span>
         </header>
 
-        {/* Main card */}
-        <main style={{ maxWidth: 760, margin: '48px auto', padding: '0 24px' }}>
-          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', padding: 40 }}>
-            {/* Header row */}
-            <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', marginBottom: 32 }}>
-              {/* Logo */}
+        <main style={{ maxWidth: 860, margin: '40px auto', padding: '0 24px 64px' }}>
+
+          {/* ── Hero card ── */}
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', padding: '36px 40px', marginBottom: 24 }}>
+            <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
               <div style={{
-                width: 72, height: 72, borderRadius: 18, background: tool.brand, color: '#fff',
+                width: 80, height: 80, borderRadius: 20, background: tool.brand, color: '#fff',
                 display: 'grid', placeItems: 'center', fontFamily: 'Georgia, serif', fontWeight: 700,
-                fontSize: tool.mono.length === 1 ? 36 : 24, letterSpacing: '-0.04em', flexShrink: 0,
+                fontSize: tool.mono.length === 1 ? 40 : 26, letterSpacing: '-0.04em', flexShrink: 0,
               }}>{tool.mono}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
-                  <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 32, margin: 0, color: '#1F2937', letterSpacing: '-0.02em' }}>{tool.name}</h1>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
+                  <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 34, margin: 0, color: '#1F2937', letterSpacing: '-0.02em' }}>{tool.name}</h1>
                   <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, background: ps.bg, color: ps.color }}>{tool.pricing}</span>
-                  {tool.featured && (
-                    <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: '#FFEDD5', color: '#C2410C', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Editor&rsquo;s Pick</span>
-                  )}
+                  {tool.featured && <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: '#FFEDD5', color: '#C2410C', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Editor&rsquo;s Pick</span>}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#9CA3AF' }}>
-                  <span>{tool.catIcon}</span>
-                  <span>{tool.catZh} · {tool.catEn}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#9CA3AF', marginBottom: 20 }}>
+                  <Link href={`/categories/${tool.cat}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#C2410C', background: '#FFEDD5', padding: '2px 10px', borderRadius: 999, textDecoration: 'none', fontWeight: 600, fontSize: 12 }}>
+                    {tool.catIcon} {tool.catZh}
+                  </Link>
                   <span>·</span>
                   <span>收录于 {tool.date}</span>
                 </div>
+                {/* CTA */}
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <a href={`https://www.google.com/search?q=${encodeURIComponent(tool.name + ' AI tool')}`} target="_blank" rel="noopener noreferrer"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 999, background: '#F97316', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
+                    访问工具官网 ↗
+                  </a>
+                  <Link href={`/categories/${tool.cat}`}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 999, border: '1px solid #E8D5B7', background: '#fff', color: '#4B5563', fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
+                    {tool.catIcon} 更多{tool.catZh}工具
+                  </Link>
+                </div>
               </div>
-            </div>
-
-            {/* Descriptions */}
-            <div style={{ borderTop: '1px solid #F3E8D0', paddingTop: 28 }}>
-              <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 18, fontWeight: 600, color: '#1F2937', margin: '0 0 12px' }}>About</h2>
-              <p style={{ fontSize: 16, color: '#4B5563', lineHeight: 1.7, margin: '0 0 20px' }}>{tool.en}</p>
-              <div style={{ background: '#FFF7ED', borderRadius: 10, padding: '16px 20px', borderLeft: '3px solid #F97316' }}>
-                <p style={{ fontSize: 15, color: '#4B5563', lineHeight: 1.65, margin: 0 }}>{tool.zh}</p>
-              </div>
-            </div>
-
-            {/* Footer actions */}
-            <div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid #F3E8D0', display: 'flex', gap: 12 }}>
-              <Link href="/" style={{ padding: '10px 22px', borderRadius: 999, border: '1px solid #E8D5B7', background: '#fff', color: '#1F2937', fontSize: 14, fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                ← 返回工具库
-              </Link>
-              <a href={`/?cat=${tool.cat}`} style={{ padding: '10px 22px', borderRadius: 999, border: 'none', background: '#FFEDD5', color: '#C2410C', fontSize: 14, fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                {tool.catIcon} 查看更多{tool.catZh}工具
-              </a>
             </div>
           </div>
+
+          {/* ── Description ── */}
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: '32px 40px', marginBottom: 24 }}>
+            <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 16px', letterSpacing: '-0.01em' }}>About · 工具简介</h2>
+            <p style={{ fontSize: 16, color: '#4B5563', lineHeight: 1.8, margin: '0 0 20px' }}>{tool.en}</p>
+            <div style={{ background: '#FFF7ED', borderRadius: 12, padding: '18px 22px', borderLeft: '4px solid #F97316' }}>
+              <p style={{ fontSize: 15, color: '#4B5563', lineHeight: 1.75, margin: 0 }}>{tool.zh}</p>
+            </div>
+          </div>
+
+          {/* ── Info grid ── */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+            {[
+              { label: '定价模式', value: tool.pricing, badge: true },
+              { label: '所属分类', value: `${tool.catIcon} ${tool.catZh} · ${tool.catEn}` },
+              { label: '收录日期', value: tool.date },
+              { label: '编辑推荐', value: tool.featured ? '✅ Editor\'s Pick' : '—' },
+            ].map(({ label, value, badge }) => (
+              <div key={label} style={{ background: '#fff', borderRadius: 12, border: '1px solid #E8D5B7', padding: '18px 22px' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{label}</div>
+                {badge
+                  ? <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 13, fontWeight: 600, background: ps.bg, color: ps.color }}>{value}</span>
+                  : <div style={{ fontSize: 15, fontWeight: 600, color: '#1F2937' }}>{value}</div>
+                }
+              </div>
+            ))}
+          </div>
+
+          {/* ── Related tools ── */}
+          {related.length > 0 && (
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: '32px 40px' }}>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 20px' }}>
+                同类工具 · More {tool.catEn}
+              </h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
+                {related.map((r) => {
+                  const rps = PRICING_STYLE[r.pricing] ?? PRICING_STYLE['Paid'];
+                  return (
+                    <Link key={r.id} href={`/tools/${r.id}`} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: '14px 16px', borderRadius: 12, border: '1px solid #F3E8D0', textDecoration: 'none', background: '#FDFAF7' }}>
+                      <div style={{ width: 40, height: 40, borderRadius: 10, background: r.brand, color: '#fff', display: 'grid', placeItems: 'center', fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: r.mono.length === 1 ? 20 : 13, flexShrink: 0 }}>{r.mono}</div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                          <span style={{ fontWeight: 700, fontSize: 14, color: '#1F2937', fontFamily: 'Georgia, serif' }}>{r.name}</span>
+                          <span style={{ padding: '1px 6px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: rps.bg, color: rps.color }}>{r.pricing}</span>
+                        </div>
+                        <p style={{ fontSize: 12, color: '#6B7280', margin: 0, lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>{r.en}</p>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </>

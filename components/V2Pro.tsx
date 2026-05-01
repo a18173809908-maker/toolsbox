@@ -244,7 +244,8 @@ function ToolCard({ tool, fav, toggleFav }: { tool: Tool; fav: boolean; toggleFa
           <h4 style={{ fontFamily: 'Georgia, serif', fontWeight: 600, fontSize: 16, margin: 0, color: T.ink }}>{tool.name}</h4>
           <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFav(tool.id); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: fav ? T.primary : T.inkMuted, padding: 4 }}>{fav ? '★' : '☆'}</button>
         </div>
-        <p style={{ fontSize: 13, color: T.inkSoft, lineHeight: 1.5, margin: '0 0 10px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' } as React.CSSProperties}>{tool.en}</p>
+        <p style={{ fontSize: 13, color: T.inkSoft, lineHeight: 1.5, margin: '0 0 4px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' } as React.CSSProperties}>{tool.en}</p>
+        {tool.zh && <p style={{ fontSize: 12, color: T.inkMuted, lineHeight: 1.5, margin: '0 0 10px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' } as React.CSSProperties}>{tool.zh}</p>}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
           <span style={{ padding: '2px 7px', borderRadius: 4, fontWeight: 600, background: T.primaryBg, color: T.accent }}>{catZh}</span>
           <span style={{ padding: '2px 6px', borderRadius: 4, border: `1px solid ${T.rule}`, color: T.inkMuted, fontWeight: 500 }}>{tool.pricing}</span>
@@ -259,7 +260,7 @@ function ToolCard({ tool, fav, toggleFav }: { tool: Tool; fav: boolean; toggleFa
 function GhItem({ item, rank }: { item: RepoItem; rank: number }) {
   const [owner, name] = item.repo.split('/');
   return (
-    <a href={`https://github.com/${item.repo}`} target="_blank" rel="noopener noreferrer" style={{ padding: '13px 0', borderBottom: `1px solid ${T.ruleSoft}`, cursor: 'pointer', display: 'flex', gap: 12, textDecoration: 'none' }}
+    <Link href={`/trending/${item.repo}`} style={{ padding: '13px 0', borderBottom: `1px solid ${T.ruleSoft}`, cursor: 'pointer', display: 'flex', gap: 12, textDecoration: 'none' }}
       onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = T.panel2; el.style.padding = '13px 8px'; el.style.margin = '0 -8px'; el.style.borderRadius = '6px'; }}
       onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.padding = '13px 0'; el.style.margin = '0'; el.style.borderRadius = '0'; }}
     >
@@ -282,7 +283,7 @@ function GhItem({ item, rank }: { item: RepoItem; rank: number }) {
           <span style={{ color: T.green, fontWeight: 600 }}>+{item.gained.toLocaleString()} today</span>
         </div>
       </div>
-    </a>
+    </Link>
   );
 }
 
