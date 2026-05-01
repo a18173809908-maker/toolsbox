@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { SiteHeader } from '@/components/SiteHeader';
 import { loadToolById, loadAllToolIds, loadToolsByCategory } from '@/lib/db/queries';
 
 export const revalidate = 3600; // ISR — regenerate hourly
@@ -89,19 +90,14 @@ export default async function ToolDetailPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <div style={{ minHeight: '100vh', background: '#FFF7ED', fontFamily: 'Inter, ui-sans-serif, system-ui, "PingFang SC", "Microsoft YaHei", sans-serif' }}>
-        {/* Top bar */}
-        <header style={{ padding: '16px 48px', borderBottom: '1px solid #E8D5B7', background: '#fff', display: 'flex', alignItems: 'center', gap: 20 }}>
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-            <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, #F97316 0%, #FBBF24 100%)', display: 'grid', placeItems: 'center', color: '#fff', fontFamily: 'Georgia, serif', fontWeight: 900, fontSize: 16, fontStyle: 'italic' }}>A</div>
-            <span style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 17, color: '#1F2937' }}>AiToolsBox</span>
-          </Link>
-          <span style={{ color: '#9CA3AF', fontSize: 14 }}>/</span>
-          <Link href="/" style={{ color: '#9CA3AF', fontSize: 14, textDecoration: 'none' }}>工具库</Link>
-          <span style={{ color: '#9CA3AF', fontSize: 14 }}>/</span>
-          <span style={{ color: '#1F2937', fontSize: 14, fontWeight: 500 }}>{tool.name}</span>
-        </header>
+        <SiteHeader />
 
         <main style={{ maxWidth: 860, margin: '40px auto', padding: '0 24px 64px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#9CA3AF', fontSize: 13, marginBottom: 18 }}>
+            <Link href="/" style={{ color: '#9CA3AF', textDecoration: 'none' }}>工具库</Link>
+            <span>/</span>
+            <span style={{ color: '#1F2937', fontWeight: 600 }}>{tool.name}</span>
+          </div>
 
           {/* ── Hero card ── */}
           <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', padding: '36px 40px', marginBottom: 24 }}>

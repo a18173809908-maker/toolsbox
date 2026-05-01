@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { SiteHeader } from '@/components/SiteHeader';
 import { loadArticleById } from '@/lib/db/queries';
 
 export const revalidate = 3600;
@@ -62,25 +63,17 @@ export default async function NewsDetailPage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div style={{ minHeight: '100vh', background: C.bg, fontFamily: 'Inter, ui-sans-serif, system-ui, "PingFang SC", "Microsoft YaHei", sans-serif' }}>
 
-        {/* Top bar */}
-        <header style={{ padding: '16px 48px', borderBottom: `1px solid ${C.rule}`, background: C.panel, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, #F97316 0%, #FBBF24 100%)', display: 'grid', placeItems: 'center', color: '#fff', fontFamily: 'Georgia, serif', fontWeight: 900, fontSize: 16, fontStyle: 'italic' }}>A</div>
-              <span style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 17, color: C.ink }}>AiToolsBox</span>
-            </Link>
-            <span style={{ color: C.inkMuted }}>/</span>
-            <Link href="/news" style={{ color: C.inkMuted, fontSize: 14, textDecoration: 'none' }}>AI 资讯</Link>
-            <span style={{ color: C.inkMuted }}>/</span>
-            <span style={{ color: C.ink, fontSize: 14, fontWeight: 500, maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {art.titleZh || art.title}
-            </span>
-          </div>
-          <Link href="/news" style={{ fontSize: 13, color: C.inkSoft, textDecoration: 'none' }}>← 返回资讯列表</Link>
-        </header>
+        <SiteHeader />
 
         {/* Article */}
         <main style={{ maxWidth: 760, margin: '48px auto', padding: '0 24px 64px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: C.inkMuted, fontSize: 13, marginBottom: 18 }}>
+            <Link href="/news" style={{ color: C.inkMuted, textDecoration: 'none' }}>AI 资讯</Link>
+            <span>/</span>
+            <span style={{ color: C.ink, fontWeight: 600, maxWidth: 360, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {art.titleZh || art.title}
+            </span>
+          </div>
           <article style={{ background: C.panel, borderRadius: 16, border: `1px solid ${C.rule}`, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', padding: '40px 48px' }}>
 
             {/* Tag + meta */}

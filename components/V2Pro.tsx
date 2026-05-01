@@ -2,7 +2,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
 import { v2Tokens as T } from '@/lib/tokens';
 import { LANG_COLOR, type Tool, type Category, type RepoItem, type TrendingPeriod, type HomepageStats, type NewsItem } from '@/lib/data';
@@ -39,76 +38,6 @@ function ToolLogo({ tool, size = 56 }: { tool: Tool; size?: number }) {
   );
 }
 
-/* ─── TopBar ──────────────────────────────────────────────────────────────── */
-function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
-  const pathname = usePathname();
-  const navItems: [string, string][] = [
-    ['首页', '/'],
-    ['GitHub 趋势', '/trending'],
-    ['AI 资讯', '/news'],
-  ];
-  return (
-    <header style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '18px 56px', borderBottom: `1px solid ${T.rule}`,
-      background: T.panel, position: 'sticky', top: 0, zIndex: 10,
-    }}>
-      {/* Logo */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{
-          width: 30, height: 30, borderRadius: 8,
-          background: `linear-gradient(135deg, ${T.primary} 0%, #FBBF24 100%)`,
-          display: 'grid', placeItems: 'center', color: '#fff',
-          fontFamily: 'Georgia, serif', fontWeight: 900, fontSize: 17, fontStyle: 'italic',
-        }}>A</div>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-          <span style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 18, color: T.ink, letterSpacing: '-0.02em' }}>AiToolsBox</span>
-          <span style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 13, color: T.inkMuted }}>· 工具集</span>
-        </div>
-      </div>
-
-      {/* Nav */}
-      <nav style={{ display: 'flex', gap: 4, fontSize: 14 }}>
-        {navItems.map(([label, href]) => {
-          const active = href === '/' ? pathname === '/' : pathname.startsWith(href);
-          return (
-            <Link key={href} href={href} style={{
-              padding: '6px 12px', cursor: 'pointer',
-              color: active ? T.ink : T.inkSoft,
-              fontWeight: active ? 600 : 500,
-              borderBottom: active ? `2px solid ${T.primary}` : '2px solid transparent',
-              textDecoration: 'none',
-            }}
-            onMouseEnter={(e) => { if (!active) { e.currentTarget.style.color = T.ink; e.currentTarget.style.borderBottomColor = T.ruleSoft; } }}
-            onMouseLeave={(e) => { if (!active) { e.currentTarget.style.color = T.inkSoft; e.currentTarget.style.borderBottomColor = 'transparent'; } }}
-            >{label}</Link>
-          );
-        })}
-      </nav>
-
-      {/* Right */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <button onClick={onOpenPalette} style={{
-          display: 'flex', alignItems: 'center', gap: 8, padding: '7px 13px',
-          background: T.bg, borderRadius: 8, border: `1px solid ${T.rule}`,
-          fontSize: 13, color: T.inkMuted, cursor: 'pointer', fontFamily: 'inherit',
-        }}>
-          <span>⌕</span><span>搜索…</span>
-          <span style={{ display: 'inline-flex', gap: 2, marginLeft: 4 }}>
-            <kbd style={{ padding: '1px 5px', background: T.panel, border: `1px solid ${T.rule}`, borderRadius: 3, fontSize: 10, fontFamily: 'ui-monospace, monospace' }}>⌘</kbd>
-            <kbd style={{ padding: '1px 5px', background: T.panel, border: `1px solid ${T.rule}`, borderRadius: 3, fontSize: 10, fontFamily: 'ui-monospace, monospace' }}>K</kbd>
-          </span>
-        </button>
-        <button style={{
-          padding: '8px 20px', borderRadius: 999, border: 'none',
-          background: T.ink, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-        }}>登录 Sign in</button>
-      </div>
-    </header>
-  );
-}
-
-/* ─── Hero ────────────────────────────────────────────────────────────────── */
 function Hero({ query, setQuery, stats, onPopularTag }: {
   query: string; setQuery: (q: string) => void;
   stats: HomepageStats; onPopularTag: (tag: string) => void;
