@@ -198,11 +198,12 @@ function FeaturedCard({ tool }: { tool: Tool }) {
   const { categories: CATEGORIES } = useData();
   const catZh = CATEGORIES.find((c) => c.id === tool.cat)?.zh;
   return (
-    <div style={{
+    <Link href={`/tools/${tool.id}`} style={{
       background: T.panel, borderRadius: 16, padding: 24,
       border: `1px solid ${T.rule}`, cursor: 'pointer',
       boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
       display: 'flex', flexDirection: 'column', gap: 14, position: 'relative', overflow: 'hidden',
+      textDecoration: 'none', transition: 'transform .15s, box-shadow .15s',
     }}
     onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 16px 36px -12px rgba(31,41,55,0.15)'; }}
     onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)'; }}
@@ -218,7 +219,7 @@ function FeaturedCard({ tool }: { tool: Tool }) {
         <span style={{ padding: '3px 9px', borderRadius: 4, fontSize: 11, fontWeight: 600, background: T.primaryBg, color: T.accent }}>{catZh}</span>
         <span style={{ fontSize: 12, color: T.inkMuted }}>{tool.date}</span>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -227,11 +228,12 @@ function ToolCard({ tool, fav, toggleFav }: { tool: Tool; fav: boolean; toggleFa
   const { categories: CATEGORIES } = useData();
   const catZh = CATEGORIES.find((c) => c.id === tool.cat)?.zh;
   return (
-    <div style={{
+    <Link href={`/tools/${tool.id}`} style={{
       background: T.panel, borderRadius: 12, padding: 18,
       border: `1px solid ${T.rule}`, cursor: 'pointer',
       boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
       display: 'flex', gap: 14, transition: 'border-color .15s, box-shadow .15s',
+      textDecoration: 'none',
     }}
     onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = T.primary; el.style.boxShadow = '0 4px 14px -4px rgba(249,115,22,0.2)'; }}
     onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = T.rule; el.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'; }}
@@ -240,7 +242,7 @@ function ToolCard({ tool, fav, toggleFav }: { tool: Tool; fav: boolean; toggleFa
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
           <h4 style={{ fontFamily: 'Georgia, serif', fontWeight: 600, fontSize: 16, margin: 0, color: T.ink }}>{tool.name}</h4>
-          <button onClick={(e) => { e.stopPropagation(); toggleFav(tool.id); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: fav ? T.primary : T.inkMuted, padding: 4 }}>{fav ? '★' : '☆'}</button>
+          <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFav(tool.id); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: fav ? T.primary : T.inkMuted, padding: 4 }}>{fav ? '★' : '☆'}</button>
         </div>
         <p style={{ fontSize: 13, color: T.inkSoft, lineHeight: 1.5, margin: '0 0 10px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' } as React.CSSProperties}>{tool.en}</p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
@@ -249,7 +251,7 @@ function ToolCard({ tool, fav, toggleFav }: { tool: Tool; fav: boolean; toggleFa
           <span style={{ color: T.inkMuted, marginLeft: 'auto' }}>{tool.date}</span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -257,7 +259,7 @@ function ToolCard({ tool, fav, toggleFav }: { tool: Tool; fav: boolean; toggleFa
 function GhItem({ item, rank }: { item: RepoItem; rank: number }) {
   const [owner, name] = item.repo.split('/');
   return (
-    <div style={{ padding: '13px 0', borderBottom: `1px solid ${T.ruleSoft}`, cursor: 'pointer', display: 'flex', gap: 12 }}
+    <a href={`https://github.com/${item.repo}`} target="_blank" rel="noopener noreferrer" style={{ padding: '13px 0', borderBottom: `1px solid ${T.ruleSoft}`, cursor: 'pointer', display: 'flex', gap: 12, textDecoration: 'none' }}
       onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = T.panel2; el.style.padding = '13px 8px'; el.style.margin = '0 -8px'; el.style.borderRadius = '6px'; }}
       onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.padding = '13px 0'; el.style.margin = '0'; el.style.borderRadius = '0'; }}
     >
@@ -280,7 +282,7 @@ function GhItem({ item, rank }: { item: RepoItem; rank: number }) {
           <span style={{ color: T.green, fontWeight: 600 }}>+{item.gained.toLocaleString()} today</span>
         </div>
       </div>
-    </div>
+    </a>
   );
 }
 
