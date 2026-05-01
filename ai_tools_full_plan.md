@@ -234,7 +234,8 @@
 | 🔴 P0 | `/trending` 列表页 | ✅ 完成 |
 | 🔴 P0 | 导航栏扩展（3 个入口）+ usePathname | ✅ 完成 |
 | 🔴 P0 | 域名 `aiboxpro.cn` 上线 | ✅ 完成（DNS + 代码） |
-| 🔴 **P0** | **全局共用顶栏 `SiteHeader`** | ⬜ **待 Codex（Task 0）— 内页导航缺失** |
+| 🔴 **P0** | **全局共用顶栏 `SiteHeader`** | 🚧 进行中（/trending 已用，其余内页待替换） |
+| 🔴 **P0** | **「加载更多」按钮无效 + 分类数量不对** | ⬜ **待 Codex（Bug 1 & 2）** |
 | 🟠 P1 | tools 表 Schema 扩展 + 工具详情页 v2 | ✅ 完成 |
 | 🟠 P1 | `robots.txt` + Baiduspider 规则 | ✅ 完成 |
 | 🟠 P1 | 资讯中文源补录 + AI 处理分支 | ⬜ 待 Codex（Task 9） |

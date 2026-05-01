@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Metadata } from 'next';
+import { SiteHeader } from '@/components/SiteHeader';
 import { loadRepoDetail } from '@/lib/db/queries';
 
 export const revalidate = 3600;
@@ -64,19 +65,14 @@ export default async function TrendingDetailPage({ params }: Props) {
   return (
     <div style={{ minHeight: '100vh', background: C.bg, fontFamily: 'Inter, ui-sans-serif, system-ui, "PingFang SC", "Microsoft YaHei", sans-serif' }}>
 
-      {/* Top bar */}
-      <header style={{ padding: '16px 48px', borderBottom: `1px solid ${C.rule}`, background: C.panel, display: 'flex', alignItems: 'center', gap: 12 }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-          <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, #F97316 0%, #FBBF24 100%)', display: 'grid', placeItems: 'center', color: '#fff', fontFamily: 'Georgia, serif', fontWeight: 900, fontSize: 16, fontStyle: 'italic' }}>A</div>
-          <span style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 17, color: C.ink }}>AiToolsBox</span>
-        </Link>
-        <span style={{ color: C.inkMuted }}>/</span>
-        <span style={{ color: C.inkMuted, fontSize: 14 }}>GitHub 趋势</span>
-        <span style={{ color: C.inkMuted }}>/</span>
-        <span style={{ color: C.ink, fontSize: 14, fontWeight: 500, fontFamily: 'ui-monospace, monospace' }}>{repo}</span>
-      </header>
+      <SiteHeader />
 
       <main style={{ maxWidth: 860, margin: '40px auto', padding: '0 24px 64px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: C.inkMuted, fontSize: 13, marginBottom: 18 }}>
+          <Link href="/trending" style={{ color: C.inkMuted, textDecoration: 'none' }}>GitHub 趋势</Link>
+          <span>/</span>
+          <span style={{ color: C.ink, fontWeight: 600, fontFamily: 'ui-monospace, monospace' }}>{repo}</span>
+        </div>
 
         {/* Hero */}
         <div style={{ background: C.panel, borderRadius: 16, border: `1px solid ${C.rule}`, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', padding: '36px 40px', marginBottom: 24 }}>

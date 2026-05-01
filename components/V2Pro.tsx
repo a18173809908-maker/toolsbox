@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { SiteHeader } from '@/components/SiteHeader';
 import { v2Tokens as T } from '@/lib/tokens';
 import { LANG_COLOR, type Tool, type Category, type RepoItem, type TrendingPeriod, type HomepageStats, type NewsItem } from '@/lib/data';
 
@@ -563,7 +564,7 @@ function V2ProInner() {
 
   return (
     <div style={{ minHeight: '100vh', background: T.bg, color: T.ink, fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif' }}>
-      <TopBar onOpenPalette={() => setPaletteOpen(true)} />
+      <SiteHeader onOpenPalette={() => setPaletteOpen(true)} />
       <Hero query={query} setQuery={setQuery} stats={stats} onPopularTag={(tag) => { setQuery(tag); setCat('all'); }} />
       <CategoryStrip cat={cat} setCat={setCat} />
 

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { SiteHeader } from '@/components/SiteHeader';
 import { loadTrendingList } from '@/lib/db/queries';
 
 export const revalidate = 3600;
@@ -59,15 +60,7 @@ export default async function TrendingPage({ searchParams }: Props) {
   return (
     <div style={{ minHeight: '100vh', background: C.bg, fontFamily: 'Inter, ui-sans-serif, system-ui, "PingFang SC", "Microsoft YaHei", sans-serif' }}>
 
-      {/* Top bar */}
-      <header style={{ padding: '16px 48px', borderBottom: `1px solid ${C.rule}`, background: C.panel, display: 'flex', alignItems: 'center', gap: 12 }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-          <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, #F97316 0%, #FBBF24 100%)', display: 'grid', placeItems: 'center', color: '#fff', fontFamily: 'Georgia, serif', fontWeight: 900, fontSize: 16, fontStyle: 'italic' }}>A</div>
-          <span style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 17, color: C.ink }}>AiToolsBox</span>
-        </Link>
-        <span style={{ color: C.inkMuted }}>/</span>
-        <span style={{ color: C.ink, fontSize: 14, fontWeight: 500 }}>GitHub 趋势</span>
-      </header>
+      <SiteHeader />
 
       <main style={{ maxWidth: 900, margin: '40px auto', padding: '0 24px 64px' }}>
 

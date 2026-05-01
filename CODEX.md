@@ -124,6 +124,78 @@ export function SiteHeader({ onOpenPalette }: { onOpenPalette?: () => void }) {
 
 ---
 
+### Bug 1 — 「加载更多」按钮无效且不该显示 🐛
+
+**位置：** `components/V2Pro.tsx`，工具列表区底部的 "Load more · 加载更多" 按钮
+
+**问题：**
+1. 点击无响应——按钮存在但没有实现加载逻辑
+2. 当前工具总数只有 24 条，已全部显示，不应该出现该按钮
+
+**修复方案：**
+
+工具列表当前实现是把所有工具一次性渲染，没有真正的分页。两种选择：
+
+- **方案 A（简单，推荐）：** 直接隐藏按钮。在工具总数 ≤ 已显示数量时不渲染。
+  ```typescript
+  // 在 V2Pro.tsx 中，找到渲染 "Load more" 的地方
+  // 加条件：只有 tools.length > visibleCount 时才显示
+  {tools.length > visibleCount && (
+    <button onClick={() => setVisibleCount(v => v + 12)}>
+      Load more · 加载更多
+    </button>
+  )}
+  ```
+  同时把初始 `visibleCount` 设为足够大（如 100），或直接移除分批显示逻辑，全量渲染（24 条不影响性能）。
+
+- **方案 B（完整实现）：** 工具数量增长后再做真正的虚拟滚动/分页，目前工具少，暂不必要。
+
+**结论：选方案 A，工具 < 100 条时直接全量渲染，移除加载更多按钮。**
+
+---
+
+### Bug 2 — 分类统计数量显示不正确 🐛
+
+**位置：** `components/V2Pro.tsx` CategoryStrip，以及首页各分类 pill 后的数字（如「图像生成 218」）
+
+**问题：** 显示的是 `lib/data.ts` 中 `CATEGORIES` 数组里**硬编码的静态数字**（218、189、167…），不是数据库中该分类下实际工具数量。
+
+当前实际工具只有 24 条，但显示 218 / 189 / 167 等虚假数字，严重误导用户。
+
+**根源：**
+```typescript
+// lib/data.ts — 静态种子数据，count 是假的
+{ id: 'image', en: 'Image Generation', zh: '图像生成', icon: '🎨', count: 218 }
+```
+
+数据库中 `categories.count` 字段也是手动维护的静态值（从 seed.ts 写入），没有动态计算。
+
+**修复方案：**
+
+在 `loadHomepageData()` 查询中，用 JOIN + COUNT 替换静态 count：
+
+```typescript
+// lib/db/queries.ts — loadHomepageData 中替换 categories 查询
+const cats = await db
+  .select({
+    id: categories.id,
+    en: categories.en,
+    zh: categories.zh,
+    icon: categories.icon,
+    count: count(tools.id),   // 实际计算，不用 categories.count
+  })
+  .from(categories)
+  .leftJoin(tools, eq(tools.catId, categories.id))
+  .groupBy(categories.id, categories.en, categories.zh, categories.icon)
+  .orderBy(desc(count(tools.id)));
+```
+
+`categories.count` 静态字段可以保留（历史用途），但展示时改用动态 count。
+
+`loadCategoryById` 同理，需要同步更新。
+
+---
+
 ## 1. 项目基本信息
 
 | 项目 | 内容 |
