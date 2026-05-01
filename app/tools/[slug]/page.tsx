@@ -5,7 +5,7 @@ import { loadToolById, loadAllToolIds, loadToolsByCategory } from '@/lib/db/quer
 
 export const revalidate = 3600; // ISR — regenerate hourly
 
-const BASE = 'https://toolsbox-six.vercel.app';
+const BASE = 'https://aiboxpro.cn';
 
 type Props = { params: Promise<{ slug: string }> };
 

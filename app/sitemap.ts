@@ -1,12 +1,12 @@
 import type { MetadataRoute } from 'next';
 import { db } from '@/lib/db';
-import { tools, categories, articles } from '@/lib/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { tools, categories, articles, githubTrending } from '@/lib/db/schema';
+import { eq, desc, asc } from 'drizzle-orm';
 
-const BASE = 'https://toolsbox-six.vercel.app';
+const BASE = 'https://aiboxpro.cn';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [ts, cats, arts] = await Promise.all([
+  const [ts, cats, arts, repos] = await Promise.all([
     db.select({ id: tools.id }).from(tools),
     db.select({ id: categories.id }).from(categories),
     db.select({ id: articles.id, publishedAt: articles.publishedAt })
@@ -14,11 +14,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .where(eq(articles.status, 'published'))
       .orderBy(desc(articles.publishedAt))
       .limit(500),
+    db.selectDistinct({ repo: githubTrending.repo })
+      .from(githubTrending)
+      .orderBy(asc(githubTrending.repo))
+      .limit(200),
   ]);
 
   const statics: MetadataRoute.Sitemap = [
-    { url: BASE,               lastModified: new Date(), changeFrequency: 'hourly', priority: 1 },
-    { url: `${BASE}/news`,     lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
+    { url: BASE,                lastModified: new Date(), changeFrequency: 'hourly', priority: 1   },
+    { url: `${BASE}/trending`,  lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
+    { url: `${BASE}/news`,      lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
   ];
 
   const toolPages: MetadataRoute.Sitemap = ts.map((t) => ({
@@ -40,5 +45,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.5,
   }));
 
-  return [...statics, ...toolPages, ...catPages, ...newsPages];
+  const repoPages: MetadataRoute.Sitemap = repos.map((r) => ({
+    url: `${BASE}/trending/${r.repo}`,
+    changeFrequency: 'daily' as const,
+    priority: 0.6,
+  }));
+
+  return [...statics, ...toolPages, ...catPages, ...newsPages, ...repoPages];
 }

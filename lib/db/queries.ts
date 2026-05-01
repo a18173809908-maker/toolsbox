@@ -227,6 +227,18 @@ export async function loadArticleById(id: number) {
   return rows[0] ?? null;
 }
 
+// ── Trending list ─────────────────────────────────────────────────────────────
+
+export async function loadTrendingList(period = 'today', limit = 25) {
+  const safe = ['today', 'week', 'month'].includes(period) ? period : 'today';
+  return db
+    .select()
+    .from(githubTrending)
+    .where(eq(githubTrending.period, safe))
+    .orderBy(desc(githubTrending.gained))
+    .limit(limit);
+}
+
 // ── Categories ────────────────────────────────────────────────────────────────
 
 export async function loadAllCategoryIds(): Promise<string[]> {

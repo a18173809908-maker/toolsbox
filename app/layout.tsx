@@ -15,7 +15,7 @@ const fraunces = Fraunces({
   style: ['normal', 'italic'],
 });
 
-const BASE = 'https://toolsbox-six.vercel.app';
+const BASE = 'https://aiboxpro.cn';
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE),

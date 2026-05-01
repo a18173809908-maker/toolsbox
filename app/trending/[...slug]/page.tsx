@@ -6,7 +6,7 @@ import { loadRepoDetail } from '@/lib/db/queries';
 
 export const revalidate = 3600;
 
-const BASE = 'https://toolsbox-six.vercel.app';
+const BASE = 'https://aiboxpro.cn';
 
 const LANG_COLOR: Record<string, string> = {
   TypeScript: '#3178C6', JavaScript: '#F7DF1E', Python: '#3776AB',

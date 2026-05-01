@@ -6,7 +6,7 @@ import { ToolCard } from './ToolCard';
 
 export const revalidate = 3600;
 
-const BASE = 'https://toolsbox-six.vercel.app';
+const BASE = 'https://aiboxpro.cn';
 
 type Props = { params: Promise<{ id: string }> };
 

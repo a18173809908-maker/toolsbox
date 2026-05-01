@@ -3,7 +3,7 @@ import { loadHomepageData } from '@/lib/db/queries';
 
 export const dynamic = 'force-dynamic';
 
-const BASE = 'https://toolsbox-six.vercel.app';
+const BASE = 'https://aiboxpro.cn';
 
 export default async function Home() {
   const data = await loadHomepageData();

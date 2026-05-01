@@ -37,7 +37,7 @@ export default async function NewsPage({ searchParams }: Props) {
     '@type': 'CollectionPage',
     name: 'AI 资讯 | AiToolsBox',
     description: '每日精选 AI 行业动态',
-    url: 'https://toolsbox-six.vercel.app/news',
+    url: 'https://aiboxpro.cn/news',
   };
 
   return (

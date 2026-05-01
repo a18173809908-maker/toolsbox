@@ -106,7 +106,7 @@ export async function GET(req: NextRequest) {
           padding: '20px 56px', borderTop: '1px solid #E8D5B7',
           background: 'rgba(255,255,255,0.7)',
         }}>
-          <span style={{ fontSize: 15, color: '#9CA3AF' }}>toolsbox-six.vercel.app</span>
+          <span style={{ fontSize: 15, color: '#9CA3AF' }}>aiboxpro.cn</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 14px', borderRadius: 999, background: '#FFEDD5' }}>
             <div style={{ width: 6, height: 6, borderRadius: 3, background: '#F97316', display: 'flex' }} />
             <span style={{ fontSize: 13, fontWeight: 700, color: '#C2410C' }}>AI TOOLS BOX</span>

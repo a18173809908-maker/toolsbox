@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { v2Tokens as T } from '@/lib/tokens';
 import { LANG_COLOR, type Tool, type Category, type RepoItem, type TrendingPeriod, type HomepageStats, type NewsItem } from '@/lib/data';
 
@@ -39,9 +40,11 @@ function ToolLogo({ tool, size = 56 }: { tool: Tool; size?: number }) {
 
 /* ─── TopBar ──────────────────────────────────────────────────────────────── */
 function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
+  const pathname = usePathname();
   const navItems: [string, string][] = [
-    ['首页 Home', '/'],
-    ['AI 资讯 News', '/news'],
+    ['首页', '/'],
+    ['GitHub 趋势', '/trending'],
+    ['AI 资讯', '/news'],
   ];
   return (
     <header style={{
@@ -66,9 +69,9 @@ function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
       {/* Nav */}
       <nav style={{ display: 'flex', gap: 4, fontSize: 14 }}>
         {navItems.map(([label, href]) => {
-          const active = typeof window !== 'undefined' ? window.location.pathname === href : href === '/';
+          const active = href === '/' ? pathname === '/' : pathname.startsWith(href);
           return (
-            <a key={href} href={href} style={{
+            <Link key={href} href={href} style={{
               padding: '6px 12px', cursor: 'pointer',
               color: active ? T.ink : T.inkSoft,
               fontWeight: active ? 600 : 500,
@@ -77,7 +80,7 @@ function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
             }}
             onMouseEnter={(e) => { if (!active) { e.currentTarget.style.color = T.ink; e.currentTarget.style.borderBottomColor = T.ruleSoft; } }}
             onMouseLeave={(e) => { if (!active) { e.currentTarget.style.color = T.inkSoft; e.currentTarget.style.borderBottomColor = 'transparent'; } }}
-            >{label}</a>
+            >{label}</Link>
           );
         })}
       </nav>
