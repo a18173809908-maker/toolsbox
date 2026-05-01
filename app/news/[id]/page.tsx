@@ -23,7 +23,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: desc,
       url: `${BASE}/news/${id}`,
       type: 'article',
+      images: [`${BASE}/og?type=news&title=${encodeURIComponent(title.slice(0, 70))}${art.tag ? `&tag=${encodeURIComponent(art.tag)}` : ''}`],
     },
+    twitter: { card: 'summary_large_image' },
     alternates: { canonical: `/news/${id}` },
   };
 }

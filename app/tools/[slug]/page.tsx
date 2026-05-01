@@ -26,7 +26,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: tool.en,
       url: `${BASE}/tools/${tool.id}`,
       type: 'website',
+      images: [`${BASE}/og?type=tool&name=${encodeURIComponent(tool.name)}&sub=${encodeURIComponent(tool.en.slice(0, 60))}&brand=${encodeURIComponent(tool.brand)}&mono=${encodeURIComponent(tool.mono)}`],
     },
+    twitter: { card: 'summary_large_image' },
     alternates: { canonical: `/tools/${tool.id}` },
   };
 }
