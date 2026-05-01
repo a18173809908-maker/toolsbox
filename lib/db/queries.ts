@@ -1,6 +1,6 @@
 import { db } from './index';
 import { categories, tools, githubTrending, articles, sources } from './schema';
-import { desc, asc, eq, ilike, or } from 'drizzle-orm';
+import { desc, asc, eq, ilike, or, isNull, count, max } from 'drizzle-orm';
 import type { TrendingPeriod, Tool, Category, RepoItem, HomepageStats, NewsItem } from '@/lib/data';
 
 // ── Homepage ─────────────────────────────────────────────────────────────────
@@ -266,4 +266,40 @@ export async function updateArticleAi(id: number, data: {
   tag?: string;
 }) {
   await db.update(articles).set(data).where(eq(articles.id, id));
+}
+
+// 鈹€鈹€ Automation status 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+
+export async function loadAutomationStatus() {
+  const [
+    trendingTotals,
+    missingTrendingZh,
+    latestTrending,
+    articleTotals,
+    missingArticleZh,
+    latestArticle,
+    activeSources,
+  ] = await Promise.all([
+    db.select({ value: count() }).from(githubTrending),
+    db.select({ value: count() }).from(githubTrending).where(isNull(githubTrending.descriptionZh)),
+    db.select({ value: max(githubTrending.snapshotDate) }).from(githubTrending),
+    db.select({ value: count() }).from(articles).where(eq(articles.status, 'published')),
+    db.select({ value: count() }).from(articles).where(isNull(articles.titleZh)),
+    db.select({ value: max(articles.fetchedAt) }).from(articles),
+    db.select({ value: count() }).from(sources).where(eq(sources.active, true)),
+  ]);
+
+  return {
+    trending: {
+      total: trendingTotals[0]?.value ?? 0,
+      missingZh: missingTrendingZh[0]?.value ?? 0,
+      latestSnapshotAt: latestTrending[0]?.value?.toISOString() ?? null,
+    },
+    articles: {
+      totalPublished: articleTotals[0]?.value ?? 0,
+      missingZh: missingArticleZh[0]?.value ?? 0,
+      latestFetchedAt: latestArticle[0]?.value?.toISOString() ?? null,
+      activeSources: activeSources[0]?.value ?? 0,
+    },
+  };
 }
