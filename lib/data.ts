@@ -30,6 +30,16 @@ export type Tool = {
   features?: string[];
   pricingDetail?: string;
   alternatives?: string[];
+  registerMethod?: string[];
+  needsOverseasPhone?: boolean;
+  needsRealName?: boolean;
+  overseasPaymentOnly?: boolean;
+  priceCny?: string;
+  miniProgram?: string;
+  appStoreCn?: boolean;
+  publicAccount?: string;
+  cnAlternatives?: string[];
+  tutorialLinks?: { platform: string; url: string; title: string }[];
   upvotes?: number;
   downvotes?: number;
   howToUse?: string[];

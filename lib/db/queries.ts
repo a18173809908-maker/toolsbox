@@ -1,6 +1,6 @@
 import { db } from './index';
 import { categories, tools, githubTrending, articles, sources, toolCandidates } from './schema';
-import { desc, asc, eq, ilike, or, isNull, count, max, and } from 'drizzle-orm';
+import { desc, asc, eq, ilike, or, isNull, count, max, and, inArray } from 'drizzle-orm';
 import type { TrendingPeriod, Tool, Category, RepoItem, HomepageStats, NewsItem } from '@/lib/data';
 
 // ── Homepage ─────────────────────────────────────────────────────────────────
@@ -109,6 +109,11 @@ export async function loadToolById(id: string): Promise<(Tool & { catEn: string;
       chineseUi: tools.chineseUi, freeQuota: tools.freeQuota, apiAvailable: tools.apiAvailable,
       openSource: tools.openSource, githubRepo: tools.githubRepo, features: tools.features,
       pricingDetail: tools.pricingDetail, alternatives: tools.alternatives,
+      registerMethod: tools.registerMethod, needsOverseasPhone: tools.needsOverseasPhone,
+      needsRealName: tools.needsRealName, overseasPaymentOnly: tools.overseasPaymentOnly,
+      priceCny: tools.priceCny, miniProgram: tools.miniProgram, appStoreCn: tools.appStoreCn,
+      publicAccount: tools.publicAccount, cnAlternatives: tools.cnAlternatives,
+      tutorialLinks: tools.tutorialLinks,
       upvotes: tools.upvotes, downvotes: tools.downvotes,
       featured: tools.featured, howToUse: tools.howToUse, faqs: tools.faqs,
       publishedAt: tools.publishedAt,
@@ -134,6 +139,16 @@ export async function loadToolById(id: string): Promise<(Tool & { catEn: string;
     features: row.features ?? undefined,
     pricingDetail: row.pricingDetail ?? undefined,
     alternatives: row.alternatives ?? undefined,
+    registerMethod: row.registerMethod ?? undefined,
+    needsOverseasPhone: row.needsOverseasPhone,
+    needsRealName: row.needsRealName,
+    overseasPaymentOnly: row.overseasPaymentOnly,
+    priceCny: row.priceCny ?? undefined,
+    miniProgram: row.miniProgram ?? undefined,
+    appStoreCn: row.appStoreCn,
+    publicAccount: row.publicAccount ?? undefined,
+    cnAlternatives: row.cnAlternatives ?? undefined,
+    tutorialLinks: row.tutorialLinks ?? undefined,
     upvotes: row.upvotes,
     downvotes: row.downvotes,
     featured: row.featured,
@@ -228,6 +243,16 @@ export async function publishToolCandidate(id: number, data: {
   features?: string[];
   howToUse?: string[];
   faqs?: { q: string; a: string }[];
+  registerMethod?: string[];
+  needsOverseasPhone?: boolean;
+  needsRealName?: boolean;
+  overseasPaymentOnly?: boolean;
+  priceCny?: string;
+  miniProgram?: string;
+  appStoreCn?: boolean;
+  publicAccount?: string;
+  cnAlternatives?: string[];
+  tutorialLinks?: { platform: string; url: string; title: string }[];
 }) {
   await db.insert(tools).values({
     id: data.slug,
@@ -243,6 +268,16 @@ export async function publishToolCandidate(id: number, data: {
     features: data.features,
     howToUse: data.howToUse,
     faqs: data.faqs,
+    registerMethod: data.registerMethod,
+    needsOverseasPhone: data.needsOverseasPhone ?? false,
+    needsRealName: data.needsRealName ?? false,
+    overseasPaymentOnly: data.overseasPaymentOnly ?? false,
+    priceCny: data.priceCny,
+    miniProgram: data.miniProgram,
+    appStoreCn: data.appStoreCn ?? false,
+    publicAccount: data.publicAccount,
+    cnAlternatives: data.cnAlternatives,
+    tutorialLinks: data.tutorialLinks,
     publishedAt: new Date().toISOString().slice(0, 10),
   }).onConflictDoNothing();
 
@@ -256,6 +291,20 @@ export async function publishToolCandidate(id: number, data: {
     status: 'published',
     publishedAt: new Date(),
   }).where(eq(toolCandidates.id, id));
+}
+
+export async function loadToolsByIds(ids: string[]) {
+  if (ids.length === 0) return [];
+  return db
+    .select({
+      id: tools.id,
+      name: tools.name,
+      zh: tools.zh,
+      pricing: tools.pricing,
+      chinaAccess: tools.chinaAccess,
+    })
+    .from(tools)
+    .where(inArray(tools.id, ids));
 }
 
 export async function loadPendingArticles(limit = 20) {

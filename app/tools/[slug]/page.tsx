@@ -3,7 +3,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { SiteHeader } from '@/components/SiteHeader';
 import { AccessBadge, ToolIcon } from '@/components/ToolBadges';
-import { loadToolById, loadAllToolIds, loadToolsByCategory, loadRelatedArticles } from '@/lib/db/queries';
+import { loadToolById, loadAllToolIds, loadToolsByCategory, loadRelatedArticles, loadToolsByIds } from '@/lib/db/queries';
 
 export const revalidate = 3600; // ISR — regenerate hourly
 
@@ -62,9 +62,10 @@ export default async function ToolDetailPage({ params }: Props) {
   const tool = await loadToolById(slug);
   if (!tool) notFound();
 
-  const [related, relatedArticles] = await Promise.all([
+  const [related, relatedArticles, alternativeTools] = await Promise.all([
     loadToolsByCategory(tool.cat).then((ts) => ts.filter((t) => t.id !== tool.id).slice(0, 4)),
     loadRelatedArticles(tool.name, 5),
+    loadToolsByIds(tool.cnAlternatives ?? []),
   ]);
 
   const jsonLd = {
@@ -96,6 +97,8 @@ export default async function ToolDetailPage({ params }: Props) {
   const ps = PRICING_STYLE[tool.pricing] ?? PRICING_STYLE['Paid'];
   const access = ACCESS_BADGE[tool.chinaAccess ?? 'unknown'];
   const officialUrl = tool.url ?? fallbackToolUrl(tool.name);
+  const registerText = tool.registerMethod?.length ? tool.registerMethod.join(' / ') : '未确认';
+  const priceText = tool.priceCny ?? tool.pricingDetail ?? (tool.pricing === 'Free' ? '免费' : tool.pricing);
 
   return (
     <>
@@ -219,6 +222,58 @@ export default async function ToolDetailPage({ params }: Props) {
               </div>
             </div>
           </div>
+
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #FED7AA', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(20px, 4vw, 28px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
+            <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 18px', letterSpacing: '-0.01em' }}>中国用户实操信息</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
+              {[
+                { label: '注册方式', value: registerText },
+                { label: '海外手机号', value: tool.needsOverseasPhone ? '需要' : '不需要' },
+                { label: '实名认证', value: tool.needsRealName ? '需要' : '不需要' },
+                { label: '支付限制', value: tool.overseasPaymentOnly ? '仅海外卡/PayPal' : '无明显限制' },
+                { label: '人民币价格', value: priceText },
+                { label: '微信小程序', value: tool.miniProgram ?? '未确认' },
+                { label: '中国区 App Store', value: tool.appStoreCn ? '已上架' : '未确认' },
+                { label: '微信公众号', value: tool.publicAccount ?? '未确认' },
+              ].map((item) => (
+                <div key={item.label} style={{ background: '#FFF7ED', borderRadius: 12, padding: '14px 16px', border: '1px solid #F3E8D0' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{item.label}</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#1F2937' }}>{item.value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {alternativeTools.length > 0 && (
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #BBF7D0', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(20px, 4vw, 28px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 14px', letterSpacing: '-0.01em' }}>国产替代方案</h2>
+              <p style={{ fontSize: 14, color: '#4B5563', lineHeight: 1.7, margin: '0 0 16px' }}>
+                如果当前工具访问或支付不方便，国内用户可以优先试试这些替代品。
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+                {alternativeTools.map((alt) => (
+                  <Link key={alt.id} href={`/tools/${alt.id}`} style={{ display: 'block', padding: '14px 16px', borderRadius: 12, background: '#F0FDF4', border: '1px solid #BBF7D0', textDecoration: 'none' }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: '#166534', marginBottom: 6 }}>{alt.name}</div>
+                    <div style={{ fontSize: 12, color: '#4B5563', lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>{alt.zh}</div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {tool.tutorialLinks && tool.tutorialLinks.length > 0 && (
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(20px, 4vw, 28px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 16px', letterSpacing: '-0.01em' }}>国内教程资源</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {tool.tutorialLinks.map((link) => (
+                  <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '12px 14px', borderRadius: 10, background: '#FFF7ED', border: '1px solid #F3E8D0', color: '#374151', textDecoration: 'none', fontSize: 14, fontWeight: 600 }}>
+                    <span>{link.platform}：{link.title}</span>
+                    <span style={{ color: '#F97316' }}>↗</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* ── Info grid ── */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 24 }}>

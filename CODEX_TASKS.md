@@ -961,3 +961,19 @@ Validation:
 - `npm run seed:cn-news-sources` completed and active news sources are Chinese only.
 - `npm run fetch:articles` completed with 7 Chinese news sources; 虎嗅 official RSS timed out during validation, other sources completed.
 - `npm run process:articles` processed 10 articles successfully.
+
+---
+
+## Codex update 2026-05-02 (G7)
+
+Status:
+- G7 done: `tools` now has China-specific fields for registration, overseas phone, real-name verification, payment limits, CNY price, WeChat mini program, China App Store availability, public account, China alternatives, and tutorial links.
+- `process-tool-candidates` prompt now asks the LLM for conservative China-user metadata for every new tool candidate.
+- `/tools/[slug]` now renders an 8-item China-user operations card, a China alternatives block, and optional domestic tutorial links.
+- Added `scripts/update-cn-user-fields.ts` and `npm run update:cn-user-fields` to backfill key tools without editing the older seed file.
+
+Validation:
+- `npm run db:push` added the new `tools` columns in Neon.
+- `npm run update:cn-user-fields` updated ChatGPT, Claude, Midjourney, Doubao, Kimi, and DeepSeek.
+- `npm run lint` passed with the pre-existing `scripts/cleanup-tool-data.ts` unused `sql` warning.
+- `npm run build` passed.
