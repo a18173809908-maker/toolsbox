@@ -197,6 +197,140 @@ vercel.json                   # Cron 配置（1/2/3 am UTC）
 
 ---
 
+## 五·五、产品差异化方向（2026-05-02 下午讨论，待 Codex 实施）
+
+### 战略定位
+
+> **AiToolsBox = 中国用户专属的 AI 工具指南**
+
+不是抄 ai-bot.cn，而是做对国内用户**更友好**的版本。每个功能决策都问一句：「这对国内用户有什么独特价值？」
+
+### 用户提出的三个问题
+
+1. 工具的分类远不如 ai-bot.cn 丰富
+2. 工具的图标不如 ai-bot.cn（我们是字母色块，他们是真 favicon）
+3. 详情页的介绍不如 ai-bot.cn 丰富
+
+### 解决方案 — 围绕「国内用户」差异化
+
+#### 任务 D1：分类按「国内用户心智模型」重组（中等优先级）
+
+**现状**：14 个分类是从西方 AI 目录翻译，不贴合国内搜索习惯
+
+**新增分类清单**（围绕国内场景）：
+```
+ai-search       AI搜索引擎       (秘塔/天工带火)
+translation     AI翻译           (独立成类)
+side-hustle     AI副业 / AI赚钱   ⭐ 国内独有热点
+digital-human   AI数字人 / AI主播 ⭐ 国内电商带货爆款
+ppt             PPT制作          (从 productivity 拆出)
+detection       内容检测/查重    ⭐ 国内学生刚需
+ai-learn        学习AI技术本身    (区别于 education)
+```
+
+**实施步骤**：
+1. `lib/data.ts` / categories 表追加上述 7 个分类
+2. 现有 38 个工具中，找出符合新分类的重新归类（如把 metaso 从 research → ai-search）
+3. 更新 `seed-cn-tools.ts` 中工具的 catId
+4. 验证 `/categories/[id]` 页面对新分类正常渲染
+
+#### 任务 D2：图标系统升级 + 国产/需VPN徽章（最高优先级，视觉冲击大）
+
+**现状**：用 `mono`（字母）+ `brand`（颜色块）做 placeholder，国内用户无法靠图标识别工具
+
+**方案**：
+1. **schema 加 `iconUrl text`** — DDG favicon 服务自动填充（`https://icons.duckduckgo.com/ip3/<domain>.ico`）
+2. **写脚本 `scripts/fill-tool-icons.ts`** — 遍历所有工具，从 `tool.url` 提取 domain，生成 iconUrl
+3. **改卡片渲染** — 优先 `<img src={iconUrl}>`，缺失/加载失败回退到字母块
+4. **加角标徽章** — 在卡片右上角醒目展示：
+   - 🇨🇳 红底「国产」徽章（chinaAccess=accessible 且工具是中国公司产品）
+   - ⚠️ 黄底「需VPN」徽章（chinaAccess=vpn-required）
+   - 🚫 灰底「已屏蔽」徽章（chinaAccess=blocked）
+
+**为什么是最高优先级**：用户一眼能识别「这工具我能不能用」，比 ai-bot.cn 还实用（他们不区分访问性）。
+
+**注意**：
+- DDG 服务有时返回 1×1 透明图（取不到 favicon），需做尺寸/字节数检测，过小则视为失败
+- 「国产」徽章判断逻辑可以用 url 域名包含 `.cn` 或在白名单里（doubao/kimi/deepseek 等）
+
+#### 任务 D3：详情页加「中国用户专属」字段（高优先级，独特价值）
+
+**思路**：不是补长篇介绍（那是 ai-bot.cn 做的事），而是回答国内用户最关心的**实操问题**。
+
+**schema 新增字段**：
+```typescript
+// 注册门槛
+registerMethod: text('register_method').array()       // ['手机号', '微信扫码', '邮箱']
+needsOverseasPhone: boolean                           // 是否需要海外手机号
+needsRealName: boolean                                // 是否需要实名认证
+
+// 支付门槛
+overseasPaymentOnly: boolean                          // 是否仅支持海外信用卡
+priceCny: text('price_cny')                          // 人民币价格（如「会员¥48/月」）
+
+// 国内特色入口
+miniProgram: text('mini_program')                    // 微信小程序名称
+appStoreCn: boolean                                  // 是否上架 App Store 中国区
+publicAccount: text('public_account')                // 官方微信公众号
+
+// 国产替代（杀手级功能）
+cnAlternatives: text('cn_alternatives').array()      // ['doubao', 'kimi'] —— 工具被墙时给国内替代品
+
+// 配套教程（国内平台）
+tutorialLinks: jsonb('tutorial_links')               // [{platform:'bilibili', url, title}]
+```
+
+**详情页对应的新区块**：
+
+```
+┌─ 🇨🇳 国内用户须知（已有，扩展） ──┐
+│  访问方式 / 中文界面 / 免费额度    │
+│  注册：手机号 + 实名认证   ← 新   │
+│  支付：仅支持海外信用卡 ⚠️ ← 新   │
+│  价格：约 ¥150/月         ← 新   │
+│  小程序：搜「豆包」可用    ← 新   │
+└──────────────────────────────────┘
+
+┌─ 🔄 国产替代方案 ──────────────┐ ← 全新区块（杀手级）
+│ 此工具需 VPN，国内用户可用：    │
+│ • 豆包 (字节，免费)             │
+│ • Kimi (月之暗面，长文本强)     │
+└──────────────────────────────┘
+
+┌─ 📺 国内教程资源（可选） ──────┐ ← 全新区块
+│ • B站：xxx 教程视频  ↗         │
+│ • 小红书：实操笔记 #           │
+└──────────────────────────────┘
+```
+
+**实施步骤**：
+1. schema 加上述字段，`npm run db:push`
+2. `loadToolById` 和 `Tool` 类型扩展
+3. `seed-cn-tools.ts` 14 个国内工具手工补全这些字段（数据已知的）
+4. `process-tool-candidates.ts` AI prompt 升级（针对新工具自动生成保守值）
+5. 详情页改造「国内用户须知」卡片 + 新增「国产替代方案」「教程资源」两个区块
+
+### 实施优先级（按用户价值）
+
+```
+P0 ─ 任务 D2  图标 + 国产徽章
+       理由：视觉冲击大、改动小、用户一眼识别能否使用
+
+P1 ─ 任务 D3  详情页中国用户专属字段（含国产替代）
+       理由：独家价值，ai-bot.cn 做不到
+
+P2 ─ 任务 D1  分类按国内场景重组
+       理由：长尾 SEO 受益，但工具量到 100+ 才明显
+```
+
+### 验证标准
+
+- D2 完成后：在 `/tools` 列表页所有卡片应显示真实图标（或回退字母块），右上角有「国产/需VPN/已屏蔽」徽章之一
+- D3 完成后：14 个国内工具的详情页「国内用户须知」卡片有 8 项信息，且至少能看到一个工具有「国产替代方案」推荐（如 ChatGPT 详情页推荐豆包/Kimi）
+- D1 完成后：`/categories` 应有 21+ 分类，新增的 `/categories/side-hustle`、`/categories/digital-human` 等页面能正常渲染
+
+---
+
 ## 六、环境变量（.env.local）
 
 ```
