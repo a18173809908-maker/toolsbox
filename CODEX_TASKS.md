@@ -476,12 +476,149 @@ hotnessScore =
 
 ---
 
+## 五·七、本地化体验升级（待 Codex 实施）
+
+### 任务 F1：GitHub README 中文翻译（百度翻译 API）
+
+**问题**：GitHub Trending 详情页（`/trending/[...slug]`）渲染的 README 几乎全英文，国内用户阅读门槛高。
+
+**方案确定：百度翻译 API**
+
+为何选百度而不是谷歌：
+1. 百度翻译开放平台**免费 200 万字符/月**，对当前规模（~200 个 repo × 平均 5K 字 ≈ 100 万/月）足够
+2. 国内访问稳定不被墙
+3. 中文翻译质量比谷歌略好
+4. 注册流程简单（5 分钟）
+5. 谷歌「免费」非官方接口违反 ToS、IP 易被封；官方 Cloud Translation 需信用卡
+
+**注册步骤**（Codex 提示用户操作）：
+1. 访问 `https://fanyi-api.baidu.com/`
+2. 注册并申请「通用翻译 API」标准版（免费）
+3. 拿到 `APP_ID` 和 `APP_KEY`
+
+**环境变量**：
+```
+BAIDU_TRANSLATE_APP_ID=
+BAIDU_TRANSLATE_APP_KEY=
+```
+
+**实施步骤**：
+
+1. **schema 加字段**：`github_trending` 表新增 `readmeZh text`（缓存翻译结果，避免重复调用）
+2. **新建 `lib/translate/baidu.ts`**：
+   - 函数签名：`translate(text: string, from: 'en', to: 'zh'): Promise<string>`
+   - 签名算法：MD5(appid + q + salt + key)
+   - 接口：`https://fanyi-api.baidu.com/api/trans/vip/translate`
+   - 单次请求限 6000 字节（UTF-8）→ 切块发送，每秒 1 次（QPS=1 限制）
+   - 失败重试 3 次，超时 fallback 到 DeepSeek 翻译
+3. **保留 markdown 结构**：
+   - 翻译前先用正则把 ```代码块``` 占位符替换（如 `__CODE_BLOCK_0__`）
+   - 把行内 `code` 也占位符替换
+   - 把 markdown 链接 `[text](url)` 中的 url 部分占位符替换（只翻 text）
+   - 翻译完成后还原占位符
+4. **改造 `app/trending/[...slug]/page.tsx`**：
+   - 加载 repo 时若 `readmeZh` 为空，触发翻译并缓存
+   - 详情页加「中英对照」切换按钮（默认显示中文，可切回英文原版）
+   - 或并排展示（左中右英）
+5. **写脚本 `scripts/translate-readmes.ts`**：批量为已有 200 个 repo 一次性翻译入库（避免详情页冷启动慢）
+
+**单次翻译伪代码**：
+```typescript
+async function translateReadme(readme: string): Promise<string> {
+  const { masked, placeholders } = maskCodeAndLinks(readme);
+  const chunks = splitByBytes(masked, 5500);
+  const translated = [];
+  for (const chunk of chunks) {
+    translated.push(await baiduTranslate(chunk));
+    await sleep(1100); // QPS=1
+  }
+  return restorePlaceholders(translated.join(''), placeholders);
+}
+```
+
+**验证标准**：
+- 任意 GitHub trending 详情页能看到中文 README，代码块/链接/图片完整保留
+- DB 中 `readmeZh` 字段填充率 80%+
+- 月度百度翻译用量在 200 万字符内
+
+---
+
+### 任务 F2：AI 资讯改为只抓国内源
+
+**问题**：当前资讯源以英文为主（TechCrunch / The Verge / VentureBeat 等），翻译后失真，且不符合「中国用户专属」定位。
+
+**方案**：放弃所有英文源，只抓国内主流媒体 + B 站。
+
+#### F2-1：禁用英文源，添加中文主流媒体 RSS（立即可做）
+
+**操作**：
+1. 把 `sources` 表中所有 `lang='en'` 的条目 `active=false`
+2. 写脚本 `scripts/seed-cn-news-sources.ts` 添加以下中文源：
+
+| 名称 | RSS / Feed | 备注 |
+|------|------------|------|
+| 机器之心 | `https://www.jiqizhixin.com/rss` | AI 权威媒体，质量高 |
+| 量子位 | `https://www.qbitai.com/feed` | 通俗易懂，覆盖面广 |
+| 36氪 AI | `https://36kr.com/feed` + 标签过滤 | 商业视角 |
+| InfoQ 中文 AI | `https://www.infoq.cn/feed.xml` + 主题过滤 | 技术深度 |
+| 虎嗅 AI | `https://www.huxiu.com/rss/0.xml` + 频道过滤 | 商业评论 |
+| PingWest 品玩 | `https://www.pingwest.com/feed` | 科技媒体 |
+| 钛媒体 AI | `https://www.tmtpost.com/rss.xml` + AI 标签 | 商业新闻 |
+
+**注意**：部分 RSS 是全站 feed，需要在 fetch 时过滤标题/分类含 AI 关键词的条目。
+
+3. 验证抓取链路：中文 RSS 通常 GBK/UTF-8 混杂，需检查编码处理
+
+#### F2-2：处理逻辑调整（中文源）
+
+`lib/jobs/process-articles.ts` 已有 `processChinese()` 分支（lang='zh'），逻辑已对：
+- 中文源：标题保留原文为 `titleZh`，AI 只生成 `summaryZh` 和 `tag`
+- 不需要翻译，省一半 token
+
+**额外建议**：因为只有中文源了，可以把 `processEnglish()` 函数删掉，简化代码。
+
+#### F2-3：B 站 AI 频道热门视频抓取（中期）
+
+**为什么选 B 站作为社交平台首发**：
+1. B 站有非官方但稳定的 API（`api.bilibili.com/x/web-interface/popular`）
+2. AI 教程视频质量高，受众与我们目标用户高度重合
+3. 反爬比小红书/微博弱
+4. 视频标题 + UP 主信息 + 播放量都能拿到，是一手「国内热度」信号
+
+**实施**：
+1. 新建 `scripts/fetch-bilibili-ai.ts`
+2. 调用：`https://api.bilibili.com/x/web-interface/search/all/v2?keyword=AI工具`
+   或分区热门：`https://api.bilibili.com/x/web-interface/popular/precious`
+3. 过滤标题含 AI 关键词的视频
+4. 入库到新表 `bilibili_videos`：
+   ```sql
+   id, bvid, title, uploader, views, likes, duration, publishedAt, url, fetchedAt
+   ```
+5. 在首页或新闻页加「📺 B站 AI 热门」区块（替代/补充现有英文资讯）
+6. 注意：B 站 API 需要带浏览器 User-Agent 头，可能需要 cookie
+
+**长期可扩展（不必现在做）**：
+- 微博热搜 AI 话题
+- 知乎 AI 话题精华
+- 小红书（最难，反爬严，最后做）
+
+#### 验证标准
+
+- F2-1 完成后：sources 表 `active=true` 的条目全部 `lang='zh'`，cron 跑完 articles 表新增条目全部为中文
+- F2-2 完成后：`processEnglish` 调用次数为 0，`processChinese` 处理量为之前总量的全部
+- F2-3 完成后：bilibili_videos 表每周新增 50+ 视频，前端能看到 B 站热门 AI 视频列表
+
+---
+
 ## 六、环境变量（.env.local）
 
 ```
-DATABASE_URL=           # Neon PostgreSQL 连接串
-DEEPSEEK_API_KEY=       # DeepSeek API key（用于 AI 处理）
-CRON_SECRET=            # Vercel cron 鉴权 header
+DATABASE_URL=                   # Neon PostgreSQL 连接串
+DEEPSEEK_API_KEY=               # DeepSeek API key（用于 AI 处理）
+CRON_SECRET=                    # Vercel cron 鉴权 header
+BAIDU_TRANSLATE_APP_ID=         # 百度翻译开放平台 APP ID（任务 F1）
+BAIDU_TRANSLATE_APP_KEY=        # 百度翻译开放平台密钥（任务 F1）
+PRODUCT_HUNT_TOKEN=             # Product Hunt API token（任务 E2，可选）
 ```
 
 ---
@@ -502,6 +639,33 @@ CRON_SECRET=            # Vercel cron 鉴权 header
 - `app/categories/[id]/page.tsx`：分类详情页 hero、工具网格、返回链接 padding 适配移动端。
 
 验证要求：后续继续前请跑 `npm run lint` 和 `npm run build`；如有浏览器环境，重点查看 375px 宽度下 `/`、`/tools`、`/news`、`/trending`、工具详情页、GitHub 详情页是否无横向滚动。
+
+---
+
+## 八、Codex 更新（2026-05-02，工具 RSS 源恢复）
+
+已恢复工具自动抓取输入源：
+
+- Product Hunt AI：`https://www.producthunt.com/feed?category=artificial-intelligence`
+- BetaList AI：`https://betalist.com/topics/artificial-intelligence/feed`
+- Cut & Ship AI：`https://www.cutandship.ai/feed.xml`
+
+已执行验证：
+
+- `npm run seed:tool-sources`：启用上述 3 个源，禁用 DreyX / Insidr / Planet AI 等新闻型源。
+- `npm run fetch:tool-candidates`：成功插入 56 条候选，Product Hunt AI 30、BetaList AI 20、Cut & Ship AI 6。
+- `npm run process:tool-candidates`：端到端跑通，结果为 processed 3、skipped 3、rejected 0。
+
+代码变更：
+
+- `scripts/seed-tool-sources.ts`：替换为 3 个验证可用源，并补充失效源禁用清单。
+- `lib/jobs/fetch-tool-candidates.ts`：清洗 RSS/Atom 描述中的 HTML，归一 `产品名 – tagline` / `产品名 - tagline` 标题。
+- `lib/jobs/process-tool-candidates.ts`：LLM 结果支持 `isTool:false`，用于识别非工具候选。
+
+注意：
+
+- Cut & Ship 有少量项目型/非标准工具条目，后续如质量不稳可先禁用该源。
+- `process-tool-candidates` 目前遇到 `isTool:false` 会 skipped，后续建议改成 rejected，避免重复处理。
 
 ---
 
