@@ -945,3 +945,19 @@ Validation:
 - `npm run db:push` completed for `readme_zh`.
 - `npm run translate:readme -- vercel/ai` and `npm run translate:readmes -- 1` handle missing Baidu config cleanly.
 - `npm run lint` and `npm run build` should be re-run after this update before push.
+
+---
+
+## Codex update 2026-05-02 (G4)
+
+Status:
+- G4 done: added `scripts/seed-cn-news-sources.ts` and `npm run seed:cn-news-sources`.
+- The seed script disables existing `type='news'` sources and re-enables 7 Chinese news feeds: 机器之心, 量子位, 36氪 AI, InfoQ 中文 AI, 虎嗅 AI, PingWest 品玩, 钛媒体 AI. Tool discovery sources are untouched because they use `type='tool'`.
+- `lib/jobs/fetch-articles.ts` now decodes RSS by declared charset and falls back to `gb18030` when UTF-8 replacement characters appear.
+- Full-site Chinese feeds are filtered by AI keywords; 机器之心 and 量子位 are treated as AI-native feeds.
+- `lib/jobs/process-articles.ts` was rewritten with readable Chinese tags/prompts and now interpolates the real Chinese title in `processChinese()`.
+
+Validation:
+- `npm run seed:cn-news-sources` completed and active news sources are Chinese only.
+- `npm run fetch:articles` completed with 7 Chinese news sources; 虎嗅 official RSS timed out during validation, other sources completed.
+- `npm run process:articles` processed 10 articles successfully.
