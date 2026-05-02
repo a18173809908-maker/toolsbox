@@ -5,6 +5,103 @@
 
 ---
 
+## ⚡ 最新检查（2026-05-02 晚，Claude review 后给 Codex 的下一批任务）
+
+Codex 已完成 D2 / E1 / F1 三个任务，实测可用。但 review 后发现以下问题需要修复，以及还未启动的 P0/P1 任务清单。**Codex 拿到这一节后请按顺序处理，每完成一个 commit 一次。**
+
+### G1（最高优先级）：修复 favicon 服务 — 改用 DDG，不用 Google
+
+**问题**：`components/ToolBadges.tsx` 第 58 行用的是 `https://www.google.com/s2/favicons?domain=...&sz=128`，但本产品定位「中国用户专属」，**Google 在国内不稳定甚至被墙**，会导致大量国产用户看不到工具图标，与产品定位直接冲突。
+
+**修复**：
+1. `components/ToolBadges.tsx` 中 `faviconUrl` 函数改为返回 DDG 地址：
+   ```typescript
+   return `https://icons.duckduckgo.com/ip3/${encodeURIComponent(host)}.ico`;
+   ```
+2. `next.config.ts` 中的 `images.remotePatterns` 把 `www.google.com` 改成 `icons.duckduckgo.com`（如果之前加过 google 的，要移除）
+3. 验证：用国内网络访问 `/tools`，所有工具卡片 favicon 应正常加载（DDG 在国内访问稳定）
+
+**注意**：DDG 偶尔返回 1×1 透明小图（取不到 favicon 时），可考虑加一层「图片加载失败 → 字母兜底」的 onError 处理（如果需要 client component 改造，可以选择保留 server-side 的 favicon URL，让浏览器自然回退）。
+
+### G2（高优先级）：F1 README 翻译落地存储 + env var 对齐
+
+**问题 1**：`lib/baidu-translate.ts` 用 `BAIDU_TRANSLATE_KEY`，但 CODEX_TASKS 文档要求的是 `BAIDU_TRANSLATE_APP_KEY`（与百度官方文档命名一致）。需要二选一对齐。
+
+**修复 1**：
+- 推荐改 `lib/baidu-translate.ts` 用 `BAIDU_TRANSLATE_APP_KEY`（与官方一致）
+- 同步更新「六、环境变量」段（已是 `BAIDU_TRANSLATE_APP_KEY`，不用改）
+- 同步更新 Codex 自己的「九、Codex 更新」记录
+
+**问题 2**：当前每次访问详情页都会触发翻译（虽然有 Next HTTP cache 24h，但每天还是浪费一次百度配额，且页面冷启动慢）。文档要求**翻译结果存到 `github_trending.readmeZh` 字段**，永久缓存。
+
+**修复 2**：
+1. `lib/db/schema.ts` 中 `githubTrending` 表加字段 `readmeZh: text('readme_zh')`
+2. 运行 `npm run db:push`
+3. `app/trending/[...slug]/page.tsx` 改造逻辑：
+   - 加载 repo 时 SELECT 包含 `readmeZh`
+   - 如果 `readmeZh` 已有值 → 直接渲染
+   - 如果为空且配置了百度密钥 → 调翻译 → UPDATE 入库 → 渲染
+4. `scripts/translate-readme.ts` 也改成 UPDATE 入库（不只是输出）
+5. 写一个补全脚本 `scripts/translate-all-readmes.ts`，遍历所有 `readmeZh IS NULL` 的 repo，批量翻译入库（限速 1 秒一次，避开百度 QPS 限制）
+
+### G3（中优先级）：HN 候选名清洗
+
+**问题**：当前 HN 候选的 name 是帖子标题（如「Show HN: AcmeAI - A GPT-powered note tool」），Codex 已做了简单清洗，但仍可能含描述性后缀。AI 处理时把这种带描述的 name 当工具名入库会很丑。
+
+**修复**：在 `lib/jobs/discover-tool-signals.ts` 的 `cleanTitle` 函数里加更严格的规则：
+- 截取 `:`、`-`、`–`、`—`、`|` 之前的部分作为工具名（如 `AcmeAI - A GPT...` → `AcmeAI`）
+- 长度超 30 字直接 reject 不入库（多数纯描述性帖子）
+- 工具名只允许字母/数字/`-`/`_`/`.`、长度 ≤ 30
+
+### G4（高优先级，未启动）：F2 资讯源切到中文 + 删英文
+
+**任务详情见「五·七 任务 F2」**（机器之心 / 量子位 / 36氪 等 7 个源）
+
+补充要点：
+1. 不要直接删除现有英文 sources，而是 `UPDATE sources SET active=false WHERE lang='en'`，保留历史数据
+2. 验证抓取链路时注意中文 RSS 编码（部分站可能 GBK，需 iconv-lite 转码）
+3. 确认 cron 跑通后再考虑实施 F2-3（B站抓取）
+
+### G5（中优先级，未启动）：E3 综合热度评分
+
+**任务详情见「五·六 任务 E3」**（hotnessScore 加权排序 + 阈值过滤）
+
+实施要点：
+1. schema 加字段：`hnPoints`、`ghGainedStars`、`hotnessScore`、`firstSeenAt`
+2. `discover-tool-signals.ts` 抓取时填这些字段（`votes` 已是来源原始分，新字段是分类记录）
+3. `process-tool-candidates.ts` 改 `loadPendingToolCandidates` 的 ORDER BY 为 `hotnessScore DESC, fetchedAt DESC`
+4. 阈值丢弃：`hotnessScore < 5` 直接 markRejected 不喂 AI
+
+### G6（中优先级，未启动）：E2 Product Hunt 官方 API
+
+**任务详情见「五·六 任务 E2」**
+
+注意：Codex 在 RSS 源里已加了 `https://www.producthunt.com/feed?category=artificial-intelligence`，**但这不是 API**，质量比官方 GraphQL 差很多（拿不到精确 votes、makers、topics）。所以 G6 还要做，独立于现有 RSS 源。
+
+### G7（中优先级，未启动）：D3 详情页中国用户专属字段
+
+**任务详情见「五·五 任务 D3」**（注册门槛 / 支付门槛 / 微信小程序 / **国产替代方案** 等）
+
+「🔄 国产替代方案」是杀手级区块，做完后 ChatGPT 详情页能推荐豆包/Kimi 给国内用户。
+
+### G8（低优先级，未启动）：D1 分类重组、E4 ai-bot.cn 抓取、E5 运营录入页
+
+详见对应章节，等 G1-G7 完成后再做。
+
+### Codex 实施顺序建议
+
+```
+G1 (修 favicon)          → 立即修，对齐产品定位
+G2 (F1 落地缓存 + env)   → 接着做，省百度配额 + 不返工
+G3 (HN 名清洗)            → 数据质量补丁
+G4 (F2 中文资讯源)        → 大改动，独立一个 commit
+G5 (E3 热度评分)          → 配合 G4 后处理，提升候选质量
+G6 (E2 PH API)           → 需要先申请 token
+G7 (D3 详情页字段)        → 体量较大，独立 commit
+```
+
+---
+
 ## 一、已完成工作汇总
 
 ### 工具库自动抓取管道（Task 10）
