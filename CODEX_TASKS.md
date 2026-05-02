@@ -753,6 +753,49 @@ PRODUCT_HUNT_TOKEN=             # Product Hunt API token（任务 E2，可选）
 
 ---
 
+## 九、Codex 更新（2026-05-02，D2 / E1 / F1）
+
+已完成用户指定任务：
+
+### D2：图标 + 国产/VPN 徽章
+
+- 新增 `components/ToolBadges.tsx`：
+  - `ToolIcon`：优先使用官网 favicon，兜底使用原字母 logo。
+  - `AccessBadge`：统一展示“国产友好 / 国内直连 / 需 VPN / 国内受限”徽章。
+- `/tools` 列表页已接入 favicon 图标与访问徽章。
+- `/tools/[slug]` 详情页 hero 已接入 favicon 图标与访问徽章。
+- `next.config.ts` 已允许 `www.google.com` favicon 图片域名。
+
+### E1：HN + GitHub trending → 工具候选
+
+- 新增 `lib/jobs/discover-tool-signals.ts`：
+  - Hacker News：通过 Algolia API 抓取 `Show HN / Launch HN + AI` 候选。
+  - GitHub trending：从本地 `github_trending` 的 week 榜筛 AI 相关 repo，写入 `tool_candidates`。
+- 新增脚本：`npm run discover:tool-signals`。
+- `/api/cron/refresh-tools` 已改为同时跑 RSS、HN、GitHub trending 三路候选，然后继续跑 `processToolCandidates()`。
+- `tool_candidates.source_type` 现在会写入 `hn` / `github` / `rss`，便于后续质量分析。
+- 已执行验证：
+  - `npm run discover:tool-signals`：HN 插入 9 条，GitHub trending 插入 7 条。
+  - `npm run process:tool-candidates`：processed 4、skipped 2、rejected 0。
+
+### F1：README 百度翻译
+
+- 新增 `lib/baidu-translate.ts`：
+  - 使用百度翻译 API：`BAIDU_TRANSLATE_APP_ID` + `BAIDU_TRANSLATE_KEY`。
+  - 对 README 做 markdown 文本清洗，只翻译前 1400 字符作为中文速览，避免整篇 README 请求过大。
+- GitHub 详情页 `/trending/[...slug]`：
+  - 如果配置了百度翻译密钥，会在 README 上方显示“百度翻译 · 中文速览”。
+  - 如果未配置密钥，页面不报错，只显示原 README。
+- 新增脚本：`npm run translate:readme -- owner/repo`。
+- 本地验证时 `.env.local` 未配置百度翻译密钥，脚本会提示并输出 README excerpt，退出码为 0。
+
+后续建议：
+
+- 如果要上线 F1，需要在 Vercel / GitHub Actions secrets 里补 `BAIDU_TRANSLATE_APP_ID` 和 `BAIDU_TRANSLATE_KEY`。
+- E1 当前会把 HN/GitHub 候选先送进候选池，再由 LLM 过滤发布；质量稳定前不要一次性大批量 process。
+
+---
+
 ```bash
 npm run dev                    # 本地开发
 npm run db:push                # 同步 schema 到 Neon

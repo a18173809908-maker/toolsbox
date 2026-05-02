@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { Metadata } from 'next';
 import { SiteHeader } from '@/components/SiteHeader';
+import { translateReadmeExcerpt } from '@/lib/baidu-translate';
 import { fetchReadme, fetchRepoInfo, renderReadme } from '@/lib/github';
 import { loadRepoDetail } from '@/lib/db/queries';
 
@@ -68,6 +69,7 @@ export default async function TrendingDetailPage({ params }: Props) {
     fetchReadme(repo),
   ]);
   const readmeHtml = readme ? await renderReadme(readme, repo) : null;
+  const readmeZh = readme ? await translateReadmeExcerpt(readme) : null;
   const pushedAt = repoInfo?.pushed_at ? new Date(repoInfo.pushed_at).toLocaleDateString('zh-CN') : null;
 
   return (
@@ -180,6 +182,12 @@ export default async function TrendingDetailPage({ params }: Props) {
         {readmeHtml && (
           <div style={{ background: C.panel, borderRadius: 16, border: `1px solid ${C.rule}`, padding: 'clamp(22px, 4vw, 28px) clamp(18px, 5vw, 40px)', marginBottom: 24, overflow: 'hidden' }}>
             <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: C.ink, margin: '0 0 18px' }}>README</h2>
+            {readmeZh && (
+              <div style={{ background: C.bg, borderRadius: 12, borderLeft: `4px solid ${C.primary}`, padding: '16px 20px', marginBottom: 20 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.accent, marginBottom: 8, letterSpacing: '0.04em' }}>百度翻译 · 中文速览</div>
+                <p style={{ fontSize: 14, color: C.inkSoft, lineHeight: 1.8, margin: 0, whiteSpace: 'pre-line' }}>{readmeZh}</p>
+              </div>
+            )}
             <div
               className="readme-content"
               style={{ lineHeight: 1.7, color: '#374151', fontSize: 14, overflow: 'hidden' }}

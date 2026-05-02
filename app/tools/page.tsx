@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
+import { AccessBadge, ToolIcon } from '@/components/ToolBadges';
 import { loadToolsPage, loadAllCategories } from '@/lib/db/queries';
 
 export const dynamic = 'force-dynamic';
@@ -31,13 +32,6 @@ const PRICING_STYLE: Record<string, { bg: string; color: string }> = {
   Free:     { bg: '#DCFCE7', color: '#16A34A' },
   Freemium: { bg: '#FFEDD5', color: '#C2410C' },
   Paid:     { bg: '#F3F4F6', color: '#374151' },
-};
-
-const ACCESS_LABEL: Record<string, { label: string; color: string }> = {
-  accessible:   { label: '国内直连', color: '#16A34A' },
-  'vpn-required': { label: '需VPN',  color: '#92400E' },
-  blocked:      { label: '无法访问', color: '#991B1B' },
-  unknown:      { label: '',         color: '#9CA3AF' },
 };
 
 type SearchParams = { cat?: string; pricing?: string; china?: string; q?: string; page?: string };
@@ -217,7 +211,6 @@ export default async function ToolsPage({ searchParams }: Props) {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(300px, 100%), 1fr))', gap: 16 }}>
               {items.map((tool) => {
                 const ps = PRICING_STYLE[tool.pricing] ?? PRICING_STYLE['Paid'];
-                const access = ACCESS_LABEL[tool.chinaAccess ?? 'unknown'];
                 return (
                   <Link
                     key={tool.id}
@@ -230,14 +223,7 @@ export default async function ToolsPage({ searchParams }: Props) {
                     }}>
                       {/* Header row */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                        <div style={{
-                          width: 44, height: 44, borderRadius: 10, background: tool.brand, color: '#fff',
-                          display: 'grid', placeItems: 'center', flexShrink: 0,
-                          fontFamily: 'Georgia, serif', fontWeight: 700,
-                          fontSize: tool.mono.length <= 2 ? 18 : 13, letterSpacing: '-0.03em',
-                        }}>
-                          {tool.mono.slice(0, 3)}
-                        </div>
+                        <ToolIcon name={tool.name} mono={tool.mono} brand={tool.brand} url={tool.url} size={44} />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontWeight: 700, fontSize: 15, color: C.ink, marginBottom: 4 }}>
                             {tool.name}
@@ -246,11 +232,7 @@ export default async function ToolsPage({ searchParams }: Props) {
                             <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, background: ps.bg, color: ps.color }}>
                               {tool.pricing}
                             </span>
-                            {tool.chinaAccess && tool.chinaAccess !== 'unknown' && access.label && (
-                              <span style={{ fontSize: 11, fontWeight: 600, color: access.color }}>
-                                {tool.chinaAccess === 'accessible' ? '🟢' : '🟡'} {access.label}
-                              </span>
-                            )}
+                            <AccessBadge chinaAccess={tool.chinaAccess} compact />
                           </div>
                         </div>
                       </div>

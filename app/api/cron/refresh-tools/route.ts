@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { discoverToolSignals } from '@/lib/jobs/discover-tool-signals';
 import { fetchToolCandidates } from '@/lib/jobs/fetch-tool-candidates';
 import { processToolCandidates } from '@/lib/jobs/process-tool-candidates';
 
@@ -13,9 +14,12 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const fetchResult = await fetchToolCandidates();
+    const [fetchResult, signalResult] = await Promise.all([
+      fetchToolCandidates(),
+      discoverToolSignals(),
+    ]);
     const processResult = await processToolCandidates();
-    return NextResponse.json({ ok: true, fetch: fetchResult, process: processResult });
+    return NextResponse.json({ ok: true, fetch: fetchResult, signals: signalResult, process: processResult });
   } catch (err) {
     return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
   }

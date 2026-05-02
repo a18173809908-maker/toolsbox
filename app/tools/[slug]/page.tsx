@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { SiteHeader } from '@/components/SiteHeader';
+import { AccessBadge, ToolIcon } from '@/components/ToolBadges';
 import { loadToolById, loadAllToolIds, loadToolsByCategory, loadRelatedArticles } from '@/lib/db/queries';
 
 export const revalidate = 3600; // ISR — regenerate hourly
@@ -119,18 +120,12 @@ export default async function ToolDetailPage({ params }: Props) {
           {/* ── Hero card ── */}
           <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', padding: 'clamp(22px, 4vw, 36px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
             <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-              <div style={{
-                width: 80, height: 80, borderRadius: 20, background: tool.brand, color: '#fff',
-                display: 'grid', placeItems: 'center', fontFamily: 'Georgia, serif', fontWeight: 700,
-                fontSize: tool.mono.length === 1 ? 40 : 26, letterSpacing: '-0.04em', flexShrink: 0,
-              }}>{tool.mono}</div>
+              <ToolIcon name={tool.name} mono={tool.mono} brand={tool.brand} url={tool.url} size={80} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
                 <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 'clamp(28px, 8vw, 34px)', margin: 0, color: '#1F2937', letterSpacing: '-0.02em' }}>{tool.name}</h1>
                   <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, background: ps.bg, color: ps.color }}>{tool.pricing}</span>
-                  {tool.chinaAccess && tool.chinaAccess !== 'unknown' && (
-                    <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, background: access.bg, color: access.color }}>{access.label}</span>
-                  )}
+                  <AccessBadge chinaAccess={tool.chinaAccess} chineseUi={tool.chineseUi} />
                   {tool.featured && <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: '#FFEDD5', color: '#C2410C', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Editor&rsquo;s Pick</span>}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#9CA3AF', marginBottom: 20 }}>

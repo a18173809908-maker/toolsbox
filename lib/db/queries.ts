@@ -184,6 +184,7 @@ export async function upsertToolCandidates(items: {
   url: string;
   description?: string;
   sourceName: string;
+  sourceType?: string;
   votes?: number;
 }[]): Promise<number> {
   if (items.length === 0) return 0;
@@ -194,6 +195,7 @@ export async function upsertToolCandidates(items: {
       url: item.url,
       description: item.description,
       sourceName: item.sourceName,
+      sourceType: item.sourceType ?? 'rss',
       votes: item.votes ?? 0,
     }).onConflictDoNothing();
     if (result.rowCount && result.rowCount > 0) inserted++;
