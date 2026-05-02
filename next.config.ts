@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'github.com' },
-      { protocol: 'https', hostname: 'www.google.com' },
+      { protocol: 'https', hostname: 'icons.duckduckgo.com' },
     ],
   },
 };

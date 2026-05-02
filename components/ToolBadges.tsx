@@ -55,7 +55,7 @@ function isChineseTool(url?: string | null) {
 export function faviconUrl(url?: string | null) {
   const host = hostname(url);
   if (!host) return null;
-  return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=128`;
+  return `https://icons.duckduckgo.com/ip3/${encodeURIComponent(host)}.ico`;
 }
 
 export function ToolIcon({ name, mono, brand, url, size = 44 }: ToolIconProps) {
