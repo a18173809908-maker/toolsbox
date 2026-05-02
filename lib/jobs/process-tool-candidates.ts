@@ -140,6 +140,12 @@ export async function processToolCandidates(): Promise<{ processed: number; reje
   let skipped = 0;
 
   for (const candidate of pending) {
+    if (candidate.hotnessScore !== null && candidate.hotnessScore < 5) {
+      await markToolCandidateRejected(candidate.id);
+      rejected++;
+      continue;
+    }
+
     if (looksLikeNews(candidate.name)) {
       await markToolCandidateRejected(candidate.id);
       rejected++;

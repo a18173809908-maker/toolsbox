@@ -977,3 +977,20 @@ Validation:
 - `npm run update:cn-user-fields` updated ChatGPT, Claude, Midjourney, Doubao, Kimi, and DeepSeek.
 - `npm run lint` passed with the pre-existing `scripts/cleanup-tool-data.ts` unused `sql` warning.
 - `npm run build` passed.
+
+---
+
+## Codex update 2026-05-02 (G5)
+
+Status:
+- G5 done: `tool_candidates` now has `hn_points`, `gh_gained_stars`, `hotness_score`, and `first_seen_at`.
+- HN candidates write `hnPoints` and use HN points as `hotnessScore`.
+- GitHub trending candidates write `ghGainedStars` and use `round(gained * 0.05)` as `hotnessScore`.
+- Pending candidate processing now orders by `hotnessScore DESC, fetchedAt DESC`.
+- Candidates with a known `hotnessScore < 5` are rejected before LLM processing; unknown scores stay eligible to avoid damaging older RSS candidates.
+
+Validation:
+- `npm run db:push` added the new `tool_candidates` columns in Neon.
+- `npm run discover:tool-signals` completed successfully; no new candidates were inserted in that run.
+- `npm run lint` passed with the pre-existing `scripts/cleanup-tool-data.ts` unused `sql` warning.
+- `npm run build` passed.

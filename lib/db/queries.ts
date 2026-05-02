@@ -201,6 +201,9 @@ export async function upsertToolCandidates(items: {
   sourceName: string;
   sourceType?: string;
   votes?: number;
+  hnPoints?: number;
+  ghGainedStars?: number;
+  hotnessScore?: number;
 }[]): Promise<number> {
   if (items.length === 0) return 0;
   let inserted = 0;
@@ -212,6 +215,9 @@ export async function upsertToolCandidates(items: {
       sourceName: item.sourceName,
       sourceType: item.sourceType ?? 'rss',
       votes: item.votes ?? 0,
+      hnPoints: item.hnPoints,
+      ghGainedStars: item.ghGainedStars,
+      hotnessScore: item.hotnessScore,
     }).onConflictDoNothing();
     if (result.rowCount && result.rowCount > 0) inserted++;
   }
@@ -223,7 +229,7 @@ export async function loadPendingToolCandidates(limit = 8) {
     .select()
     .from(toolCandidates)
     .where(eq(toolCandidates.status, 'pending'))
-    .orderBy(desc(toolCandidates.fetchedAt))
+    .orderBy(desc(toolCandidates.hotnessScore), desc(toolCandidates.fetchedAt))
     .limit(limit);
 }
 

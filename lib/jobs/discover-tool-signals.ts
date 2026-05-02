@@ -60,6 +60,8 @@ export async function fetchHackerNewsToolCandidates(limit = 20): Promise<Discove
           sourceName: 'Hacker News AI',
           sourceType: 'hn',
           votes: hit.points ?? 0,
+          hnPoints: hit.points ?? 0,
+          hotnessScore: hit.points ?? 0,
         };
       })
       .filter((item): item is NonNullable<typeof item> => Boolean(item));
@@ -94,6 +96,8 @@ export async function fetchGithubTrendingToolCandidates(limit = 20): Promise<Dis
           sourceName: 'GitHub Trending AI',
           sourceType: 'github',
           votes: repo.gained,
+          ghGainedStars: repo.gained,
+          hotnessScore: Math.round(repo.gained * 0.05),
         };
       });
 
