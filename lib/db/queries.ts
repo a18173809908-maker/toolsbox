@@ -110,7 +110,8 @@ export async function loadToolById(id: string): Promise<(Tool & { catEn: string;
       openSource: tools.openSource, githubRepo: tools.githubRepo, features: tools.features,
       pricingDetail: tools.pricingDetail, alternatives: tools.alternatives,
       upvotes: tools.upvotes, downvotes: tools.downvotes,
-      featured: tools.featured, publishedAt: tools.publishedAt,
+      featured: tools.featured, howToUse: tools.howToUse, faqs: tools.faqs,
+      publishedAt: tools.publishedAt,
       catEn: categories.en, catZh: categories.zh, catIcon: categories.icon,
     })
     .from(tools)
@@ -135,7 +136,10 @@ export async function loadToolById(id: string): Promise<(Tool & { catEn: string;
     alternatives: row.alternatives ?? undefined,
     upvotes: row.upvotes,
     downvotes: row.downvotes,
-    featured: row.featured, date: row.publishedAt,
+    featured: row.featured,
+    howToUse: row.howToUse ?? undefined,
+    faqs: row.faqs ?? undefined,
+    date: row.publishedAt,
     catEn: row.catEn, catZh: row.catZh, catIcon: row.catIcon,
   };
 }
@@ -220,6 +224,8 @@ export async function publishToolCandidate(id: number, data: {
   url: string;
   chinaAccess: Tool['chinaAccess'];
   features?: string[];
+  howToUse?: string[];
+  faqs?: { q: string; a: string }[];
 }) {
   await db.insert(tools).values({
     id: data.slug,
@@ -233,6 +239,8 @@ export async function publishToolCandidate(id: number, data: {
     url: data.url,
     chinaAccess: data.chinaAccess ?? 'unknown',
     features: data.features,
+    howToUse: data.howToUse,
+    faqs: data.faqs,
     publishedAt: new Date().toISOString().slice(0, 10),
   }).onConflictDoNothing();
 
@@ -433,6 +441,30 @@ export async function loadAllCategories() {
   return cats
     .map((c) => ({ ...c, count: countMap.get(c.id) ?? 0 }))
     .sort((a, b) => b.count - a.count);
+}
+
+// ── Tool related articles ─────────────────────────────────────────────────────
+
+export async function loadRelatedArticles(toolName: string, limit = 5) {
+  const pattern = `%${toolName}%`;
+  return db
+    .select({
+      id: articles.id,
+      title: articles.title,
+      titleZh: articles.titleZh,
+      url: articles.url,
+      tag: articles.tag,
+      publishedAt: articles.publishedAt,
+    })
+    .from(articles)
+    .where(
+      and(
+        eq(articles.status, 'published'),
+        or(ilike(articles.title, pattern), ilike(articles.titleZh, pattern))
+      )
+    )
+    .orderBy(desc(articles.publishedAt))
+    .limit(limit);
 }
 
 // ── Automation status ─────────────────────────────────────────────────────────

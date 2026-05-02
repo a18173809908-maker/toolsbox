@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { SiteHeader } from '@/components/SiteHeader';
-import { loadToolById, loadAllToolIds, loadToolsByCategory } from '@/lib/db/queries';
+import { loadToolById, loadAllToolIds, loadToolsByCategory, loadRelatedArticles } from '@/lib/db/queries';
 
 export const revalidate = 3600; // ISR — regenerate hourly
 
@@ -61,9 +61,10 @@ export default async function ToolDetailPage({ params }: Props) {
   const tool = await loadToolById(slug);
   if (!tool) notFound();
 
-  const related = (await loadToolsByCategory(tool.cat))
-    .filter((t) => t.id !== tool.id)
-    .slice(0, 4);
+  const [related, relatedArticles] = await Promise.all([
+    loadToolsByCategory(tool.cat).then((ts) => ts.filter((t) => t.id !== tool.id).slice(0, 4)),
+    loadRelatedArticles(tool.name, 5),
+  ]);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -138,6 +139,15 @@ export default async function ToolDetailPage({ params }: Props) {
                   </Link>
                   <span>·</span>
                   <span>收录于 {tool.date}</span>
+                  {(tool.upvotes ?? 0) > 0 && (
+                    <>
+                      <span>·</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                        <span>👍</span>
+                        <span style={{ fontWeight: 600, color: '#6B7280' }}>{tool.upvotes}</span>
+                      </span>
+                    </>
+                  )}
                 </div>
                 {/* CTA */}
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -163,7 +173,22 @@ export default async function ToolDetailPage({ params }: Props) {
             </div>
           </div>
 
-          {/* ── Info grid ── */}
+          {/* ── 使用教程 ── */}
+          {tool.howToUse && tool.howToUse.length > 0 && (
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(22px, 4vw, 32px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 20px', letterSpacing: '-0.01em' }}>🚀 如何开始使用</h2>
+              <ol style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {tool.howToUse.map((step, i) => (
+                  <li key={i} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                    <span style={{ flexShrink: 0, width: 28, height: 28, borderRadius: '50%', background: '#F97316', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 13 }}>{i + 1}</span>
+                    <span style={{ fontSize: 15, color: '#374151', lineHeight: 1.7, paddingTop: 4 }}>{step}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+
+          {/* ── 功能亮点 ── */}
           {tool.features && tool.features.length > 0 && (
             <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(22px, 4vw, 28px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
               <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 16px', letterSpacing: '-0.01em' }}>功能亮点</h2>
@@ -177,16 +202,36 @@ export default async function ToolDetailPage({ params }: Props) {
             </div>
           )}
 
+          {/* ── 国内用户须知 card ── */}
+          <div style={{ background: '#fff', borderRadius: 16, border: '2px solid #FED7AA', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(20px, 4vw, 28px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
+            <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 18px', letterSpacing: '-0.01em' }}>🇨🇳 国内用户须知</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14 }}>
+              <div style={{ background: access.bg, borderRadius: 12, padding: '16px 18px' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: access.color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>访问方式</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: access.color }}>{access.label}</div>
+              </div>
+              <div style={{ background: '#F9FAFB', borderRadius: 12, padding: '16px 18px', border: '1px solid #E5E7EB' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>中文界面</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#1F2937' }}>{tool.chineseUi ? '✅ 支持' : '❌ 不支持'}</div>
+              </div>
+              <div style={{ background: '#F9FAFB', borderRadius: 12, padding: '16px 18px', border: '1px solid #E5E7EB' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>免费额度</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#1F2937' }}>{tool.freeQuota ?? '—'}</div>
+              </div>
+              <div style={{ background: '#F9FAFB', borderRadius: 12, padding: '16px 18px', border: '1px solid #E5E7EB' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>API 开放</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#1F2937' }}>{tool.apiAvailable ? '✅ 可用' : '—'}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Info grid ── */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 24 }}>
             {[
               { label: '定价模式', value: tool.pricing, badge: true },
               { label: '所属分类', value: `${tool.catIcon} ${tool.catZh} · ${tool.catEn}` },
               { label: '收录日期', value: tool.date },
               { label: '编辑推荐', value: tool.featured ? '✅ Editor\'s Pick' : '—' },
-              { label: '国内访问', value: access.label },
-              { label: '免费额度', value: tool.freeQuota ?? '—' },
-              { label: '中文界面', value: tool.chineseUi ? '是' : '—' },
-              { label: 'API 可用', value: tool.apiAvailable ? '是' : '—' },
             ].map(({ label, value, badge }) => (
               <div key={label} style={{ background: '#fff', borderRadius: 12, border: '1px solid #E8D5B7', padding: '18px 22px' }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{label}</div>
@@ -197,6 +242,51 @@ export default async function ToolDetailPage({ params }: Props) {
               </div>
             ))}
           </div>
+
+          {/* ── FAQ ── */}
+          {tool.faqs && tool.faqs.length > 0 && (
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(22px, 4vw, 32px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 18px', letterSpacing: '-0.01em' }}>💬 常见问答</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                {tool.faqs.map((faq, i) => (
+                  <div key={i} style={{ padding: '16px 0', borderBottom: i < tool.faqs!.length - 1 ? '1px solid #F3E8D0' : 'none' }}>
+                    <div style={{ fontWeight: 700, fontSize: 15, color: '#1F2937', marginBottom: 6 }}>Q：{faq.q}</div>
+                    <div style={{ fontSize: 14, color: '#4B5563', lineHeight: 1.7 }}>A：{faq.a}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Related articles ── */}
+          {relatedArticles.length > 0 && (
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(22px, 4vw, 32px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 18px', letterSpacing: '-0.01em' }}>
+                📰 相关资讯
+              </h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {relatedArticles.map((a) => {
+                  const dateStr = a.publishedAt ? new Date(a.publishedAt).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }) : '';
+                  const displayTitle = a.titleZh || a.title;
+                  return (
+                    <a key={a.id} href={a.url} target="_blank" rel="noopener noreferrer"
+                      style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, padding: '11px 4px', borderBottom: '1px solid #F3E8D0', textDecoration: 'none', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, maxWidth: '100%' }}>
+                        {a.tag && (
+                          <span style={{ flexShrink: 0, padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 700, background: '#FFEDD5', color: '#C2410C' }}>{a.tag}</span>
+                        )}
+                        <span style={{ fontSize: 14, color: '#374151', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{displayTitle}</span>
+                      </div>
+                      {dateStr && <span style={{ flexShrink: 0, fontSize: 12, color: '#9CA3AF' }}>{dateStr}</span>}
+                    </a>
+                  );
+                })}
+              </div>
+              <Link href="/news" style={{ display: 'inline-block', marginTop: 14, fontSize: 13, color: '#F97316', textDecoration: 'none', fontWeight: 600 }}>
+                查看全部资讯 →
+              </Link>
+            </div>
+          )}
 
           {/* ── Related tools ── */}
           {related.length > 0 && (

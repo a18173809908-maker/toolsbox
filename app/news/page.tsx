@@ -49,14 +49,14 @@ export default async function NewsPage({ searchParams }: Props) {
         <SiteHeader />
 
         {/* Page hero */}
-        <section style={{ padding: '48px 56px 32px', background: C.bg, borderBottom: `1px solid ${C.rule}`, position: 'relative', overflow: 'hidden' }}>
+        <section style={{ padding: 'clamp(36px, 7vw, 48px) clamp(16px, 5vw, 56px) 32px', background: C.bg, borderBottom: `1px solid ${C.rule}`, position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', right: -80, top: -80, width: 360, height: 360, borderRadius: '50%', background: 'radial-gradient(circle, rgba(249,115,22,0.10) 0%, transparent 70%)', pointerEvents: 'none' }} />
           <div style={{ position: 'relative', maxWidth: 720 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 14px', borderRadius: 999, background: C.primaryBg, color: C.accent, fontSize: 12, fontWeight: 700, marginBottom: 20, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               <span style={{ width: 6, height: 6, borderRadius: 3, background: C.primary, display: 'inline-block' }} />
               AI Pulse · 每日资讯
             </div>
-            <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 52, lineHeight: 1, margin: '0 0 16px', color: C.ink, letterSpacing: '-0.03em' }}>
+            <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 'clamp(36px, 10vw, 52px)', lineHeight: 1, margin: '0 0 16px', color: C.ink, letterSpacing: '-0.03em' }}>
               AI <span style={{ color: C.primary }}>资讯</span> News
             </h1>
             <p style={{ fontSize: 16, color: C.inkSoft, margin: 0, lineHeight: 1.6 }}>
@@ -69,7 +69,7 @@ export default async function NewsPage({ searchParams }: Props) {
         {/* Tag filter strip */}
         {tags.length > 0 && (
           <section style={{ background: C.bg, borderBottom: `1px solid ${C.rule}` }}>
-            <div style={{ display: 'flex', gap: 8, padding: '12px 56px', overflowX: 'auto', scrollbarWidth: 'none' } as React.CSSProperties}>
+            <div style={{ display: 'flex', gap: 8, padding: '12px clamp(16px, 5vw, 56px)', overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
               <TagPill href="/news" active={!tag}>全部</TagPill>
               {tags.map((t) => (
                 <TagPill key={t} href={`/news?tag=${encodeURIComponent(t)}`} active={tag === t}>{t}</TagPill>
@@ -79,14 +79,14 @@ export default async function NewsPage({ searchParams }: Props) {
         )}
 
         {/* Articles grid */}
-        <main style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 56px' }}>
+        <main style={{ maxWidth: 1100, margin: '0 auto', padding: 'clamp(28px, 6vw, 40px) clamp(16px, 5vw, 56px)' }}>
           {articles.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '80px 0', color: C.inkMuted }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>📰</div>
               <p style={{ fontSize: 16 }}>暂无资讯，稍后再来查看</p>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(320px, 100%), 1fr))', gap: 20 }}>
               {articles.map((art) => (
                 <ArticleCard key={art.id} art={art} />
               ))}

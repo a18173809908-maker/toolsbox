@@ -75,16 +75,16 @@ export default async function TrendingDetailPage({ params }: Props) {
 
       <SiteHeader />
 
-      <main style={{ maxWidth: 860, margin: '40px auto', padding: '0 24px 64px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: C.inkMuted, fontSize: 13, marginBottom: 18 }}>
+      <main style={{ maxWidth: 860, margin: 'clamp(28px, 6vw, 40px) auto', padding: '0 clamp(16px, 5vw, 24px) 64px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: C.inkMuted, fontSize: 13, marginBottom: 18, minWidth: 0 }}>
           <Link href="/trending" style={{ color: C.inkMuted, textDecoration: 'none' }}>GitHub 趋势</Link>
           <span>/</span>
-          <span style={{ color: C.ink, fontWeight: 600, fontFamily: 'ui-monospace, monospace' }}>{repo}</span>
+          <span style={{ color: C.ink, fontWeight: 600, fontFamily: 'ui-monospace, monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{repo}</span>
         </div>
 
         {/* Hero */}
-        <div style={{ background: C.panel, borderRadius: 16, border: `1px solid ${C.rule}`, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', padding: '36px 40px', marginBottom: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20 }}>
+        <div style={{ background: C.panel, borderRadius: 16, border: `1px solid ${C.rule}`, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', padding: 'clamp(22px, 4vw, 36px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20, flexWrap: 'wrap' }}>
             {/* GitHub avatar */}
             <Image
               src={`https://github.com/${owner}.png?size=80`}
@@ -97,7 +97,7 @@ export default async function TrendingDetailPage({ params }: Props) {
                 <span style={{ color: C.inkSoft }}>{owner}</span>
                 <span style={{ color: C.inkMuted }}> / </span>
               </div>
-              <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 36, margin: '0 0 14px', color: C.ink, letterSpacing: '-0.02em' }}>{name}</h1>
+              <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 'clamp(28px, 8vw, 36px)', margin: '0 0 14px', color: C.ink, letterSpacing: '-0.02em', overflowWrap: 'anywhere' }}>{name}</h1>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 <a href={`https://github.com/${repo}`} target="_blank" rel="noopener noreferrer"
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 22px', borderRadius: 999, background: C.ink, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
@@ -128,7 +128,7 @@ export default async function TrendingDetailPage({ params }: Props) {
         </div>
 
         {/* Description */}
-        <div style={{ background: C.panel, borderRadius: 16, border: `1px solid ${C.rule}`, padding: '28px 40px', marginBottom: 24 }}>
+        <div style={{ background: C.panel, borderRadius: 16, border: `1px solid ${C.rule}`, padding: 'clamp(22px, 4vw, 28px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
           <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: C.ink, margin: '0 0 14px' }}>项目简介</h2>
           {main.descriptionZh && (
             <div style={{ background: C.bg, borderRadius: 12, padding: '16px 20px', borderLeft: `4px solid ${C.primary}`, marginBottom: 14 }}>
@@ -139,7 +139,7 @@ export default async function TrendingDetailPage({ params }: Props) {
         </div>
 
         {/* Stats grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16, marginBottom: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(180px, 100%), 1fr))', gap: 16, marginBottom: 24 }}>
           <div style={{ background: C.panel, borderRadius: 12, border: `1px solid ${C.rule}`, padding: '18px 22px' }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: C.inkMuted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>语言</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -178,7 +178,7 @@ export default async function TrendingDetailPage({ params }: Props) {
         </div>
 
         {readmeHtml && (
-          <div style={{ background: C.panel, borderRadius: 16, border: `1px solid ${C.rule}`, padding: '28px 40px', marginBottom: 24, overflow: 'hidden' }}>
+          <div style={{ background: C.panel, borderRadius: 16, border: `1px solid ${C.rule}`, padding: 'clamp(22px, 4vw, 28px) clamp(18px, 5vw, 40px)', marginBottom: 24, overflow: 'hidden' }}>
             <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: C.ink, margin: '0 0 18px' }}>README</h2>
             <div
               className="readme-content"

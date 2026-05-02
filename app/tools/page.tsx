@@ -98,11 +98,11 @@ export default async function ToolsPage({ searchParams }: Props) {
 
         <SiteHeader />
 
-        <main style={{ maxWidth: 1100, margin: '0 auto', padding: '36px 24px 64px' }}>
+        <main style={{ maxWidth: 1100, margin: '0 auto', padding: 'clamp(28px, 6vw, 36px) clamp(16px, 5vw, 24px) 64px' }}>
 
           {/* Hero */}
           <div style={{ marginBottom: 28 }}>
-            <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 38, color: C.ink, margin: '0 0 8px', letterSpacing: '-0.02em' }}>
+            <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 'clamp(30px, 8vw, 38px)', color: C.ink, margin: '0 0 8px', letterSpacing: '-0.02em' }}>
               AI 工具库
             </h1>
             <p style={{ fontSize: 15, color: C.inkSoft, margin: 0 }}>
@@ -148,9 +148,9 @@ export default async function ToolsPage({ searchParams }: Props) {
           </div>
 
           {/* Filter row */}
-          <div style={{ display: 'flex', gap: 24, alignItems: 'center', marginBottom: 28, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', marginBottom: 28, flexWrap: 'wrap' }}>
             {/* Pricing */}
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
               <span style={{ fontSize: 12, color: C.inkMuted, fontWeight: 600, marginRight: 2 }}>定价</span>
               {PRICING_OPTS.map((opt) => {
                 const active = pricing === opt.value;
@@ -173,7 +173,7 @@ export default async function ToolsPage({ searchParams }: Props) {
             </div>
 
             {/* China access */}
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
               <span style={{ fontSize: 12, color: C.inkMuted, fontWeight: 600, marginRight: 2 }}>地区</span>
               {CHINA_OPTS.map((opt) => {
                 const active = china === opt.value;
@@ -214,7 +214,7 @@ export default async function ToolsPage({ searchParams }: Props) {
               <Link href="/tools" style={{ color: C.primary, textDecoration: 'none', fontSize: 14 }}>清除筛选条件</Link>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(300px, 100%), 1fr))', gap: 16 }}>
               {items.map((tool) => {
                 const ps = PRICING_STYLE[tool.pricing] ?? PRICING_STYLE['Paid'];
                 const access = ACCESS_LABEL[tool.chinaAccess ?? 'unknown'];

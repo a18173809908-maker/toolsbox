@@ -1,4 +1,4 @@
-import { pgTable, text, integer, boolean, timestamp, serial, index } from 'drizzle-orm/pg-core';
+import { pgTable, text, integer, boolean, timestamp, serial, index, jsonb } from 'drizzle-orm/pg-core';
 
 export const categories = pgTable('categories', {
   id: text('id').primaryKey(),
@@ -32,6 +32,8 @@ export const tools = pgTable(
     upvotes: integer('upvotes').notNull().default(0),
     downvotes: integer('downvotes').notNull().default(0),
     featured: boolean('featured').notNull().default(false),
+    howToUse: text('how_to_use').array(),
+    faqs: jsonb('faqs').$type<{ q: string; a: string }[]>(),
     publishedAt: text('published_at').notNull(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
   },

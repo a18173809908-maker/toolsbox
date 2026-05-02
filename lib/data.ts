@@ -32,6 +32,8 @@ export type Tool = {
   alternatives?: string[];
   upvotes?: number;
   downvotes?: number;
+  howToUse?: string[];
+  faqs?: { q: string; a: string }[];
 };
 
 export type RepoItem = {

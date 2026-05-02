@@ -66,18 +66,18 @@ export default async function NewsDetailPage({ params }: Props) {
         <SiteHeader />
 
         {/* Article */}
-        <main style={{ maxWidth: 760, margin: '48px auto', padding: '0 24px 64px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: C.inkMuted, fontSize: 13, marginBottom: 18 }}>
+        <main style={{ maxWidth: 760, margin: 'clamp(28px, 7vw, 48px) auto', padding: '0 clamp(16px, 5vw, 24px) 64px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: C.inkMuted, fontSize: 13, marginBottom: 18, minWidth: 0 }}>
             <Link href="/news" style={{ color: C.inkMuted, textDecoration: 'none' }}>AI 资讯</Link>
             <span>/</span>
             <span style={{ color: C.ink, fontWeight: 600, maxWidth: 360, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {art.titleZh || art.title}
             </span>
           </div>
-          <article style={{ background: C.panel, borderRadius: 16, border: `1px solid ${C.rule}`, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', padding: '40px 48px' }}>
+          <article style={{ background: C.panel, borderRadius: 16, border: `1px solid ${C.rule}`, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', padding: 'clamp(24px, 6vw, 40px) clamp(18px, 6vw, 48px)' }}>
 
             {/* Tag + meta */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
               {art.tag && (
                 <span style={{ padding: '3px 10px', borderRadius: 4, background: C.primaryBg, color: C.accent, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{art.tag}</span>
               )}
@@ -91,7 +91,7 @@ export default async function NewsDetailPage({ params }: Props) {
 
             {/* Chinese title */}
             {art.titleZh && (
-              <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 32, lineHeight: 1.3, margin: '0 0 12px', color: C.ink, letterSpacing: '-0.02em' }}>
+              <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 'clamp(26px, 7vw, 32px)', lineHeight: 1.3, margin: '0 0 12px', color: C.ink, letterSpacing: '-0.02em' }}>
                 {art.titleZh}
               </h1>
             )}
@@ -106,7 +106,7 @@ export default async function NewsDetailPage({ params }: Props) {
               <div style={{ borderTop: `1px solid ${C.ruleSoft}`, paddingTop: 24, marginBottom: 28 }}>
                 <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 16, fontWeight: 600, color: C.inkSoft, margin: '0 0 14px' }}>摘要 · Summary</h2>
                 {art.summaryZh && (
-                  <div style={{ background: C.bg, borderRadius: 10, padding: '16px 20px', borderLeft: `3px solid ${C.primary}`, marginBottom: 14 }}>
+                  <div style={{ background: C.bg, borderRadius: 10, padding: 'clamp(14px, 4vw, 16px) clamp(16px, 5vw, 20px)', borderLeft: `3px solid ${C.primary}`, marginBottom: 14 }}>
                     <p style={{ fontSize: 15, color: C.inkSoft, lineHeight: 1.75, margin: 0 }}>{art.summaryZh}</p>
                   </div>
                 )}

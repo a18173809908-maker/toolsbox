@@ -19,7 +19,8 @@
     "fetch:tool-candidates": "tsx --env-file=.env.local scripts/fetch-tool-candidates.ts",
     "process:tool-candidates": "tsx --env-file=.env.local scripts/process-tool-candidates.ts",
     "update:tool-meta": "tsx --env-file=.env.local scripts/update-tool-meta.ts",
-    "cleanup:tool-data": "tsx --env-file=.env.local scripts/cleanup-tool-data.ts"
+    "cleanup:tool-data": "tsx --env-file=.env.local scripts/cleanup-tool-data.ts",
+    "seed:cn-tools": "tsx --env-file=.env.local scripts/seed-cn-tools.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

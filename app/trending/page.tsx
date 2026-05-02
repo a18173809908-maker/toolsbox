@@ -62,18 +62,18 @@ export default async function TrendingPage({ searchParams }: Props) {
 
       <SiteHeader />
 
-      <main style={{ maxWidth: 900, margin: '40px auto', padding: '0 24px 64px' }}>
+      <main style={{ maxWidth: 900, margin: 'clamp(28px, 6vw, 40px) auto', padding: '0 clamp(16px, 5vw, 24px) 64px' }}>
 
         {/* Page hero */}
         <div style={{ marginBottom: 28 }}>
-          <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 38, color: C.ink, margin: '0 0 10px', letterSpacing: '-0.02em' }}>
+          <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 'clamp(30px, 8vw, 38px)', color: C.ink, margin: '0 0 10px', letterSpacing: '-0.02em' }}>
             GitHub 趋势
           </h1>
           <p style={{ fontSize: 15, color: C.inkSoft, margin: 0 }}>{meta.desc}</p>
         </div>
 
         {/* Period tabs */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 24, overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 4 } as React.CSSProperties}>
           {(['today', 'week', 'month'] as const).map((p) => {
             const m = PERIOD_META[p];
             const isActive = p === safe;
@@ -87,6 +87,7 @@ export default async function TrendingPage({ searchParams }: Props) {
                   color: isActive ? '#fff' : C.inkSoft,
                   border: `1px solid ${isActive ? C.ink : C.rule}`,
                   textDecoration: 'none',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {m.label} <span style={{ opacity: 0.6, fontSize: 12 }}>{m.labelEn}</span>
@@ -114,7 +115,7 @@ export default async function TrendingPage({ searchParams }: Props) {
                 >
                   <div style={{
                     background: C.panel, borderRadius: 14, border: `1px solid ${C.rule}`,
-                    padding: '18px 22px', display: 'flex', alignItems: 'flex-start', gap: 16,
+                    padding: 'clamp(16px, 4vw, 18px) clamp(16px, 5vw, 22px)', display: 'flex', alignItems: 'flex-start', gap: 14,
                     transition: 'border-color 0.15s',
                   }}>
                     {/* Rank */}
@@ -146,7 +147,7 @@ export default async function TrendingPage({ searchParams }: Props) {
                       </p>
 
                       {/* Stats row */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 12, color: C.inkMuted }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 12, color: C.inkMuted, flexWrap: 'wrap' }}>
                         <span>★ {r.stars.toLocaleString()}</span>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: C.green, fontWeight: 600 }}>
                           <span>+{r.gained.toLocaleString()}</span>

@@ -15,6 +15,8 @@ interface ToolAiResult {
   pricing: 'Free' | 'Freemium' | 'Paid';
   chinaAccess: 'accessible' | 'vpn-required' | 'blocked' | 'unknown';
   features?: string[];
+  howToUse?: string[];
+  faqs?: { q: string; a: string }[];
 }
 
 // Patterns that indicate an RSS item is a news article, not a tool
@@ -54,6 +56,8 @@ async function enrichCandidate(input: { name: string; description?: string }): P
 - "pricing": 只能是 Free, Freemium, Paid；不确定用 Freemium
 - "chinaAccess": 只能是 accessible, vpn-required, blocked, unknown；不确定用 unknown
 - "features": 2 到 4 个中文功能点，每个不超过 10 字
+- "howToUse": 3 到 4 个步骤，教用户如何开始使用，每步不超过 30 字
+- "faqs": 2 到 3 个常见问题，每个对象含 "q"（问题）和 "a"（简短回答）
 
 只返回 JSON，不要 markdown。
 
@@ -61,7 +65,7 @@ async function enrichCandidate(input: { name: string; description?: string }): P
 描述：${input.description || input.name}`;
 
   try {
-    const raw = await chat([{ role: 'user', content: prompt }], { temperature: 0.1, maxTokens: 320 });
+    const raw = await chat([{ role: 'user', content: prompt }], { temperature: 0.1, maxTokens: 600 });
     const json = extractJson(raw);
     if (!json) return null;
     const parsed = JSON.parse(json) as ToolAiResult;
@@ -74,6 +78,10 @@ async function enrichCandidate(input: { name: string; description?: string }): P
       pricing: parsed.pricing,
       chinaAccess: parsed.chinaAccess,
       features: Array.isArray(parsed.features) ? parsed.features.slice(0, 4).map(String) : undefined,
+      howToUse: Array.isArray(parsed.howToUse) ? parsed.howToUse.slice(0, 4).map(String) : undefined,
+      faqs: Array.isArray(parsed.faqs)
+        ? parsed.faqs.slice(0, 3).filter((f) => f?.q && f?.a).map((f) => ({ q: String(f.q), a: String(f.a) }))
+        : undefined,
     };
   } catch {
     return null;
@@ -116,6 +124,8 @@ export async function processToolCandidates(): Promise<{ processed: number; reje
         url: candidate.url,
         chinaAccess: enriched.chinaAccess,
         features: enriched.features,
+        howToUse: enriched.howToUse,
+        faqs: enriched.faqs,
       });
       processed++;
     } catch {
