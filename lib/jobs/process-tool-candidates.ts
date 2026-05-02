@@ -3,8 +3,10 @@ import { chat } from '@/lib/llm';
 
 const BATCH = 6;
 const CATEGORY_IDS = [
-  'chatbot', 'image', 'video', 'audio', 'code', 'writing', 'productivity',
-  'design', 'marketing', 'education', 'research', '3d', 'data', 'agent',
+  'chatbot', 'ai-search', 'image', 'video', 'digital-human', 'audio',
+  'code', 'writing', 'ppt', 'translation', 'productivity', 'design',
+  'marketing', 'side-hustle', 'education', 'ai-learn', 'detection',
+  'research', '3d', 'data', 'agent',
 ] as const;
 
 type CategoryId = (typeof CATEGORY_IDS)[number];

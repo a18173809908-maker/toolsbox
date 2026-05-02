@@ -255,7 +255,7 @@ const CN_TOOLS = [
     name: '秘塔AI搜索',
     mono: '搜',
     brand: '#475569',
-    catId: 'research',
+    catId: 'ai-search',
     url: 'https://metaso.cn',
     en: "Ad-free AI search engine that delivers source-cited comprehensive answers across web, academic, and social media.",
     zh: '无广告的AI搜索引擎，自动汇总多方来源并生成带引用的答案，支持学术、新闻、社交媒体多场景搜索。',

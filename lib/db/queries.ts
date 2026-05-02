@@ -457,8 +457,13 @@ export async function loadAllCategoryIds(): Promise<string[]> {
 }
 
 export async function loadCategoryById(id: string) {
-  const rows = await db.select().from(categories).where(eq(categories.id, id));
-  return rows[0] ?? null;
+  const [catRows, totalRows] = await Promise.all([
+    db.select().from(categories).where(eq(categories.id, id)),
+    db.select({ value: count() }).from(tools).where(eq(tools.catId, id)),
+  ]);
+  const cat = catRows[0];
+  if (!cat) return null;
+  return { ...cat, count: totalRows[0]?.value ?? 0 };
 }
 
 export async function loadToolsByCategory(catId: string) {

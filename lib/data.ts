@@ -77,6 +77,13 @@ export type NewsItem = {
 };
 
 export const CATEGORIES: Category[] = [
+  { id: 'ai-search',    en: 'AI Search Engines', zh: 'AI搜索引擎', icon: '🔎', count: 0 },
+  { id: 'translation',  en: 'AI Translation',    zh: 'AI翻译', icon: '🌐', count: 0 },
+  { id: 'side-hustle',  en: 'AI Side Hustle',    zh: 'AI副业/赚钱', icon: '💰', count: 0 },
+  { id: 'digital-human', en: 'Digital Humans',   zh: 'AI数字人/主播', icon: '🧑‍💼', count: 0 },
+  { id: 'ppt',          en: 'Presentations',     zh: 'PPT制作', icon: '📊', count: 0 },
+  { id: 'detection',    en: 'AI Detection',      zh: '内容检测/查重', icon: '🛡️', count: 0 },
+  { id: 'ai-learn',     en: 'Learn AI',          zh: '学习AI技术', icon: '🧭', count: 0 },
   { id: 'chatbot',      en: 'AI Chatbots',      zh: '智能对话', icon: '💬', count: 142 },
   { id: 'image',        en: 'Image Generation', zh: '图像生成', icon: '🎨', count: 218 },
   { id: 'video',        en: 'Video Creation',   zh: '视频创作', icon: '🎬', count: 96 },

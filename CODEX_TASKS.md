@@ -980,6 +980,23 @@ Validation:
 
 ---
 
+## Codex update 2026-05-02 (G8 / D1)
+
+Status:
+- D1 done: added 7 domestic-scene categories: `ai-search`, `translation`, `side-hustle`, `digital-human`, `ppt`, `detection`, and `ai-learn`.
+- Added `scripts/seed-domestic-categories.ts` and `npm run seed:domestic-categories` to upsert the categories, recalculate category counts, and reclassify existing tools.
+- Existing tools moved: `metaso` + `perplexity` -> `ai-search`, `gamma` -> `ppt`, AI side-hustle/learning article-derived tools -> `side-hustle` / `ai-learn`.
+- `process-tool-candidates.ts` now allows the new category IDs so future AI-discovered tools can be classified into domestic scenarios.
+- `loadCategoryById()` now returns live tool counts instead of relying on stale stored category counts.
+
+Validation:
+- `npm run seed:domestic-categories` completed; database now has 21 categories.
+- New category counts after migration: `ai-search=2`, `side-hustle=1`, `ppt=1`, `ai-learn=3`; empty categories still render normally.
+- `npm run lint` passed with only the pre-existing `scripts/cleanup-tool-data.ts` unused `sql` warning.
+- `npm run build` passed and generated `/categories/[id]` with `+18 more paths`, confirming new category pages including `/categories/side-hustle` and `/categories/digital-human`.
+
+---
+
 ## Codex update 2026-05-02 (E4)
 
 Status:
