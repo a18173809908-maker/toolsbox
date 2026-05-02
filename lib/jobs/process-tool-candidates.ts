@@ -17,6 +17,19 @@ interface ToolAiResult {
   features?: string[];
 }
 
+// Patterns that indicate an RSS item is a news article, not a tool
+const NEWS_PATTERNS = [
+  /digest/i, /newsletter/i, /\bdaily\b/i, /\bweekly\b/i, /\bmonthly\b/i,
+  /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i,
+  /issue\s*#?\d+/i,   // "Issue #42"
+  /vol\.?\s*\d+/i,    // "Vol. 3"
+  /roundup/i, /recap/i, /\bwrap[\s-]?up\b/i,
+];
+
+function looksLikeNews(name: string): boolean {
+  return NEWS_PATTERNS.some((p) => p.test(name));
+}
+
 function slugify(name: string) {
   return name
     .toLowerCase()
@@ -75,6 +88,13 @@ export async function processToolCandidates(): Promise<{ processed: number; reje
   let skipped = 0;
 
   for (const candidate of pending) {
+    // Reject news articles masquerading as tools
+    if (looksLikeNews(candidate.name)) {
+      await markToolCandidateRejected(candidate.id);
+      rejected++;
+      continue;
+    }
+
     const enriched = await enrichCandidate({ name: candidate.name, description: candidate.description ?? undefined });
     if (!enriched) {
       skipped++;
