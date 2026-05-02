@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { v2Tokens as T } from '@/lib/tokens';
@@ -10,12 +11,14 @@ type SiteHeaderProps = {
 
 const navItems: [string, string][] = [
   ['首页', '/'],
+  ['工具库', '/tools'],
   ['GitHub 趋势', '/trending'],
   ['AI 资讯', '/news'],
 ];
 
 export function SiteHeader({ onOpenPalette }: SiteHeaderProps) {
   const pathname = usePathname();
+  const isMobile = useIsMobile();
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' : pathname.startsWith(href);
 
@@ -24,8 +27,8 @@ export function SiteHeader({ onOpenPalette }: SiteHeaderProps) {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      gap: 24,
-      padding: '16px clamp(20px, 4vw, 56px)',
+      gap: isMobile ? 10 : 24,
+      padding: isMobile ? '12px 16px' : '16px clamp(20px, 4vw, 56px)',
       borderBottom: `1px solid ${T.rule}`,
       background: T.panel,
       position: 'sticky',
@@ -48,12 +51,12 @@ export function SiteHeader({ onOpenPalette }: SiteHeaderProps) {
         }}>
           A
         </div>
-        <span style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 18, color: T.ink }}>
+        <span style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: isMobile ? 16 : 18, color: T.ink }}>
           AiToolsBox
         </span>
       </Link>
 
-      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 14, flex: 1 }}>
+      <nav style={{ display: isMobile ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 14, flex: 1 }}>
         {navItems.map(([label, href]) => {
           const active = isActive(href);
           return (
@@ -96,7 +99,7 @@ export function SiteHeader({ onOpenPalette }: SiteHeaderProps) {
           }}
         >
           <span>⌘K</span>
-          <span>搜索</span>
+          {!isMobile && <span>搜索</span>}
         </button>
       ) : (
         <Link
@@ -116,9 +119,22 @@ export function SiteHeader({ onOpenPalette }: SiteHeaderProps) {
             flexShrink: 0,
           }}
         >
-          ⌘K 搜索
+          {isMobile ? '⌘K' : '⌘K 搜索'}
         </Link>
       )}
     </header>
   );
+}
+
+function useIsMobile() {
+  const [mobile, setMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const check = () => setMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  return mobile;
 }

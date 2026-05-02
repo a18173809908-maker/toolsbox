@@ -24,6 +24,19 @@ function useData(): DataCtx {
 /* ─── Helpers ──────────────────────────────────────────────────────────────── */
 function formatNumber(n: number): string { return n.toLocaleString('en-US'); }
 
+function useIsMobile() {
+  const [mobile, setMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const check = () => setMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  return mobile;
+}
+
 /* ─── Tool Logo ───────────────────────────────────────────────────────────── */
 function ToolLogo({ tool, size = 56 }: { tool: Tool; size?: number }) {
   return (
@@ -38,13 +51,14 @@ function ToolLogo({ tool, size = 56 }: { tool: Tool; size?: number }) {
   );
 }
 
-function Hero({ query, setQuery, stats, onPopularTag }: {
+function Hero({ query, setQuery, stats, onPopularTag, mobile }: {
   query: string; setQuery: (q: string) => void;
   stats: HomepageStats; onPopularTag: (tag: string) => void;
+  mobile: boolean;
 }) {
   const dateLabel = new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' });
   return (
-    <section style={{ padding: '64px 56px 48px', background: T.bg, position: 'relative', overflow: 'hidden' }}>
+    <section style={{ padding: mobile ? '36px 20px 28px' : '64px 56px 48px', background: T.bg, position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', right: -100, top: -100, width: 480, height: 480, borderRadius: '50%', background: 'radial-gradient(circle, rgba(249,115,22,0.13) 0%, transparent 70%)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', left: -60, bottom: -100, width: 340, height: 340, borderRadius: '50%', background: 'radial-gradient(circle, rgba(251,191,36,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
       <div style={{ position: 'relative', maxWidth: 920 }}>
@@ -54,24 +68,24 @@ function Hero({ query, setQuery, stats, onPopularTag }: {
           {formatNumber(stats.toolsTotal)} tools curated &nbsp;·&nbsp; 更新于 {dateLabel}
         </div>
         {/* Title */}
-        <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 84, lineHeight: 0.95, color: T.ink, margin: '0 0 26px', letterSpacing: '-0.04em' }}>
+        <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: mobile ? 40 : 84, lineHeight: mobile ? 1.1 : 0.95, color: T.ink, margin: '0 0 26px', letterSpacing: '-0.04em' }}>
           The thoughtful<br />
           <span style={{ color: T.primary }}>directory</span> of AI.
         </h1>
         {/* Subtitle */}
-        <p style={{ fontSize: 19, color: T.inkSoft, lineHeight: 1.55, margin: '0 0 36px', maxWidth: 620 }}>
+        <p style={{ fontSize: mobile ? 15 : 19, color: T.inkSoft, lineHeight: 1.55, margin: '0 0 36px', maxWidth: 620 }}>
           每天精选最值得收藏的 AI 工具，并实时追踪 GitHub 上的 AI 趋势项目。<br />
           A hand-picked AI directory and a live pulse of what&rsquo;s trending on GitHub.
         </p>
         {/* Search */}
-        <div style={{ display: 'flex', alignItems: 'center', background: T.panel, borderRadius: 14, padding: 6, boxShadow: '0 24px 60px -20px rgba(249,115,22,0.3), 0 4px 12px rgba(31,41,55,0.06)', border: `1px solid ${T.rule}`, maxWidth: 640 }}>
+        <div style={{ display: 'flex', alignItems: 'center', background: T.panel, borderRadius: 14, padding: 6, boxShadow: '0 24px 60px -20px rgba(249,115,22,0.3), 0 4px 12px rgba(31,41,55,0.06)', border: `1px solid ${T.rule}`, maxWidth: 640, width: '100%' }}>
           <div style={{ padding: '0 14px', color: T.inkMuted, fontSize: 18 }}>⌕</div>
           <input
             value={query} onChange={(e) => setQuery(e.target.value)}
             placeholder="搜索 AI 工具，例如 ChatGPT、Midjourney、Cursor…"
             style={{ flex: 1, border: 'none', outline: 'none', fontSize: 16, padding: '14px 4px', background: 'transparent', color: T.ink, fontFamily: 'inherit' }}
           />
-          <button style={{ padding: '12px 22px', borderRadius: 10, border: 'none', background: T.primary, color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Search</button>
+          <button style={{ padding: mobile ? '12px 15px' : '12px 22px', borderRadius: 10, border: 'none', background: T.primary, color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>{mobile ? '搜' : 'Search'}</button>
         </div>
         {/* Popular tags */}
         <div style={{ display: 'flex', gap: 8, marginTop: 18, fontSize: 13, color: T.inkMuted, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -89,11 +103,11 @@ function Hero({ query, setQuery, stats, onPopularTag }: {
 }
 
 /* ─── Category strip ──────────────────────────────────────────────────────── */
-function CategoryStrip({ cat, setCat }: { cat: string; setCat: (c: string) => void }) {
+function CategoryStrip({ cat, setCat, mobile }: { cat: string; setCat: (c: string) => void; mobile: boolean }) {
   const { categories: CATEGORIES, tools: ALL_TOOLS } = useData();
   return (
     <section style={{ background: T.bg, borderBottom: `1px solid ${T.rule}` }}>
-      <div style={{ display: 'flex', gap: 8, padding: '16px 56px', overflowX: 'auto', scrollbarWidth: 'none' } as React.CSSProperties}>
+      <div style={{ display: 'flex', gap: 8, padding: mobile ? '12px 16px' : '16px 56px', overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
         <CatPill active={cat === 'all'} onClick={() => setCat('all')}>全部 All · {ALL_TOOLS.length}</CatPill>
         {CATEGORIES.map((c) => (
           <CatPill key={c.id} active={cat === c.id} onClick={() => setCat(c.id)} href={`/categories/${c.id}`}>
@@ -431,9 +445,9 @@ function NewsPulseCard() {
 }
 
 /* ─── Footer ──────────────────────────────────────────────────────────────── */
-function Footer() {
+function Footer({ mobile }: { mobile: boolean }) {
   return (
-    <footer style={{ padding: '48px 56px 36px', background: T.bg, borderTop: `1px solid ${T.rule}`, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+    <footer style={{ padding: mobile ? '32px 20px 24px' : '48px 56px 36px', background: T.bg, borderTop: `1px solid ${T.rule}`, display: 'flex', flexDirection: mobile ? 'column' : 'row', gap: mobile ? 16 : 0, justifyContent: 'space-between', alignItems: mobile ? 'flex-start' : 'flex-end' }}>
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
           <div style={{ width: 28, height: 28, borderRadius: 8, background: `linear-gradient(135deg, ${T.primary} 0%, #FBBF24 100%)`, display: 'grid', placeItems: 'center', color: '#fff', fontFamily: 'Georgia, serif', fontWeight: 900, fontSize: 16, fontStyle: 'italic' }}>A</div>
@@ -462,6 +476,7 @@ export default function V2ProHomepage(props: DataCtx) {
 
 function V2ProInner() {
   const { tools: AI_TOOLS, trending: GITHUB_TRENDING, stats } = useData();
+  const mobile = useIsMobile();
   // news is consumed by NewsPulseCard via context
   const [cat, setCat] = React.useState('all');
   const [query, setQuery] = React.useState('');
@@ -494,11 +509,11 @@ function V2ProInner() {
   return (
     <div style={{ minHeight: '100vh', background: T.bg, color: T.ink, fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif' }}>
       <SiteHeader onOpenPalette={() => setPaletteOpen(true)} />
-      <Hero query={query} setQuery={setQuery} stats={stats} onPopularTag={(tag) => { setQuery(tag); setCat('all'); }} />
-      <CategoryStrip cat={cat} setCat={setCat} />
+      <Hero query={query} setQuery={setQuery} stats={stats} mobile={mobile} onPopularTag={(tag) => { setQuery(tag); setCat('all'); }} />
+      <CategoryStrip cat={cat} setCat={setCat} mobile={mobile} />
 
       {/* Main: V1 two-column layout */}
-      <section style={{ padding: '48px 56px', display: 'grid', gridTemplateColumns: '1fr 360px', gap: 48 }}>
+      <section style={{ padding: mobile ? '24px 16px' : '48px 56px', display: 'grid', gridTemplateColumns: mobile ? '1fr' : '1fr 360px', gap: mobile ? 28 : 48 }}>
 
         {/* Left: tools */}
         <div>
@@ -512,7 +527,7 @@ function V2ProInner() {
                 </div>
                 <p style={{ fontSize: 14, color: T.inkSoft, margin: 0 }}>本周值得一试的 AI 工具，由编辑团队精选。</p>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, marginBottom: 52 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(3, 1fr)', gap: mobile ? 14 : 20, marginBottom: 52 }}>
                 {featured.map((t) => <FeaturedCard key={t.id} tool={t} />)}
               </div>
             </>
@@ -532,7 +547,7 @@ function V2ProInner() {
               ))}
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(2, 1fr)', gap: 14 }}>
             {rest.map((t) => <ToolCard key={t.id} tool={t} fav={fav.has(t.id)} toggleFav={toggleFav} />)}
           </div>
           {rest.length === 0 && (
@@ -541,7 +556,7 @@ function V2ProInner() {
         </div>
 
         {/* Right: GitHub trending rail */}
-        <aside style={{ position: 'sticky', top: 90, alignSelf: 'start' }}>
+        <aside style={{ position: mobile ? 'static' : 'sticky', top: 90, alignSelf: 'start' }}>
           <div style={{ background: T.panel, borderRadius: 16, padding: 24, border: `1px solid ${T.rule}`, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
             <div style={{ marginBottom: 4 }}>
               <h3 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 22, margin: 0, color: T.ink, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -567,7 +582,7 @@ function V2ProInner() {
         </aside>
       </section>
 
-      <Footer />
+      <Footer mobile={mobile} />
 
       {paletteOpen && (
         <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} onOpenTool={handleOpenTool} fav={fav} recent={recent} />

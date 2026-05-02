@@ -108,7 +108,7 @@ export default async function ToolDetailPage({ params }: Props) {
       <div style={{ minHeight: '100vh', background: '#FFF7ED', fontFamily: 'Inter, ui-sans-serif, system-ui, "PingFang SC", "Microsoft YaHei", sans-serif' }}>
         <SiteHeader />
 
-        <main style={{ maxWidth: 860, margin: '40px auto', padding: '0 24px 64px' }}>
+        <main style={{ maxWidth: 860, margin: '40px auto', padding: '0 clamp(16px, 5vw, 24px) 64px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#9CA3AF', fontSize: 13, marginBottom: 18 }}>
             <Link href="/" style={{ color: '#9CA3AF', textDecoration: 'none' }}>工具库</Link>
             <span>/</span>
@@ -116,8 +116,8 @@ export default async function ToolDetailPage({ params }: Props) {
           </div>
 
           {/* ── Hero card ── */}
-          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', padding: '36px 40px', marginBottom: 24 }}>
-            <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', padding: 'clamp(22px, 4vw, 36px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
+            <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
               <div style={{
                 width: 80, height: 80, borderRadius: 20, background: tool.brand, color: '#fff',
                 display: 'grid', placeItems: 'center', fontFamily: 'Georgia, serif', fontWeight: 700,
@@ -125,7 +125,7 @@ export default async function ToolDetailPage({ params }: Props) {
               }}>{tool.mono}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
-                  <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 34, margin: 0, color: '#1F2937', letterSpacing: '-0.02em' }}>{tool.name}</h1>
+                <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 'clamp(28px, 8vw, 34px)', margin: 0, color: '#1F2937', letterSpacing: '-0.02em' }}>{tool.name}</h1>
                   <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, background: ps.bg, color: ps.color }}>{tool.pricing}</span>
                   {tool.chinaAccess && tool.chinaAccess !== 'unknown' && (
                     <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, background: access.bg, color: access.color }}>{access.label}</span>
@@ -155,17 +155,17 @@ export default async function ToolDetailPage({ params }: Props) {
           </div>
 
           {/* ── Description ── */}
-          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: '32px 40px', marginBottom: 24 }}>
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(22px, 4vw, 32px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
             <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 16px', letterSpacing: '-0.01em' }}>About · 工具简介</h2>
             <p style={{ fontSize: 16, color: '#4B5563', lineHeight: 1.8, margin: '0 0 20px' }}>{tool.en}</p>
-            <div style={{ background: '#FFF7ED', borderRadius: 12, padding: '18px 22px', borderLeft: '4px solid #F97316' }}>
+            <div style={{ background: '#FFF7ED', borderRadius: 12, padding: 'clamp(14px, 4vw, 18px) clamp(16px, 5vw, 22px)', borderLeft: '4px solid #F97316' }}>
               <p style={{ fontSize: 15, color: '#4B5563', lineHeight: 1.75, margin: 0 }}>{tool.zh}</p>
             </div>
           </div>
 
           {/* ── Info grid ── */}
           {tool.features && tool.features.length > 0 && (
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: '28px 40px', marginBottom: 24 }}>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(22px, 4vw, 28px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
               <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 16px', letterSpacing: '-0.01em' }}>功能亮点</h2>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                 {tool.features.map((feature) => (
@@ -177,7 +177,7 @@ export default async function ToolDetailPage({ params }: Props) {
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 24 }}>
             {[
               { label: '定价模式', value: tool.pricing, badge: true },
               { label: '所属分类', value: `${tool.catIcon} ${tool.catZh} · ${tool.catEn}` },
@@ -200,11 +200,11 @@ export default async function ToolDetailPage({ params }: Props) {
 
           {/* ── Related tools ── */}
           {related.length > 0 && (
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: '32px 40px' }}>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(22px, 4vw, 32px) clamp(18px, 5vw, 40px)' }}>
               <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 20px' }}>
                 同类工具 · More {tool.catEn}
               </h2>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))', gap: 14 }}>
                 {related.map((r) => {
                   const rps = PRICING_STYLE[r.pricing] ?? PRICING_STYLE['Paid'];
                   return (

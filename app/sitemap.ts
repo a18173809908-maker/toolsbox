@@ -21,9 +21,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]);
 
   const statics: MetadataRoute.Sitemap = [
-    { url: BASE,                lastModified: new Date(), changeFrequency: 'hourly', priority: 1   },
-    { url: `${BASE}/trending`,  lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
-    { url: `${BASE}/news`,      lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
+    { url: BASE,               lastModified: new Date(), changeFrequency: 'hourly', priority: 1   },
+    { url: `${BASE}/tools`,    lastModified: new Date(), changeFrequency: 'daily',  priority: 0.9 },
+    { url: `${BASE}/trending`, lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
+    { url: `${BASE}/news`,     lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
   ];
 
   const toolPages: MetadataRoute.Sitemap = ts.map((t) => ({

@@ -384,7 +384,58 @@ export async function updateArticleAi(id: number, data: {
   await db.update(articles).set(data).where(eq(articles.id, id));
 }
 
-// 鈹€鈹€ Automation status 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+// ── Tools list page ───────────────────────────────────────────────────────────
+
+export async function loadToolsPage(opts: {
+  cat?: string;
+  pricing?: string;
+  china?: string;
+  q?: string;
+  page?: number;
+  pageSize?: number;
+}) {
+  const { cat, pricing, china, q, page = 1, pageSize = 24 } = opts;
+  const offset = (page - 1) * pageSize;
+
+  const conditions = [];
+  if (cat && cat !== 'all') conditions.push(eq(tools.catId, cat));
+  if (pricing) conditions.push(eq(tools.pricing, pricing));
+  if (china) conditions.push(eq(tools.chinaAccess, china));
+  if (q) {
+    const pattern = `%${q}%`;
+    conditions.push(or(ilike(tools.name, pattern), ilike(tools.zh, pattern), ilike(tools.en, pattern))!);
+  }
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const [items, totalRows] = await Promise.all([
+    db.select({
+      id: tools.id, name: tools.name, mono: tools.mono, brand: tools.brand,
+      catId: tools.catId, en: tools.en, zh: tools.zh,
+      pricing: tools.pricing, url: tools.url, chinaAccess: tools.chinaAccess,
+      features: tools.features, featured: tools.featured, publishedAt: tools.publishedAt,
+    })
+      .from(tools)
+      .where(where)
+      .orderBy(desc(tools.publishedAt))
+      .limit(pageSize)
+      .offset(offset),
+    db.select({ value: count() }).from(tools).where(where),
+  ]);
+
+  return { items, total: totalRows[0]?.value ?? 0 };
+}
+
+export async function loadAllCategories() {
+  const cats = await db.select().from(categories);
+  const toolRows = await db.select({ catId: tools.catId }).from(tools);
+  const countMap = new Map<string, number>();
+  for (const t of toolRows) countMap.set(t.catId, (countMap.get(t.catId) ?? 0) + 1);
+  return cats
+    .map((c) => ({ ...c, count: countMap.get(c.id) ?? 0 }))
+    .sort((a, b) => b.count - a.count);
+}
+
+// ── Automation status ─────────────────────────────────────────────────────────
 
 export async function loadAutomationStatus() {
   const [

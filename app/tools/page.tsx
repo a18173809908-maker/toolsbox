@@ -1,0 +1,302 @@
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { SiteHeader } from '@/components/SiteHeader';
+import { loadToolsPage, loadAllCategories } from '@/lib/db/queries';
+
+export const dynamic = 'force-dynamic';
+
+const BASE = 'https://aiboxpro.cn';
+
+const C = {
+  bg: '#FFF7ED', panel: '#FFFFFF', ink: '#1F2937', inkSoft: '#4B5563',
+  inkMuted: '#9CA3AF', rule: '#E8D5B7', ruleSoft: '#F3E8D0',
+  primary: '#F97316', primaryBg: '#FFEDD5', accent: '#C2410C',
+  green: '#16A34A', greenBg: '#DCFCE7',
+};
+
+const PRICING_OPTS = [
+  { value: '',          label: '全部' },
+  { value: 'Free',      label: '免费' },
+  { value: 'Freemium',  label: 'Freemium' },
+  { value: 'Paid',      label: '付费' },
+];
+
+const CHINA_OPTS = [
+  { value: '',            label: '全部地区' },
+  { value: 'accessible',  label: '🟢 国内直连' },
+  { value: 'vpn-required',label: '🟡 需要VPN' },
+];
+
+const PRICING_STYLE: Record<string, { bg: string; color: string }> = {
+  Free:     { bg: '#DCFCE7', color: '#16A34A' },
+  Freemium: { bg: '#FFEDD5', color: '#C2410C' },
+  Paid:     { bg: '#F3F4F6', color: '#374151' },
+};
+
+const ACCESS_LABEL: Record<string, { label: string; color: string }> = {
+  accessible:   { label: '国内直连', color: '#16A34A' },
+  'vpn-required': { label: '需VPN',  color: '#92400E' },
+  blocked:      { label: '无法访问', color: '#991B1B' },
+  unknown:      { label: '',         color: '#9CA3AF' },
+};
+
+type SearchParams = { cat?: string; pricing?: string; china?: string; q?: string; page?: string };
+type Props = { searchParams: Promise<SearchParams> };
+
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const sp = await searchParams;
+  const cats = await loadAllCategories();
+  const catMeta = cats.find((c) => c.id === sp.cat);
+  const title = catMeta ? `${catMeta.zh} AI 工具 | AiToolsBox` : 'AI 工具库 | AiToolsBox';
+  const desc = catMeta
+    ? `精选${catMeta.zh}类 AI 工具，含国内可用标注与定价信息。`
+    : '精选 AI 工具导航，国内可用标注、定价与功能对比一览。';
+  return {
+    title,
+    description: desc,
+    openGraph: { title, description: desc, url: `${BASE}/tools`, type: 'website' },
+    alternates: { canonical: '/tools' },
+  };
+}
+
+function buildUrl(base: SearchParams, override: Partial<SearchParams>) {
+  const p = { ...base, ...override };
+  // Remove empty values
+  const entries = Object.entries(p).filter(([, v]) => v && v !== '');
+  if (entries.length === 0) return '/tools';
+  return '/tools?' + entries.map(([k, v]) => `${k}=${encodeURIComponent(v!)}`).join('&');
+}
+
+export default async function ToolsPage({ searchParams }: Props) {
+  const sp = await searchParams;
+  const cat     = sp.cat ?? '';
+  const pricing = sp.pricing ?? '';
+  const china   = sp.china ?? '';
+  const q       = sp.q ?? '';
+  const page    = Math.max(1, parseInt(sp.page ?? '1', 10) || 1);
+  const pageSize = 24;
+
+  const [{ items, total }, cats] = await Promise.all([
+    loadToolsPage({ cat: cat || undefined, pricing: pricing || undefined, china: china || undefined, q: q || undefined, page, pageSize }),
+    loadAllCategories(),
+  ]);
+
+  const totalPages = Math.ceil(total / pageSize);
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'AI 工具库 | AiToolsBox',
+    description: '精选 AI 工具导航，国内可用标注、定价与功能对比一览。',
+    url: `${BASE}/tools`,
+  };
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <div style={{ minHeight: '100vh', background: C.bg, fontFamily: 'Inter, ui-sans-serif, system-ui, "PingFang SC", "Microsoft YaHei", sans-serif' }}>
+
+        <SiteHeader />
+
+        <main style={{ maxWidth: 1100, margin: '0 auto', padding: '36px 24px 64px' }}>
+
+          {/* Hero */}
+          <div style={{ marginBottom: 28 }}>
+            <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 38, color: C.ink, margin: '0 0 8px', letterSpacing: '-0.02em' }}>
+              AI 工具库
+            </h1>
+            <p style={{ fontSize: 15, color: C.inkSoft, margin: 0 }}>
+              收录 {total} 个 AI 工具，标注国内可用情况与定价模式
+            </p>
+          </div>
+
+          {/* Category pills */}
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', marginBottom: 16, paddingBottom: 4 }}>
+            <div style={{ display: 'flex', gap: 8, width: 'max-content' }}>
+              <Link
+                href={buildUrl(sp, { cat: '', page: '1' })}
+                style={{
+                  padding: '7px 16px', borderRadius: 999, fontSize: 13, fontWeight: !cat ? 700 : 500,
+                  background: !cat ? C.ink : C.panel,
+                  color: !cat ? '#fff' : C.inkSoft,
+                  border: `1px solid ${!cat ? C.ink : C.rule}`,
+                  textDecoration: 'none', whiteSpace: 'nowrap',
+                }}
+              >
+                全部
+              </Link>
+              {cats.map((c) => {
+                const active = cat === c.id;
+                return (
+                  <Link
+                    key={c.id}
+                    href={buildUrl(sp, { cat: c.id, page: '1' })}
+                    style={{
+                      padding: '7px 16px', borderRadius: 999, fontSize: 13, fontWeight: active ? 700 : 500,
+                      background: active ? C.ink : C.panel,
+                      color: active ? '#fff' : C.inkSoft,
+                      border: `1px solid ${active ? C.ink : C.rule}`,
+                      textDecoration: 'none', whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {c.icon} {c.zh}
+                    {c.count > 0 && <span style={{ marginLeft: 5, opacity: 0.6, fontSize: 11 }}>{c.count}</span>}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Filter row */}
+          <div style={{ display: 'flex', gap: 24, alignItems: 'center', marginBottom: 28, flexWrap: 'wrap' }}>
+            {/* Pricing */}
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <span style={{ fontSize: 12, color: C.inkMuted, fontWeight: 600, marginRight: 2 }}>定价</span>
+              {PRICING_OPTS.map((opt) => {
+                const active = pricing === opt.value;
+                return (
+                  <Link
+                    key={opt.value}
+                    href={buildUrl(sp, { pricing: opt.value, page: '1' })}
+                    style={{
+                      padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: active ? 700 : 500,
+                      background: active ? C.primaryBg : 'transparent',
+                      color: active ? C.accent : C.inkSoft,
+                      border: `1px solid ${active ? C.accent : C.rule}`,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    {opt.label}
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* China access */}
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <span style={{ fontSize: 12, color: C.inkMuted, fontWeight: 600, marginRight: 2 }}>地区</span>
+              {CHINA_OPTS.map((opt) => {
+                const active = china === opt.value;
+                return (
+                  <Link
+                    key={opt.value}
+                    href={buildUrl(sp, { china: opt.value, page: '1' })}
+                    style={{
+                      padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: active ? 700 : 500,
+                      background: active ? C.primaryBg : 'transparent',
+                      color: active ? C.accent : C.inkSoft,
+                      border: `1px solid ${active ? C.accent : C.rule}`,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    {opt.label}
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* Clear filters */}
+            {(cat || pricing || china || q) && (
+              <Link
+                href="/tools"
+                style={{ fontSize: 12, color: C.inkMuted, textDecoration: 'underline', marginLeft: 'auto' }}
+              >
+                清除筛选
+              </Link>
+            )}
+          </div>
+
+          {/* Results */}
+          {items.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '80px 0', color: C.inkMuted }}>
+              <div style={{ fontSize: 36, marginBottom: 12 }}>🔍</div>
+              <p style={{ fontSize: 15 }}>没有找到匹配的工具</p>
+              <Link href="/tools" style={{ color: C.primary, textDecoration: 'none', fontSize: 14 }}>清除筛选条件</Link>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+              {items.map((tool) => {
+                const ps = PRICING_STYLE[tool.pricing] ?? PRICING_STYLE['Paid'];
+                const access = ACCESS_LABEL[tool.chinaAccess ?? 'unknown'];
+                return (
+                  <Link
+                    key={tool.id}
+                    href={`/tools/${tool.id}`}
+                    style={{ textDecoration: 'none', display: 'block' }}
+                  >
+                    <div style={{
+                      background: C.panel, borderRadius: 14, border: `1px solid ${C.rule}`,
+                      padding: '20px 22px', height: '100%', boxSizing: 'border-box',
+                    }}>
+                      {/* Header row */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                        <div style={{
+                          width: 44, height: 44, borderRadius: 10, background: tool.brand, color: '#fff',
+                          display: 'grid', placeItems: 'center', flexShrink: 0,
+                          fontFamily: 'Georgia, serif', fontWeight: 700,
+                          fontSize: tool.mono.length <= 2 ? 18 : 13, letterSpacing: '-0.03em',
+                        }}>
+                          {tool.mono.slice(0, 3)}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 700, fontSize: 15, color: C.ink, marginBottom: 4 }}>
+                            {tool.name}
+                          </div>
+                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                            <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, background: ps.bg, color: ps.color }}>
+                              {tool.pricing}
+                            </span>
+                            {tool.chinaAccess && tool.chinaAccess !== 'unknown' && access.label && (
+                              <span style={{ fontSize: 11, fontWeight: 600, color: access.color }}>
+                                {tool.chinaAccess === 'accessible' ? '🟢' : '🟡'} {access.label}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      <p style={{
+                        fontSize: 13, color: C.inkSoft, margin: 0, lineHeight: 1.55,
+                        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const,
+                        overflow: 'hidden',
+                      }}>
+                        {tool.zh || tool.en}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginTop: 48 }}>
+              {page > 1 && (
+                <Link
+                  href={buildUrl(sp, { page: String(page - 1) })}
+                  style={{ padding: '8px 20px', borderRadius: 8, border: `1px solid ${C.rule}`, background: C.panel, color: C.inkSoft, textDecoration: 'none', fontSize: 14 }}
+                >
+                  ← 上一页
+                </Link>
+              )}
+              <span style={{ fontSize: 13, color: C.inkMuted }}>
+                第 {page} / {totalPages} 页，共 {total} 个工具
+              </span>
+              {page < totalPages && (
+                <Link
+                  href={buildUrl(sp, { page: String(page + 1) })}
+                  style={{ padding: '8px 20px', borderRadius: 8, border: `1px solid ${C.rule}`, background: C.panel, color: C.inkSoft, textDecoration: 'none', fontSize: 14 }}
+                >
+                  下一页 →
+                </Link>
+              )}
+            </div>
+          )}
+
+        </main>
+      </div>
+    </>
+  );
+}
