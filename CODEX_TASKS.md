@@ -5,6 +5,220 @@
 
 ---
 
+## 🎯 战略调整（2026-05-02 晚）：从「目录」转向「场景指南」
+
+### 为什么调整
+
+跟 ai-bot.cn 对比后用户发现：我们的工具数（38）远不如他们（5000+），详情页深度也远不如（他们是人工编辑的产品评测，我们是 AI 自动生成的简短摘要）。
+
+**结论**：在「工具覆盖率 + 详情深度」这条战线追 ai-bot.cn 是**输的战线**。
+
+| 项 | ai-bot.cn | 我们（按现路径） |
+|---|---|---|
+| 形态 | 编辑型工具目录（人工写每条评测） | AI 自动化目录（AI 摘要） |
+| 工具数 | 5000+ | 38 |
+| 单条用工时 | 30 分钟 | 30 秒 |
+| 优势 | 内容深度 / 长尾 SEO | 速度 / 成本 |
+| 痛点 | 慢、贵、依赖编辑团队 | 内容浅、千篇一律、无人格 |
+
+继续按现路径走，**5 年后的状态就是「5000 个看起来都差不多的 AI 摘要」**，依然不如他们 3 年前。
+
+### 用户的三个真实痛点
+
+1. 「我搜的工具没收录」（覆盖率）
+2. 「点详情页只是一句话简介」（深度）
+3. 「我为什么要来这而不去 ai-bot.cn」（差异化）
+
+### 战略转向：路 A — 「场景化使用指南」
+
+**不再追求列出所有工具，改为回答国内用户的具体场景问题**：
+
+```
+旧形态                    新形态
+按工具组织内容        →   按用户意图组织内容
+/tools/doubao         →   /scenes/ai-write-thesis
+（豆包功能介绍）           （学生用 AI 写论文全攻略，
+                          豆包 / Kimi / 秘塔怎么配合）
+```
+
+**为什么能赢 ai-bot.cn**：
+- 他们按工具组织（用户必须知道工具名才能找到）
+- 我们按场景组织（用户不需知道工具名，搜「AI 写论文」就能进来）
+- SEO 上「AI 写论文」搜索量比「豆包」大数倍
+- 我们 + DeepSeek 半天能写一篇 5000 字深度文，他们写一篇要编辑 1 天
+
+工具列表（/tools）继续保留作为辅助，不是主流量入口。**主流量入口变成 /scenes**。
+
+---
+
+## 📋 Path A 实施计划（H 系列任务，按顺序由 Codex 执行）
+
+### H1：Schema + 数据层（1-2 天）
+
+**新增表 `scenes`**：
+
+```typescript
+// lib/db/schema.ts
+export const scenes = pgTable('scenes', {
+  id: text('id').primaryKey(),                // slug: 'ai-write-thesis'
+  title: text('title').notNull(),             // '学生用AI写论文全攻略'
+  subtitle: text('subtitle'),                 // '从找资料到降重，5个工具完整流程'
+  category: text('category').notNull(),       // 'student' | 'ecommerce' | 'creator' | 'office' | 'developer'
+  intro: text('intro'),                       // 开篇导语，~200字
+  body: text('body').notNull(),               // markdown 长正文，2000-5000字
+  toolIds: text('tool_ids').array(),          // 文中提到的工具 ids，便于关联和反向引用
+  tags: text('tags').array(),                 // ['学生', '免费', '中文']
+  seoKeywords: text('seo_keywords').array(),  // ['AI写论文', 'AI论文降重', 'AI写论文免费']
+  coverImage: text('cover_image'),            // 可选封面图 URL
+  status: text('status').notNull().default('draft'),  // 'draft' | 'published'
+  views: integer('views').notNull().default(0),
+  publishedAt: timestamp('published_at'),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => ({
+  statusIdx: index('scenes_status_idx').on(t.status),
+  categoryIdx: index('scenes_category_idx').on(t.category),
+  publishedIdx: index('scenes_published_idx').on(t.publishedAt),
+}));
+```
+
+**新增 queries**：
+- `loadAllScenes(opts)` — 列表（按 category / tag 过滤、分页）
+- `loadSceneById(id)` — 详情
+- `loadScenesByToolId(toolId)` — 反向关联：某工具被哪些场景指南引用
+- `incrementSceneViews(id)` — PV 统计
+
+### H2：前端页面（2-3 天）
+
+**新建 `/scenes` 列表页**：
+- 顶部 hero 写明产品定位（如「找 AI 工具？先看场景指南」）
+- 5 个分类 tab：学生 / 电商 / 内容创作 / 职场 / 开发者
+- 卡片网格：封面 + 标题 + 副标题 + 涉及工具 logo + 阅读量
+- 按 publishedAt desc 排序
+
+**新建 `/scenes/[slug]` 详情页**：
+- Hero：标题 / 副标题 / 涉及工具 logos / 发布时间 / 阅读量
+- 主体：渲染 markdown 长正文（用现有的 marked + sanitize-html）
+- 「文中提到的工具」卡片块（自动从 toolIds 加载）
+- 文末「相关场景指南」（同 category 的其他文章）
+- JSON-LD `Article` + `HowTo` schema（SEO 关键）
+- `revalidate` 3600（ISR）
+
+**改造 `/tools/[slug]` 详情页**：
+- 底部新增「📖 相关场景指南」区块
+- 调 `loadScenesByToolId(tool.id)` 反向引用，列出涉及该工具的场景文章
+
+**改造首页**：
+- 显著位置加「场景指南」入口（不是底部，是 hero 下方）
+
+**改造 SiteHeader**：
+- nav 加「场景指南」链接，比「工具库」更靠前
+
+### H3：第一批 10 篇内容（持续 2-4 周）
+
+**第一批选题**（按搜索热度估算，国内场景优先）：
+
+| # | slug | 标题 | 主要工具 | 目标 SEO 词 |
+|---|------|------|----------|------------|
+| 1 | ai-write-thesis | 学生用 AI 写论文 / 降重全攻略 | 豆包、Kimi、秘塔、DeepSeek | AI 写论文、AI 论文降重 |
+| 2 | ai-make-ppt-cn | AI 中文做 PPT 实测 5 工具横评 | Gamma、AiPPT、即梦 | AI 做 PPT、AI 生成 PPT |
+| 3 | ai-digital-human | AI 数字人直播带货搭建指南 | 即梦、海螺、可灵 | AI 数字人、AI 主播 |
+| 4 | ai-write-wechat | AI 写公众号文章实战 | 豆包、Kimi、文心一言 | AI 写公众号、AI 写作 |
+| 5 | ai-xiaohongshu | AI 写小红书笔记爆款指南 | 豆包、文心一言 | AI 写小红书 |
+| 6 | ai-english-essay | AI 写英语作文（学生免费版） | DeepSeek、Kimi | AI 写英语作文 |
+| 7 | ai-translate-doc | AI 翻译长文档（带格式保留） | DeepSeek、Kimi、通义 | AI 翻译、AI 文档翻译 |
+| 8 | ai-mindmap | AI 自动生成思维导图 | 豆包、文心一言 | AI 思维导图 |
+| 9 | ai-short-video | AI 自动剪辑短视频 | 即梦、可灵、剪映 | AI 剪辑、AI 短视频 |
+| 10 | ai-coding-assistant | 国内程序员的 AI 编程工具横评 | DeepSeek、通义灵码、Cursor | AI 编程助手 |
+
+**生产流程**：
+
+```
+1. DeepSeek 起草 (10 分钟/篇)
+   - 给定场景 + 目标用户 + 候选工具
+   - 让 DeepSeek 写 3000-5000 字结构化文章
+   - prompt 模板见下
+
+2. 人工审校 + 实操截图 (30-60 分钟/篇)
+   - 检查事实错误（工具名、价格、链接）
+   - 删 AI 套话，加自己的实操观点
+   - 截图：每个工具的实际操作画面 1-2 张
+   - 写到 scenes 表 status=draft
+
+3. 发布 (1 分钟/篇)
+   - 改 status=published，自动进 sitemap
+```
+
+**DeepSeek prompt 模板**（写在 `scripts/draft-scene.ts`）：
+
+```
+你是一位国内 AI 工具实操专家，正在写一篇《[场景标题]》的实战指南。
+
+目标读者：[学生/职场/电商/创作者...]
+他们的真实痛点：[具体描述]
+
+可用的工具（从我们工具库选）：
+- 豆包：字节跳动产品，国内免费可直连
+- Kimi：月之暗面，长文本强
+- DeepSeek：完全免费，推理强
+- 秘塔 AI 搜索：无广告搜索引擎
+- ...
+
+请输出一篇 3000-5000 字 markdown 文章，包含：
+1. 开篇（200字）：用户痛点 + 本文将解决什么
+2. 工具选择（500字）：为什么是这几个工具，国内用户用什么最合适
+3. 详细步骤（2000字+）：3-5 个步骤，每步说清楚用哪个工具、怎么操作
+4. 常见问题（300字）：3-5 个 FAQ
+5. 总结（200字）：推荐工具组合 + 替代方案
+
+风格：实操干货，避免套话和空泛描述。多用具体例子。
+```
+
+### H4：SEO 优化 + 内部链路（1-2 天，H3 同步进行）
+
+1. **每篇文章独立 metadata**（title / description / keywords）
+2. **JSON-LD `Article` schema**（结构化数据，搜索引擎识别）
+3. **每篇文章里嵌入工具卡片**（自动跳到 /tools/[id]，内部链接互通）
+4. **/tools/[slug] 详情页反向引用「相关场景指南」**
+5. **加进 sitemap.xml**（新加 /scenes/* 路径）
+6. **首页 hero + 主导航突出场景指南**
+
+### H5：后期延伸（1 个月后再考虑）
+
+- 场景搜索（在 /scenes 页加搜索框）
+- 用户订阅（公众号/邮件「每周新场景指南」）
+- 评论 / 点赞（涉及用户认证体系）
+- 路 B：对话式工具推荐（基于场景库 + DeepSeek）
+
+---
+
+### 推进时间表
+
+```
+Week 1  ─ H1 (schema) + H2 (列表页 + 详情页 + ISR)
+         里程碑：能在 /scenes/ai-write-thesis 看到一篇渲染出来的测试文章
+
+Week 2  ─ H3 第一批 3 篇（最高 SEO 价值的 #1 #2 #3）
+         + H4 SEO 优化
+         里程碑：3 篇上线，sitemap 有，Google Search Console 提交
+
+Week 3  ─ H3 补到 6 篇
+         看流量：哪些场景词带来真实搜索流量
+
+Week 4  ─ H3 补到 10 篇
+         做 H5 准备
+```
+
+### 验证标准
+
+- H1：scenes 表创建成功，至少 1 条 draft 测试数据
+- H2：`/scenes` 和 `/scenes/[slug]` 渲染正常，移动端无横向滚动，JSON-LD 正确
+- H3：每篇文章 ≥ 3000 字，至少 5 张截图，事实准确
+- H4：`/scenes/[slug]` Lighthouse SEO 评分 ≥ 95，sitemap 包含所有 published 场景
+- 一个月后：场景指南带来的总 PV ≥ 工具详情页总 PV 的 50%（说明流量转移成功）
+
+---
+
 ## 🚨 Codex 当前进度提醒（2026-05-02 晚）
 
 **G1-G3 已完成 ✅**（commits `a5ba5b9` / `65a4a02` / `ed20a0a`）：DDG favicon、README 翻译落 DB、HN 名清洗都改对了。
