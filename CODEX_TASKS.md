@@ -458,9 +458,93 @@ hotnessScore =
 
 #### 任务 E4（P2）：ai-bot.cn sitemap 增量抓取
 
-- 新建 `scripts/fetch-aibot-sitemap.ts`
-- 注意 robots.txt + 限流（建议每秒不超过 1 个请求）
-- 仅抓元数据（名称、URL、分类、点赞数），描述用 AI 重写避免版权问题
+##### 定位
+
+把 ai-bot.cn 当作「**国内 AI 工具的索引黄页**」用，不是爬整个网站。我们只关心两件事：
+1. 他们已经收录了哪些国内工具（能拿到工具的**官网 URL**）
+2. 这些工具的国内热度（**点赞数**）
+
+剩下的内容（描述、功能、教程、FAQ）全部用我们自己的 AI 重新生成。
+
+##### 抓取流程
+
+**第一步：sitemap.xml 拉全量 URL 列表**
+
+```
+https://ai-bot.cn/sitemap.xml
+```
+
+ai-bot.cn 的工具详情页 URL 格式 `/sites/<id>.html`，从 sitemap 里能一次性拿到几千条工具页 URL。
+
+**第二步：每个工具页解析这些字段（且仅这些字段）**
+
+| 字段 | 用途 | 我们的目标字段 |
+|------|------|----------------|
+| 工具名（如「豆包」） | 工具识别 | `tool_candidates.name` |
+| 工具官网 URL（指向 doubao.com） | ⭐ 关键 | `tool_candidates.url` |
+| 主分类（如「AI聊天助手」） | 预归类 | 映射到我们的 catId |
+| 一句话简介 | **仅作 AI 处理时的参考输入**，不直接展示 | （prompt input only，不写入 tools 表） |
+| 点赞数（如 3878） | 国内热度信号 | `tool_candidates.aibotLikes` |
+
+**第三步：增量化 — 只处理新增 URL**
+
+每周拉一次 sitemap，与 DB 中已记录的 URL 集合 diff，只处理新增。这样每周可能新增几十到几百条候选，不会重复打扰目标站点。
+
+##### 法律风险规避（务必严格遵守）
+
+**❌ 绝对不做的事：**
+
+1. **不复制任何描述文案** — ai-bot.cn 的简介只作为 AI 处理时的输入参考，**不直接展示给用户**，写入 tools 表的 `en` / `zh` 全部由 DeepSeek 重新生成
+2. **不抓取截图、logo、视频等图片资源** — 我们自己用工具官网的 favicon，不复用 ai-bot.cn 的图片
+3. **不复制评论、用户内容** — 评论区数据完全不抓
+4. **不做整站抓取** — 不爬首页、分类页、活动页等非 sitemap 包含的页面
+5. **不模拟登录、不绕过付费内容** — sitemap 是公开的，不做需鉴权的操作
+6. **不抓取 robots.txt 禁止的路径** — 抓取前先验证 `/robots.txt`，遵守 Disallow 规则
+
+**✅ 必须做的事：**
+
+1. **限速** — 每秒最多 1 个请求，并发 = 1（同步顺序处理）
+2. **明确 User-Agent** — 设置可识别的 UA：`AiToolsBox-Crawler/1.0 (https://aiboxpro.cn; respectful)`，方便对方识别和联系
+3. **遵守 robots.txt** — 抓取前先 fetch 一次 `https://ai-bot.cn/robots.txt`，解析 Disallow，命中则跳过
+4. **错误率高时停止** — 如果连续 5 个请求 4xx/5xx，立即停止本次任务，避免被封后继续打
+5. **响应 429/503** — 遇到限流响应自动退避，最多 3 次后放弃
+6. **frequency 不超过每周 1 次** — 不需要更频繁，sitemap 一周更新一次足够
+7. **抓取上限** — 单次任务最多新增 200 条候选，超过则截断（避免一口气拉完所有历史）
+8. **数据落地后只用元数据** — 入库后我们的 AI 处理流程**完全基于 url 自己重新爬目标工具官网**生成描述，ai-bot.cn 的简介**只用一次** 作为 prompt 引导，不存档不展示
+
+**⚖️ 法律性质判断**：
+
+- sitemap.xml 是公开 SEO 文件，抓取行为合理
+- 网站名称 + 官网 URL 属于**事实性数据**（fact），不构成版权
+- 描述文案构成版权作品，**我们不复制不展示，仅作 AI 引导**（合理使用 grey area，但保守起见也可以连引导都不用，只用「工具名 + URL」让 AI 自己去工具官网取信息）
+- **最稳妥方案**：连描述都不取，只取「工具名 + 官网 URL + 点赞数」三个事实性字段
+- 如果 ai-bot.cn 有「禁止机器抓取」声明（在 ToS 或 robots.txt），立即停止此任务
+
+##### 实施步骤
+
+1. **新建 `scripts/fetch-aibot-sitemap.ts`**
+   - 步骤：fetch robots.txt 检查 → fetch sitemap.xml → diff 已有 URL → 限速逐个抓 → 解析 → 入 tool_candidates
+   - 错误处理：5 次连续失败立即终止
+2. **schema 加 `aibotLikes` 字段**（已在 E1 综合热度信号中规划）
+3. **`tool_candidates.sourceName='aibot'`** 标记来源
+4. **加 cron** — 每周一次（如周一凌晨 4 点），不要更频繁
+5. **写运行日志**：每次任务结束输出新增数 / 跳过数 / 失败数 / 耗时
+6. **手动开关** — 在 sources 表加一条记录，`active=true/false` 控制是否抓取，便于随时停止
+
+##### 验证标准
+
+- 单次任务新增 30-100 条候选（前几次会多，稳定后每周 50 左右）
+- DB 中 `aibotLikes` 字段填充率 100%（这个源拿到的都有）
+- robots.txt 检查日志清晰
+- 有终止日志（错误时立即停止而非死磕）
+- 法务自查清单（schema 中无 ai-bot.cn 描述文案、无图片、无评论）
+
+##### 退出预案
+
+如果未来 ai-bot.cn 发律师函或在 robots.txt 明确禁止：
+1. 立即把 sources 表中 ai-bot 那条 `active=false`
+2. 不删除已入库工具数据（已是我们 AI 重新生成的，不构成侵权）
+3. 仅删除 `tool_candidates` 表中标记 source='aibot' 的 pending 条目
 
 #### 任务 E5（P2）：运营录入页
 
