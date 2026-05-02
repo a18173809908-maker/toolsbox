@@ -20,12 +20,16 @@ const AI_RE = /\b(ai|agent|llm|gpt|claude|openai|model|copilot|rag|machine learn
 const GH_EXCLUDED_LANGS = new Set(['HTML', 'CSS', 'Shell']);
 
 function cleanTitle(title: string) {
-  return title
+  const candidate = title
     .replace(/^Show HN:\s*/i, '')
     .replace(/^Launch HN:\s*/i, '')
-    .replace(/\s+[–—-]\s+.+$/, '')
-    .trim()
-    .slice(0, 80);
+    .trim();
+
+  const rawName = candidate.split(/\s*(?:[:|]|[–—]| - )\s*/u)[0]?.trim() ?? '';
+  if (!rawName || rawName.length > 30) return null;
+  if (!/^[A-Za-z0-9._-]{1,30}$/.test(rawName)) return null;
+
+  return rawName;
 }
 
 function hnUrl(hit: HnHit) {
@@ -44,15 +48,21 @@ export async function fetchHackerNewsToolCandidates(limit = 20): Promise<Discove
     const data = await res.json() as { hits?: HnHit[] };
     const candidates = (data.hits ?? [])
       .filter((hit) => hit.title && AI_RE.test(hit.title))
-      .map((hit) => ({
-        name: cleanTitle(hit.title!),
-        url: hnUrl(hit),
-        description: `${hit.title}${hit.points ? ` · ${hit.points} HN points` : ''}`,
-        sourceName: 'Hacker News AI',
-        sourceType: 'hn',
-        votes: hit.points ?? 0,
-      }))
-      .filter((item) => item.name && item.url);
+      .map((hit) => {
+        const name = cleanTitle(hit.title!);
+        const url = hnUrl(hit);
+        if (!name || !url) return null;
+
+        return {
+          name,
+          url,
+          description: `${hit.title}${hit.points ? ` - ${hit.points} HN points` : ''}`,
+          sourceName: 'Hacker News AI',
+          sourceType: 'hn',
+          votes: hit.points ?? 0,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => Boolean(item));
 
     const inserted = await upsertToolCandidates(candidates);
     return { source: 'Hacker News AI', fetched: inserted };
@@ -80,7 +90,7 @@ export async function fetchGithubTrendingToolCandidates(limit = 20): Promise<Dis
         return {
           name,
           url: `https://github.com/${repo.repo}`,
-          description: `${repo.description} · GitHub +${repo.gained.toLocaleString()} stars/week · ${repo.lang}`,
+          description: `${repo.description} - GitHub +${repo.gained.toLocaleString()} stars/week - ${repo.lang}`,
           sourceName: 'GitHub Trending AI',
           sourceType: 'github',
           votes: repo.gained,

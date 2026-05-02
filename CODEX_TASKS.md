@@ -902,3 +902,17 @@ npm run cleanup:tool-data      # 清理噪音 + 禁用工具源
 npm run fetch:articles         # 抓取资讯
 npm run process:articles       # AI 处理资讯（摘要/翻译/标签）
 ```
+
+---
+
+## Codex update 2026-05-02 (G1-G3)
+
+Status:
+- G1 done: `components/ToolBadges.tsx` now uses DuckDuckGo favicon service, and `next.config.ts` allows `icons.duckduckgo.com`.
+- G2 done: `github_trending.readme_zh` was added and pushed to Neon with `npm run db:push`; README translation now caches to DB; Baidu env name is aligned to `BAIDU_TRANSLATE_APP_KEY`; `scripts/translate-all-readmes.ts` and `npm run translate:readmes` were added.
+- G3 done: HN candidate names are now cleaned before insert; `Show HN:` / `Launch HN:` prefixes are stripped, names are cut before `:`, `-`, en dash, em dash, or `|`, and candidates are rejected unless the name is ASCII letters/numbers/`-`/`_`/`.` with length <= 30.
+
+Validation:
+- `npm run db:push` completed for `readme_zh`.
+- `npm run translate:readme -- vercel/ai` and `npm run translate:readmes -- 1` handle missing Baidu config cleanly.
+- `npm run lint` and `npm run build` should be re-run after this update before push.
