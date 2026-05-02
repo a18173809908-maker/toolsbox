@@ -203,6 +203,7 @@ export async function upsertToolCandidates(items: {
   votes?: number;
   hnPoints?: number;
   ghGainedStars?: number;
+  aibotLikes?: number;
   hotnessScore?: number;
 }[]): Promise<number> {
   if (items.length === 0) return 0;
@@ -217,6 +218,7 @@ export async function upsertToolCandidates(items: {
       votes: item.votes ?? 0,
       hnPoints: item.hnPoints,
       ghGainedStars: item.ghGainedStars,
+      aibotLikes: item.aibotLikes,
       hotnessScore: item.hotnessScore,
     }).onConflictDoNothing();
     if (result.rowCount && result.rowCount > 0) inserted++;

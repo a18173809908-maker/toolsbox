@@ -104,6 +104,7 @@ export const toolCandidates = pgTable(
     votes: integer('votes').notNull().default(0),
     hnPoints: integer('hn_points'),
     ghGainedStars: integer('gh_gained_stars'),
+    aibotLikes: integer('aibot_likes'),
     hotnessScore: integer('hotness_score'),
     firstSeenAt: timestamp('first_seen_at').notNull().defaultNow(),
     status: text('status').notNull().default('pending'),

@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/refresh-tools",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/aibot-sitemap",
+      "schedule": "0 4 * * 1"
     }
   ]
 }

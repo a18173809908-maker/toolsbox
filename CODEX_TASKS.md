@@ -980,6 +980,24 @@ Validation:
 
 ---
 
+## Codex update 2026-05-02 (E4)
+
+Status:
+- E4 done: added respectful ai-bot.cn sitemap ingestion with `lib/jobs/fetch-aibot-sitemap.ts`, `scripts/fetch-aibot-sitemap.ts`, and `/api/cron/aibot-sitemap`.
+- Added `tool_candidates.aibot_likes`; ai-bot candidates write `sourceType='aibot'`, likes, and `hotnessScore = round(likes * 0.5)`.
+- Added an `aibot` source switch in the existing `sources` table; setting the `ai-bot.cn sitemap` source inactive stops the job.
+- Added weekly schedules in `vercel.json` and `.github/workflows/fetch-aibot-sitemap.yml`.
+- Legal guardrails implemented: checks robots.txt, only processes `/sites/<id>.html`, rate limits to 1 request/sec, stops after 5 consecutive failures, and only stores tool name, official URL, category label, and likes. It does not store ai-bot descriptions, images, comments, or screenshots.
+
+Validation:
+- `curl` confirmed robots.txt allows `/sites/` for generic user agents and publishes the sitemap URL.
+- `npm run db:push` added `aibot_likes` in Neon.
+- `npm run fetch:aibot-sitemap -- 2` inserted 2 candidates with 0 failures.
+- `npm run lint` passed with only the pre-existing `scripts/cleanup-tool-data.ts` unused `sql` warning.
+- `npm run build` passed.
+
+---
+
 ## Codex update 2026-05-02 (G5)
 
 Status:
