@@ -4,7 +4,7 @@ const API = 'https://fanyi-api.baidu.com/api/trans/vip/translate';
 
 function credentials() {
   const appid = process.env.BAIDU_TRANSLATE_APP_ID;
-  const key = process.env.BAIDU_TRANSLATE_KEY;
+  const key = process.env.BAIDU_TRANSLATE_APP_KEY;
   if (!appid || !key) return null;
   return { appid, key };
 }

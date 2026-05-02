@@ -309,6 +309,33 @@ export async function loadRepoDetail(repo: string) {
   return rows;
 }
 
+export async function updateRepoReadmeZh(repo: string, readmeZh: string) {
+  await db.update(githubTrending).set({ readmeZh }).where(eq(githubTrending.repo, repo));
+}
+
+export async function loadReposMissingReadmeZh(limit = 20) {
+  const rows = await db
+    .select({
+      repo: githubTrending.repo,
+      gained: githubTrending.gained,
+      readmeZh: githubTrending.readmeZh,
+    })
+    .from(githubTrending)
+    .where(eq(githubTrending.period, 'week'))
+    .orderBy(desc(githubTrending.gained))
+    .limit(limit * 3);
+
+  const seen = new Set<string>();
+  return rows
+    .filter((row) => {
+      if (seen.has(row.repo) || row.readmeZh) return false;
+      seen.add(row.repo);
+      return true;
+    })
+    .slice(0, limit)
+    .map((row) => row.repo);
+}
+
 // ── Search ────────────────────────────────────────────────────────────────────
 
 export async function searchTools(q: string, limit = 20) {

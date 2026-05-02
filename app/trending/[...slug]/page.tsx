@@ -3,9 +3,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { Metadata } from 'next';
 import { SiteHeader } from '@/components/SiteHeader';
-import { translateReadmeExcerpt } from '@/lib/baidu-translate';
+import { hasBaiduTranslateConfig, translateReadmeExcerpt } from '@/lib/baidu-translate';
 import { fetchReadme, fetchRepoInfo, renderReadme } from '@/lib/github';
-import { loadRepoDetail } from '@/lib/db/queries';
+import { loadRepoDetail, updateRepoReadmeZh } from '@/lib/db/queries';
 
 export const revalidate = 3600;
 
@@ -69,7 +69,11 @@ export default async function TrendingDetailPage({ params }: Props) {
     fetchReadme(repo),
   ]);
   const readmeHtml = readme ? await renderReadme(readme, repo) : null;
-  const readmeZh = readme ? await translateReadmeExcerpt(readme) : null;
+  let readmeZh = rows.find((row) => row.readmeZh)?.readmeZh ?? null;
+  if (!readmeZh && readme && hasBaiduTranslateConfig()) {
+    readmeZh = await translateReadmeExcerpt(readme);
+    if (readmeZh) await updateRepoReadmeZh(repo, readmeZh);
+  }
   const pushedAt = repoInfo?.pushed_at ? new Date(repoInfo.pushed_at).toLocaleDateString('zh-CN') : null;
 
   return (

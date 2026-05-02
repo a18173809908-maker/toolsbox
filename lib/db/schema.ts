@@ -51,6 +51,7 @@ export const githubTrending = pgTable(
     repo: text('repo').notNull(),
     description: text('description').notNull(),
     descriptionZh: text('description_zh'),
+    readmeZh: text('readme_zh'),
     lang: text('lang').notNull(),
     stars: integer('stars').notNull(),
     gained: integer('gained').notNull(),

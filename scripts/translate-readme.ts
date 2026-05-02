@@ -1,5 +1,6 @@
 import { fetchReadme } from '@/lib/github';
 import { hasBaiduTranslateConfig, readmeExcerpt, translateReadmeExcerpt } from '@/lib/baidu-translate';
+import { updateRepoReadmeZh } from '@/lib/db/queries';
 
 const repo = process.argv[2];
 
@@ -17,7 +18,7 @@ if (!repo || !repo.includes('/')) {
 
   if (!hasBaiduTranslateConfig()) {
     console.log('Baidu translate is not configured; skipping translation.');
-    console.log('Set BAIDU_TRANSLATE_APP_ID and BAIDU_TRANSLATE_KEY in .env.local.');
+    console.log('Set BAIDU_TRANSLATE_APP_ID and BAIDU_TRANSLATE_APP_KEY in .env.local.');
     console.log('\nExcerpt:\n');
     console.log(readmeExcerpt(readme));
     return;
@@ -29,6 +30,8 @@ if (!repo || !repo.includes('/')) {
     process.exit(1);
   }
 
+  await updateRepoReadmeZh(repo, translated);
+  console.log(`Saved README translation for ${repo}`);
   console.log(translated);
 })().catch((err) => {
   console.error(err);
