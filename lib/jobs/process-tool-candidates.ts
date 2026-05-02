@@ -10,6 +10,7 @@ const CATEGORY_IDS = [
 type CategoryId = (typeof CATEGORY_IDS)[number];
 
 interface ToolAiResult {
+  isTool?: boolean;
   zh: string;
   catId: CategoryId;
   pricing: 'Free' | 'Freemium' | 'Paid';
@@ -50,7 +51,10 @@ function extractJson(s: string): string | null {
 }
 
 async function enrichCandidate(input: { name: string; description?: string }): Promise<ToolAiResult | null> {
-  const prompt = `你是中国用户视角的 AI 工具目录编辑。根据工具名称和英文描述，返回严格 JSON：
+  const prompt = `你是中国用户视角的 AI 工具目录编辑。先判断候选是否是具体 AI 产品/工具。
+如果它只是新闻、博客文章、榜单、咨询服务、招聘信息，或与 AI 无关，只返回 {"isTool":false}。
+如果是有效 AI 工具，返回严格 JSON：
+- "isTool": true
 - "zh": 一句中文简介，不超过 55 字，说明这个工具能做什么
 - "catId": 只能选一个：${CATEGORY_IDS.join(', ')}
 - "pricing": 只能是 Free, Freemium, Paid；不确定用 Freemium
@@ -69,6 +73,7 @@ async function enrichCandidate(input: { name: string; description?: string }): P
     const json = extractJson(raw);
     if (!json) return null;
     const parsed = JSON.parse(json) as ToolAiResult;
+    if (parsed.isTool === false) return null;
     if (!parsed.zh || !CATEGORY_IDS.includes(parsed.catId) || !parsed.pricing || !parsed.chinaAccess) {
       return null;
     }

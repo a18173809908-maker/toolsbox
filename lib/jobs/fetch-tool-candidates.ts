@@ -7,24 +7,32 @@ interface ParsedToolItem {
   description?: string;
 }
 
+function textFromMaybeHtml(value: string) {
+  return load(value).text().replace(/\s+/g, ' ').trim();
+}
+
+function normalizeName(title: string) {
+  const clean = textFromMaybeHtml(title);
+  const split = clean.match(/^(.{2,50}?)(?:\s+[–—]\s+|\s+-\s+).{8,}$/);
+  return (split?.[1] ?? clean).trim();
+}
+
 function parseToolFeed(xml: string): ParsedToolItem[] {
   const $ = load(xml, { xmlMode: true });
   const items: ParsedToolItem[] = [];
 
   $('item').each((_, el) => {
-    const name = $(el).children('title').text().trim();
+    const name = normalizeName($(el).children('title').text());
     const url = $(el).children('link').text().trim() || $(el).children('guid').text().trim();
-    const description = $(el).children('description').text().replace(/\s+/g, ' ').trim();
+    const description = textFromMaybeHtml($(el).children('description').text());
     if (name && url) items.push({ name, url, description: description || undefined });
   });
 
   if (items.length === 0) {
     $('entry').each((_, el) => {
-      const name = $(el).children('title').text().trim();
+      const name = normalizeName($(el).children('title').text());
       const url = $(el).children('link').attr('href') ?? $(el).children('link').text().trim();
-      const description = ($(el).children('summary').text() || $(el).children('content').text())
-        .replace(/\s+/g, ' ')
-        .trim();
+      const description = textFromMaybeHtml($(el).children('summary').text() || $(el).children('content').text());
       if (name && url) items.push({ name, url, description: description || undefined });
     });
   }
