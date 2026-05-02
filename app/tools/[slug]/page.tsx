@@ -21,12 +21,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!tool) return { title: 'Not Found' };
   const access = tool.chinaAccess ? ACCESS_BADGE[tool.chinaAccess] : undefined;
   const titlePrefix = tool.chinaAccess === 'accessible' ? '国内可用 ' : '';
+  const featureText = tool.features?.slice(0, 3).join('、');
+  const description = [tool.zh, featureText, access?.label].filter(Boolean).join('。').slice(0, 180);
   return {
-    title: `${tool.name} — ${tool.catZh} AI 工具`,
-    description: [tool.zh, access?.label].filter(Boolean).join('。').slice(0, 120),
+    title: `${tool.name} — ${titlePrefix}${tool.catZh} AI 工具 | AiToolsBox`,
+    description,
     openGraph: {
       title: `${tool.name} | ${titlePrefix}AiToolsBox`,
-      description: [tool.zh, access?.label].filter(Boolean).join('。').slice(0, 120),
+      description,
       url: `${BASE}/tools/${tool.id}`,
       type: 'website',
       images: [`${BASE}/og?type=tool&name=${encodeURIComponent(tool.name)}&sub=${encodeURIComponent(tool.en.slice(0, 60))}&brand=${encodeURIComponent(tool.brand)}&mono=${encodeURIComponent(tool.mono)}`],
@@ -79,6 +81,16 @@ export default async function ToolDetailPage({ params }: Props) {
     url: tool.url ?? `${BASE}/tools/${tool.id}`,
   };
 
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: '首页', item: BASE },
+      { '@type': 'ListItem', position: 2, name: tool.catZh, item: `${BASE}/categories/${tool.cat}` },
+      { '@type': 'ListItem', position: 3, name: tool.name, item: `${BASE}/tools/${tool.id}` },
+    ],
+  };
+
   const ps = PRICING_STYLE[tool.pricing] ?? PRICING_STYLE['Paid'];
   const access = ACCESS_BADGE[tool.chinaAccess ?? 'unknown'];
   const officialUrl = tool.url ?? fallbackToolUrl(tool.name);
@@ -88,6 +100,10 @@ export default async function ToolDetailPage({ params }: Props) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <div style={{ minHeight: '100vh', background: '#FFF7ED', fontFamily: 'Inter, ui-sans-serif, system-ui, "PingFang SC", "Microsoft YaHei", sans-serif' }}>
         <SiteHeader />
