@@ -5,6 +5,72 @@
 
 ---
 
+## Codex 实施状态更新（2026-05-02）
+
+> 下面是 Codex 已经落地并推送到 `main` 的变更，包含和原计划不同的实际决策。Claude Code 接手时以本节为准，避免重复执行旧 SQL 或继续追不可用源。
+
+### 已完成并推送
+
+- **Bug 0：`vercel.json` 已创建并推送。**
+  - 文件：`vercel.json`
+  - 当前包含 3 个 Vercel Cron：`/api/cron/refresh-trending`、`/api/cron/refresh-articles`、`/api/cron/refresh-tools`
+  - 注意：Vercel Hobby 计划的 Cron 频率有限制，所以 Vercel Cron 作为每日备份触发；更高频触发由 GitHub Actions 负责。
+
+- **Bug 1：首页无效 “Load more / 加载更多” 按钮已移除。**
+  - 文件：`components/V2Pro.tsx`
+
+- **Bug 2：分类数量已改为真实 tools 统计。**
+  - 文件：`lib/db/queries.ts`
+  - 实现方式：在 `loadHomepageData()` 中按实际 `tools` 数据聚合分类数量，并覆盖静态 `categories.count`。
+  - 与原计划差异：没有使用 SQL `leftJoin + COUNT`，但显示结果已来自真实工具数据。
+
+- **Task 0：全局共用顶栏 `SiteHeader` 已完成。**
+  - 文件：`components/SiteHeader.tsx`
+  - 已接入：首页、`/trending`、`/trending/[...slug]`、`/tools/[slug]`、`/news`、`/news/[id]`、`/categories/[id]`
+
+- **Task 3：工具详情页 v2 已完成。**
+  - 文件：`app/tools/[slug]/page.tsx`
+  - 已包含真实官网 URL、国内可用 badge、features、扩展信息栏、SEO metadata 增强、`BreadcrumbList` JSON-LD。
+
+- **Task 4：GitHub 仓库详情页 v2 已完成。**
+  - 文件：`app/trending/[...slug]/page.tsx`、`lib/github.ts`、`app/globals.css`
+  - 已接 GitHub API，渲染 topics、homepage、license、forks、最近更新时间、README HTML。
+  - README 使用 `marked + sanitize-html` 渲染，并通过 `.readme-content` 做样式隔离。
+
+- **Task 9：AI 资讯中文优先已完成。**
+  - 文件：`lib/jobs/process-articles.ts`、`scripts/seed-sources.ts`
+  - 已按 `sources.lang` 分支处理：
+    - 中文源：`titleZh = 原标题`，只生成中文摘要和中文标签。
+    - 英文源：翻译标题，生成英文摘要、中文摘要和中文标签。
+  - 已执行 `npm run seed:sources`，中文源已入库并验证抓取。
+  - 已执行 `npm run fetch:articles`，本次成功新增 107 篇文章。
+  - 已执行 `npm run process:articles`，一次处理 10 篇，`skipped: 0`。
+
+- **Task 10：工具自动发现管道第一版已完成。**
+  - 文件：`lib/jobs/fetch-tool-candidates.ts`、`lib/jobs/process-tool-candidates.ts`、`app/api/cron/refresh-tools/route.ts`
+  - 新增 DB：`sources.type`、`tool_candidates`
+  - 已执行 `npm run db:push`
+  - 已执行 `npm run seed:tool-sources`
+  - 已执行 `npm run fetch:tool-candidates`，成功插入 70 条候选工具。
+  - 注意：没有手动执行 `npm run process:tool-candidates`，避免立即批量发布候选工具到正式 `tools` 表。
+
+### 数据源实际决策
+
+- **中文新闻源已入库：** 量子位、少数派、InfoQ 中文、极客公园、36氪。
+- **机器之心暂未入库：** 实测 `https://www.jiqizhixin.com/rss` 返回 HTML，不是有效 RSS，放入会导致定时任务持续报错。
+- **工具发现源已替换：**
+  - 原计划 `theresanaiforthat` 实测 403。
+  - 原计划 `futurepedia` 实测 404。
+  - 原计划 `aitoolsdirectory` 实测 fetch failed。
+  - 当前使用已验证可抓取的 3 个源：DreyX AI Digest、Insidr AI Tools、Planet AI。
+
+### 不需要再手动做的运营 SQL
+
+- 不需要在 Neon 控制台手动执行 Task 9 的中文新闻源 SQL；`npm run seed:sources` 已执行。
+- 不需要在 Neon 控制台手动执行 Task 10 的工具源 SQL；`npm run seed:tool-sources` 已执行，并且旧源已替换为可用源。
+
+---
+
 ## 0. 最高优先级紧急修复 🚨
 
 ### Task 0 — 全局共用顶栏（所有内页导航缺失）
@@ -151,6 +217,57 @@ export function SiteHeader({ onOpenPalette }: { onOpenPalette?: () => void }) {
 - **方案 B（完整实现）：** 工具数量增长后再做真正的虚拟滚动/分页，目前工具少，暂不必要。
 
 **结论：选方案 A，工具 < 100 条时直接全量渲染，移除加载更多按钮。**
+
+---
+
+### Bug 0 — 缺少 `vercel.json`，所有定时任务从未自动执行 🚨
+
+**发现：** 项目中根本没有 `vercel.json` 文件。
+
+**影响：**
+- `app/api/cron/github-trending/route.ts` — 路由存在，但从未自动触发过
+- `app/api/cron/refresh-articles/route.ts` — 路由存在，但从未自动触发过
+- GitHub 趋势数据从未自动更新
+- 新闻文章从未自动抓取
+
+**修复：** 在项目根目录新建 `vercel.json`：
+
+```json
+{
+  "crons": [
+    {
+      "path": "/api/cron/github-trending",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/refresh-articles",
+      "schedule": "0 */4 * * *"
+    }
+  ]
+}
+```
+
+- GitHub Trending：每 6 小时更新一次（`0 */6 * * *`）
+- 新闻抓取：每 4 小时一次（`0 */4 * * *`）
+- 所有 cron 路由都有 `Authorization: Bearer {CRON_SECRET}` 鉴权，Vercel 会自动在请求头中携带
+
+**验证：** 部署后在 Vercel Dashboard → Crons 面板可以看到两个定时任务已注册，并可手动触发测试。
+
+> ⚠️ 注意：Vercel cron 免费计划只支持最小间隔 1 天（daily）。如果需要每 4/6 小时，需升级到 Pro 计划，或将两个路由合并为一个每天跑一次的 cron（日触发：`0 6 * * *`）。目前先按 4h/6h 写，实际执行频率视 Vercel 计划而定。
+
+---
+
+### 说明 — 工具数量为何一直是 24 条
+
+**结论：工具没有自动抓取，不会自动增加。**
+
+工具数据来自 `lib/db/seed.ts` 手动录入的种子数据，共 24 条。没有工具爬虫或自动发现管道。
+
+要增加工具数量，只能：
+1. 手动往 `lib/db/seed.ts` 补充工具数据，然后重新执行 `npx tsx lib/db/seed.ts`
+2. 或在 Neon 控制台直接 INSERT
+
+Task 9（中文新闻）的 SQL 也尚未执行——中文 RSS 源还没有插入 sources 表。
 
 ---
 
@@ -1111,6 +1228,443 @@ SSG + ISR，展示全站最新技巧，按工具分组。
 
 SSG（`generateStaticParams` 来自 `loadAllToolIds`）+ ISR。
 这是 SEO 重点页面，`title` 格式：`{工具名} 使用技巧 — 教程 · 提示词 · 实战 | AiToolsBox`
+
+---
+
+### Task 10 — 工具自动发现管道（Auto Tool Discovery）⭐ 高优先
+
+**为什么：** 工具数量永远卡在 24 条是因为没有任何抓取管道。本任务建立一套与资讯抓取完全对称的自动发现流程：订阅专门的 AI 工具目录 RSS → AI 富化（中文描述 + 分类 + 国内访问判断）→ 自动发布到工具库。
+
+---
+
+#### 10.1 数据源
+
+以下 RSS 源**无需 API Key**，每天发布新 AI 工具，可直接订阅：
+
+| 来源 | 状态 | 说明 |
+|---|---|---|
+| DreyX AI Digest | ✅ 已入库，实测可抓取 | 已通过 `npm run seed:tool-sources` 录入 |
+| Insidr AI Tools | ✅ 已入库，实测可抓取 | 已通过 `npm run seed:tool-sources` 录入 |
+| Planet AI | ✅ 已入库，实测可抓取 | 已通过 `npm run seed:tool-sources` 录入 |
+| There's An AI For That | ❌ 实测 403，不可用 | 已废弃 |
+| Futurepedia | ❌ 实测 404，不可用 | 已废弃 |
+| AI Tools Directory | ❌ fetch 失败，不可用 | 已废弃 |
+
+> 2026-05-02 已执行 `npm run fetch:tool-candidates`，成功插入 70 条候选工具。管道有输入，每日凌晨 3 点 cron 自动处理。
+
+以上源添加到 `sources` 表时 `lang='en'`，并加一个新字段 `type='tool'`（见下文 Schema 改动）。
+
+**国内 AI 工具补充（中文来源）：**
+
+下列站点目前没有标准 RSS，先跳过，后续专项处理：
+- ai-bot.cn（国内 AI 工具聚合，可考虑定期全量抓取页面）
+
+---
+
+#### 10.2 Schema 改动
+
+**`sources` 表新增 `type` 字段**，区分「资讯源」和「工具源」：
+
+```sql
+ALTER TABLE sources ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'news';
+-- 取值: 'news' | 'tool'
+```
+
+Drizzle schema 对应追加：
+```typescript
+type: text('type').notNull().default('news'),
+```
+
+**新建 `tool_candidates` 表**（工具暂存区，AI 富化前的原始数据）：
+
+```sql
+CREATE TABLE tool_candidates (
+  id           SERIAL PRIMARY KEY,
+  name         TEXT NOT NULL,
+  url          TEXT NOT NULL UNIQUE,
+  description  TEXT,
+  -- AI 富化结果
+  slug         TEXT UNIQUE,          -- 将成为 tools.id
+  zh           TEXT,                 -- 中文描述
+  cat_id       TEXT,                 -- 对应 categories.id
+  china_access TEXT DEFAULT 'unknown',
+  pricing      TEXT DEFAULT 'Freemium',
+  features     TEXT[],
+  -- 来源元数据
+  source_name  TEXT NOT NULL,        -- 来源名称
+  source_type  TEXT NOT NULL DEFAULT 'rss',
+  votes        INTEGER DEFAULT 0,    -- 来源站的热度分（有则取）
+  -- 处理状态
+  status       TEXT NOT NULL DEFAULT 'pending',
+  -- 'pending' → 'enriched' → 'published' | 'rejected'
+  fetched_at   TIMESTAMP DEFAULT NOW(),
+  published_at TIMESTAMP
+);
+
+CREATE INDEX ON tool_candidates (status);
+CREATE INDEX ON tool_candidates (fetched_at DESC);
+```
+
+Drizzle schema 新增（`lib/db/schema.ts`）：
+
+```typescript
+export const toolCandidates = pgTable(
+  'tool_candidates',
+  {
+    id:          serial('id').primaryKey(),
+    name:        text('name').notNull(),
+    url:         text('url').notNull().unique(),
+    description: text('description'),
+    slug:        text('slug').unique(),
+    zh:          text('zh'),
+    catId:       text('cat_id'),
+    chinaAccess: text('china_access').default('unknown'),
+    pricing:     text('pricing').default('Freemium'),
+    features:    text('features').array(),
+    sourceName:  text('source_name').notNull(),
+    sourceType:  text('source_type').notNull().default('rss'),
+    votes:       integer('votes').default(0),
+    status:      text('status').notNull().default('pending'),
+    fetchedAt:   timestamp('fetched_at').notNull().defaultNow(),
+    publishedAt: timestamp('published_at'),
+  },
+  (t) => ({
+    statusIdx: index('tool_candidates_status_idx').on(t.status),
+  }),
+);
+```
+
+---
+
+#### 10.3 新建 `lib/jobs/fetch-tools.ts`
+
+与 `fetch-articles.ts` 完全对称，只抓 `type='tool'` 的源：
+
+```typescript
+import { load } from 'cheerio';
+import { db } from '@/lib/db';
+import { sources, toolCandidates } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
+
+interface ParsedTool {
+  name: string;
+  url: string;
+  description?: string;
+  votes?: number;
+}
+
+function parseToolFeed(xml: string): ParsedTool[] {
+  const $ = load(xml, { xmlMode: true });
+  const items: ParsedTool[] = [];
+
+  $('item, entry').each((_, el) => {
+    const title = $(el).children('title').text().trim();
+    const link  = $(el).children('link').text().trim()
+                  || $(el).children('link').attr('href') || '';
+    const desc  = $(el).children('description, summary, content').text().trim();
+    if (title && link) {
+      items.push({ name: title, url: link, description: desc || undefined });
+    }
+  });
+
+  return items.slice(0, 50); // 每源最多取 50 条
+}
+
+export async function fetchNewTools() {
+  const toolSources = await db
+    .select()
+    .from(sources)
+    .where(eq(sources.type, 'tool')); // ← 只取工具源
+
+  const results = [];
+
+  for (const src of toolSources) {
+    try {
+      const res = await fetch(src.feedUrl, {
+        headers: { 'User-Agent': 'AiToolsBox/1.0 tool-discovery' },
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const xml = await res.text();
+      const parsed = parseToolFeed(xml);
+
+      let inserted = 0;
+      for (const tool of parsed) {
+        const result = await db
+          .insert(toolCandidates)
+          .values({
+            name: tool.name,
+            url: tool.url,
+            description: tool.description,
+            sourceName: src.name,
+            votes: tool.votes ?? 0,
+          })
+          .onConflictDoNothing(); // URL 去重
+        if (result.rowCount && result.rowCount > 0) inserted++;
+      }
+
+      results.push({ source: src.name, inserted });
+    } catch (err) {
+      results.push({ source: src.name, inserted: 0, error: String(err) });
+    }
+  }
+
+  return results;
+}
+```
+
+---
+
+#### 10.4 新建 `lib/jobs/process-tools.ts`
+
+对 `status='pending'` 的候选工具进行 AI 富化，然后自动发布到 `tools` 表。
+
+```typescript
+import { db } from '@/lib/db';
+import { tools, toolCandidates, categories } from '@/lib/db/schema';
+import { eq, and, isNull } from 'drizzle-orm';
+import { chat } from '@/lib/llm';
+
+const BATCH = 5; // 每次处理 5 条，控制 Claude API 消耗
+
+// 从数据库获取现有分类 ID 列表（用于约束 AI 输出）
+async function getCategoryIds(): Promise<string[]> {
+  const cats = await db.select({ id: categories.id }).from(categories);
+  return cats.map(c => c.id);
+}
+
+// 根据 URL 推断国内访问情况（规则优先，无需 AI）
+function inferChinaAccess(url: string): 'accessible' | 'vpn-required' | 'unknown' {
+  try {
+    const domain = new URL(url).hostname.toLowerCase();
+    // 中国域名 → 直连
+    if (domain.endsWith('.cn') || domain.endsWith('.com.cn')) return 'accessible';
+    // 已知国内可用的产品域名关键词
+    const cnProducts = ['kimi', 'moonshot', 'zhipuai', 'zhipu', 'wenxin', 'qianfan',
+      'tongyi', 'baidu', 'aliyun', 'alibaba', 'tencent', 'bytedance',
+      'deepseek', 'minimax', '01.ai', 'sensetime'];
+    if (cnProducts.some(k => domain.includes(k))) return 'accessible';
+    // 默认：国外工具需要 VPN
+    return 'vpn-required';
+  } catch {
+    return 'unknown';
+  }
+}
+
+// 将工具名转为 slug：ChatGPT → chatgpt，Stable Diffusion → stable-diffusion
+function toSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .slice(0, 40);
+}
+
+interface AiToolResult {
+  catId: string;
+  zh: string;           // 中文描述（≤ 60 字）
+  pricing: 'Free' | 'Freemium' | 'Paid';
+  features: string[];   // 3~5 条核心功能，中文
+}
+
+async function enrichTool(name: string, description: string, catIds: string[]): Promise<AiToolResult | null> {
+  const prompt = `你是一位 AI 工具编辑，专注于为中国用户介绍 AI 产品。
+
+请根据以下 AI 工具信息，返回 JSON：
+- "catId": 从这些分类中选一个最匹配的 id：${catIds.join(', ')}
+- "zh": 中文简介（≤60字，通俗易懂，突出核心功能，不要翻译腔）
+- "pricing": 定价模型，只能是 "Free"、"Freemium" 或 "Paid" 之一
+- "features": 3~5条核心功能亮点，中文，每条 ≤15 字，数组格式
+
+只返回 JSON，不要 markdown 代码块。
+
+工具名：${name}
+英文描述：${description?.slice(0, 400) || '（无）'}`;
+
+  try {
+    const raw = await chat([{ role: 'user', content: prompt }], { maxTokens: 512 });
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) return null;
+    const parsed = JSON.parse(match[0]) as AiToolResult;
+    if (!parsed.catId || !catIds.includes(parsed.catId)) return null;
+    if (!parsed.zh) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export async function processToolCandidates() {
+  const catIds = await getCategoryIds();
+
+  const pending = await db
+    .select()
+    .from(toolCandidates)
+    .where(eq(toolCandidates.status, 'pending'))
+    .limit(BATCH);
+
+  let processed = 0;
+  let skipped = 0;
+
+  for (const candidate of pending) {
+    const result = await enrichTool(
+      candidate.name,
+      candidate.description ?? '',
+      catIds,
+    );
+
+    if (!result) {
+      // AI 失败：标记为 rejected，避免反复重试
+      await db.update(toolCandidates)
+        .set({ status: 'rejected' })
+        .where(eq(toolCandidates.id, candidate.id));
+      skipped++;
+      continue;
+    }
+
+    const chinaAccess = inferChinaAccess(candidate.url ?? '');
+    const slug = toSlug(candidate.name);
+
+    // 更新 candidate
+    await db.update(toolCandidates)
+      .set({
+        slug,
+        zh: result.zh,
+        catId: result.catId,
+        chinaAccess,
+        pricing: result.pricing,
+        features: result.features,
+        status: 'enriched',
+      })
+      .where(eq(toolCandidates.id, candidate.id));
+
+    // 直接发布到 tools 表
+    // 注意：若 slug 冲突则在末尾加 id 确保唯一
+    const finalSlug = slug + '-' + candidate.id; // 安全 slug，防重复
+    await db.insert(tools).values({
+      id: finalSlug,
+      name: candidate.name,
+      mono: candidate.name.toUpperCase().slice(0, 12),
+      brand: '#6B7280',         // 默认灰色，可后续手动修改
+      catId: result.catId,
+      en: candidate.description?.slice(0, 200) ?? candidate.name,
+      zh: result.zh,
+      pricing: result.pricing,
+      url: candidate.url,
+      chinaAccess,
+      features: result.features,
+      featured: false,
+      publishedAt: new Date().toISOString().slice(0, 10),
+    }).onConflictDoNothing(); // id 冲突时跳过（幂等）
+
+    // 标记为已发布
+    await db.update(toolCandidates)
+      .set({ status: 'published', publishedAt: new Date() })
+      .where(eq(toolCandidates.id, candidate.id));
+
+    processed++;
+  }
+
+  return { processed, skipped };
+}
+```
+
+---
+
+#### 10.5 新建 `app/api/cron/fetch-tools/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { fetchNewTools } from '@/lib/jobs/fetch-tools';
+import { processToolCandidates } from '@/lib/jobs/process-tools';
+
+export const maxDuration = 60;
+
+export async function GET(req: NextRequest) {
+  const auth = req.headers.get('Authorization');
+  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // 先抓取新工具候选
+  const fetchResults = await fetchNewTools();
+  // 再对 pending 候选做 AI 富化 + 发布
+  const processResult = await processToolCandidates();
+
+  return NextResponse.json({ fetch: fetchResults, process: processResult });
+}
+```
+
+---
+
+#### 10.6 更新 `vercel.json`（在 Bug 0 的基础上追加）
+
+```json
+{
+  "crons": [
+    {
+      "path": "/api/cron/github-trending",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/refresh-articles",
+      "schedule": "0 */4 * * *"
+    },
+    {
+      "path": "/api/cron/fetch-tools",
+      "schedule": "0 8 * * *"
+    }
+  ]
+}
+```
+
+工具发现每天早上 8 点（UTC）跑一次，一次最多处理 5 条，每天稳定增加 5 个新工具。
+
+---
+
+#### 10.7 初始化：将工具 RSS 源插入 sources 表
+
+✅ **已完成（2026-05-02）**：执行 `npm run seed:tool-sources` 录入了 DreyX AI Digest、Insidr AI Tools、Planet AI 三个可用源，随后执行 `npm run fetch:tool-candidates` 插入 70 条候选工具。
+
+**未来新增源注意事项：**
+
+原设计文档中的三个源实测均不可用：
+- theresanaiforthat.com → 403
+- futurepedia.io → 404
+- aitoolsdirectory.com → fetch 失败
+
+新增工具 RSS 源前**必须先验证 feedUrl 可正常返回 XML**，再插入 sources 表（`type='tool'`）。脚本入口：`npm run seed:tool-sources`（需更新脚本内容）。
+
+---
+
+#### 10.8 注意事项
+
+1. **slug 唯一性**：目前用 `slug + '-' + id` 保证唯一，外观不完美（如 `chatgpt-42`）。后续可以写去重逻辑：先尝试不带数字的 slug，冲突才加后缀。
+
+2. **brand 颜色**：自动抓取的工具全部用 `#6B7280`（中性灰）。运营后续可在管理页批量修改。
+
+3. **内容质量**：来自 RSS 的描述质量参差不齐，AI 富化会尽力。如果 Claude 连续 3 次返回非法 JSON，当前实现直接 reject。可以后续在 candidates 表里手动审核 rejected 条目。
+
+4. **API 消耗**：BATCH=5，每天一次 cron，每天最多 5 次 Claude 调用（每次约 512 tokens），成本极低。若需更快积累，可把 BATCH 调到 20~50，但每天抓到的新工具也就那么多。
+
+5. **`fetch-articles.ts` 不受影响**：`loadSources()` 现在需要加 `type='news'` 过滤，否则工具源也会被当作资讯源处理。务必同步更新：
+   ```typescript
+   // lib/db/queries.ts — loadSources() 改为：
+   export async function loadSources() {
+     return db.select().from(sources)
+       .where(and(eq(sources.active, true), eq(sources.type, 'news')));
+   }
+   ```
+   新增一个对应函数：
+   ```typescript
+   export async function loadToolSources() {
+     return db.select().from(sources)
+       .where(and(eq(sources.active, true), eq(sources.type, 'tool')));
+   }
+   ```
+   在 `fetch-tools.ts` 中调 `loadToolSources()`（而非 `loadSources()`）。
 
 ---
 

@@ -5,6 +5,26 @@
 
 ---
 
+## Codex 状态同步（2026-05-02）
+
+以下为已推送到 `main` 的最新实际状态，Claude Code 接手时以本节为准：
+
+- ✅ `vercel.json` 已创建，包含 `/api/cron/refresh-trending`、`/api/cron/refresh-articles`、`/api/cron/refresh-tools` 三个 Vercel Cron。Hobby 计划下 Vercel Cron 作为每日备份触发，高频触发仍由 GitHub Actions 负责。
+- ✅ 全局 `SiteHeader` 已接入首页与所有主要内页。
+- ✅ 首页无效 “Load more / 加载更多” 按钮已移除。
+- ✅ 首页分类数量已按真实 `tools` 数据统计，不再使用静态 `categories.count`。实现方式为 `loadHomepageData()` 内聚合，不是 SQL `leftJoin + COUNT`。
+- ✅ Task 3 工具详情页 v2 已完成：真实官网 URL、国内可用 badge、features、扩展信息栏、SEO metadata、Breadcrumb JSON-LD。
+- ✅ Task 4 GitHub 详情页 v2 已完成：GitHub API、topics、license、homepage、forks、最近更新、README 渲染。
+- ✅ Task 9 中文资讯源与中文优先处理已完成：中文源已入库并验证抓取，`process-articles.ts` 已按 `sources.lang` 分支处理。
+- ✅ Task 10 工具自动发现第一版已完成：`tool_candidates` 暂存表、工具 RSS 抓取、AI 富化发布逻辑、cron endpoint、GitHub Actions、Vercel Cron 均已接线。
+
+数据源实际情况：
+- 中文新闻源已入库：量子位、少数派、InfoQ 中文、极客公园、36氪。
+- 机器之心 RSS 实测返回 HTML，暂未入库。
+- 工具源原计划的 `theresanaiforthat` / `futurepedia` / `aitoolsdirectory` 实测不可用，已替换为 DreyX AI Digest、Insidr AI Tools、Planet AI，并成功抓取 70 条候选工具。
+
+---
+
 ## 当前部署信息
 
 | 项目 | 内容 |
@@ -35,6 +55,8 @@
 - ✅ `articles` 表（title, titleZh, url, summary, summaryZh, tag, source, publishedAt）
 - ✅ `githubTrending` 表（repo, lang, stars, gained, period, scrapedAt）
 - ✅ `sources` 表（RSS 源管理）
+- ⬜ **`sources.type` 字段**（'news' | 'tool'，区分资讯源与工具源）
+- ⬜ **`tool_candidates` 表**（工具自动发现暂存区，见 CODEX.md Task 10）
 - ✅ **tools 表扩展字段**（url, chinaAccess, chineseUi, freeQuota, apiAvailable, openSource, githubRepo, features, pricingDetail, alternatives, upvotes, downvotes）
   ```sql
   ALTER TABLE tools ADD COLUMN url              TEXT;
@@ -56,6 +78,7 @@
 
 - ✅ GitHub Trending 爬虫（每日 today/week/month）
 - ✅ RSS 资讯抓取 + AI 摘要（中英双语）
+- ⬜ **工具自动发现**（订阅 theresanaiforthat / futurepedia RSS → AI 富化 → 自动发布，见 CODEX.md Task 10）
 - ⬜ **中文资讯源补录**（P1，见 CODEX.md Task 9）
   - 量子位 / 机器之心 / 少数派 / InfoQ中文 / 极客公园 / 36氪
   - 执行前验证 RSS URL 可用性
@@ -234,10 +257,12 @@
 | 🔴 P0 | `/trending` 列表页 | ✅ 完成 |
 | 🔴 P0 | 导航栏扩展（3 个入口）+ usePathname | ✅ 完成 |
 | 🔴 P0 | 域名 `aiboxpro.cn` 上线 | ✅ 完成（DNS + 代码） |
+| 🔴 **P0** | **创建 `vercel.json`，启用定时任务** | ⬜ **待 Codex（Bug 0）** |
 | 🔴 **P0** | **全局共用顶栏 `SiteHeader`** | 🚧 进行中（/trending 已用，其余内页待替换） |
 | 🔴 **P0** | **「加载更多」按钮无效 + 分类数量不对** | ⬜ **待 Codex（Bug 1 & 2）** |
 | 🟠 P1 | tools 表 Schema 扩展 + 工具详情页 v2 | ✅ 完成 |
 | 🟠 P1 | `robots.txt` + Baiduspider 规则 | ✅ 完成 |
+| 🟠 **P1** | **工具自动发现管道**（Tool Auto Discovery） | ⬜ **待 Codex（Task 10）** |
 | 🟠 P1 | 资讯中文源补录 + AI 处理分支 | ⬜ 待 Codex（Task 9） |
 | 🟠 P1 | `<AdSlot />` 占位组件 | ⬜ 待 Codex（Task 2） |
 | 🟡 P2 | GitHub 详情页 v2（README + Topics） | ⬜ 待 Codex（Task 4） |
