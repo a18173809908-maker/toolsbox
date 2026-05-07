@@ -13,11 +13,42 @@
 
 ---
 
+## 进度状态（最近更新：2026-05-07）
+
+| 任务 | 类型 | 状态 | Commit |
+|---|---|---|---|
+| I6 对比页起草脚本 | 工程 | ✅ 已完成 | 2a47561 |
+| I6 10 篇对比页内容 | 内容 | 🟡 待编辑产出 | — |
+| I7 Lab 报告代码支持 | 工程 | ✅ 已完成 | 1519082 |
+| I7 首份 Lab 报告内容 | 内容 | 🟡 待编辑产出 | — |
+| I8 Cursor 替代品 + SEO schema | 工程 | 🟡 待做 | — |
+| I9 连通性数据层 + 实测填充 | 工程 + 运营 | 🟡 待做 | — |
+| I10 图文自动生成系统 | 工程 | 🟡 待做 | — |
+| I11 社区分发 SOP | 运营文档 | 🟡 待做 | — |
+| I12 工具方互推 SOP | 运营文档 | 🟡 待做 | — |
+| I13 小红书账号准备 | 运营前置 | 🟡 待做 | — |
+
+**当前阻塞**：
+- I6 / I7 内容产出依赖编辑实测，工程链路（脚本 + 模板 + 反向引用）已就绪
+- I10 / I11 / I12 / I13 都在第 7-8 周计划中，可平行启动
+
+> 命名提醒：本 sprint 的 I6/I7/I8/I9 与 [sprint-1.md](./sprint-1.md) 的 I6/I7 编号有重叠但**指代不同**，引用时建议带前缀（如 "sprint-2 I6"）。
+
+---
+
 ## 第 5-6 周：AI 编程核心内容
 
 ### I6（高优先级）：发布 10 个 AI 编程核心对比页
 
 **依赖**：I4（comparisons 表 + `/compare/[slug]` 页面）已完成
+
+**工程已完成**（commit 2a47561）：`scripts/draft-comparison.ts` 起草脚本上线
+- `npm run draft:comparison -- <tool-a-id> <tool-b-id>` 输出 markdown 草稿
+- `--prompt-only` 不调用 LLM 只输出 prompt（省 API 费用）
+- `--list` 列出所有可用工具 ID
+- prompt 模板内置 5 个对比维度、3000-4000 字、必须明确推荐、不允许编造数据
+
+**待做（内容）**：编辑使用脚本产出 10 篇对比页草稿 → 人工审核 / 补 Methodology Box → 写入 `comparisons` 表 status='published'。
 
 **第一批对比页清单**（按搜索热度排序，优先执行靠前的）：
 
@@ -83,6 +114,15 @@ prompt 模板：
 ### I7（高优先级）：AIBoxPro Lab 首份实测报告
 
 **说明**：Lab 报告比普通对比页更深，需要真实测试数据和完整 Methodology Box。第一份报告选 `Claude Code vs Cursor` 深度压测。
+
+**工程已完成**（commit 1519082，schema 已通过 `db:push` 同步到生产 DB）：
+- `comparisons` 表新增 5 字段：`is_lab_report` / `lab_report_id` / `sample_size` / `reproducible` / `repo_url`
+- 对比详情页：`isLabReport=true` 时标题旁显示「AIBoxPro Lab」紫色徽章
+- Methodology Box 在 Lab 模式下展开 4 个额外字段（Lab ID / 样本规模 / 可复现性 / 测试仓库）
+- 工具详情页新增「AIBoxPro Lab」反向引用区块（`loadLabReportsByToolId`）
+- 字段级补充（commit e426a5e）：补 `tested_version` 字段，Methodology Box 渲染读真实值
+
+**待做（内容）**：编辑完成首份 `Claude Code vs Cursor` 实测，所有 Methodology Box 字段必须有真实值（不允许"待补充"）。
 
 **选择**：Lab 报告复用 `comparisons` 表（`is_lab_report = true` 字段标记），不单独建表，降低实施复杂度。
 

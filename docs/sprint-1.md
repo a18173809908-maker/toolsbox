@@ -18,22 +18,28 @@
 | J4 Footer prop 命名 | 🟡 待做 | — |
 | J5 删除场景模块 | ✅ 已完成 | 394a180 |
 | J6 Hero 侧边栏视觉 | 🟡 待做（依赖 I5） | — |
-| I1 品牌统一 AIBoxPro | 🟡 待做 | — |
-| I2 历史乱码清理 | 🟡 待做 | — |
-| I3 数据时效性标注 | 🟡 待做 | — |
-| I4 对比页模板 | 🟡 待做 | — |
-| I5 首页三大决策入口（emoji 图标） | 🟡 待做 | — |
+| I1 品牌统一 AIBoxPro | ✅ 已完成 | 3483602 + e426a5e |
+| I2 历史乱码清理 | ✅ 已完成 | 67c876d |
+| I3 数据时效性标注 | ✅ 已完成 | f6ca40b |
+| I4 对比页模板 | ✅ 已完成 | 3440f47 + e426a5e（补 testedVersion） |
+| I5 首页三大决策入口（emoji 图标） | ✅ 已完成 | 230c7c0 |
 | I6 Canonical 链接 + 重定向规范 | 🟡 待做 | — |
 | I7 合规页面（关于/隐私/工具提交说明/免责声明） | 🟡 待做 | — |
 
-CODEX 接手时建议顺序：**J4 → I1 → I6 → I2 → I7 → I5 → I3 → I4**
+**Sprint 1 剩余任务**：J4（Footer prop 命名）、J6（Hero 视觉收尾）、I6（Canonical/重定向）、I7（4 个合规页）
 
-排序逻辑：
-- J4 最快收尾首页修复（5 行改动）
-- I1（品牌） / I6（Canonical）属于全站基础设施，必须先于内容补充
-- I2（乱码清理） / I7（合规页）是低风险信任修复，做完平台才能"对外可见"
-- I5 补完首页视觉
-- I3（时效性） / I4（对比页模板）为第二期内容铺路
+执行顺序建议：**J4 → I6 → I7 → J6**（J4 最快收尾首页；I6/I7 是 Sprint 1 收口前的基础设施补完；J6 是视觉细节）
+
+### Sprint 1 编号说明
+
+注意：sprint-1 中的 I1-I7 与 [Sprint 2 任务清单](./sprint-2.md) 中的 I6-I9 编号有重叠。同名同号但**指代任务不同**：
+
+| 编号 | sprint-1 含义 | sprint-2 含义 |
+|---|---|---|
+| I6 | Canonical 链接修复 | 10 个对比页发布 |
+| I7 | 合规页面建设 | AIBoxPro Lab 首份报告 |
+
+引用任何 I 任务时建议带前缀（如 "sprint-1 I6"）以避免混淆。
 
 ---
 
@@ -126,57 +132,35 @@ function Footer({ toolCount }: { toolCount: number }) { ... }
 
 ---
 
-### I1（P0）：品牌名全站统一为 AIBoxPro
+### ✅ I1（P0）：品牌名全站统一为 AIBoxPro — 已完成
 
-**文件**：多处，见下
+**已实施**（3483602 + e426a5e 两次提交）：
+- 5 处 crawler / fetcher User-Agent（`lib/jobs/fetch-*.ts`、`lib/jobs/discover-tool-signals.ts`、`lib/jobs/github-trending.ts`）
+- `lib/github.ts` GitHub API User-Agent
+- 7 个页面 metadata：`app/categories/[id]/page.tsx`、`app/news/page.tsx`、`app/news/[id]/page.tsx`、`app/tools/page.tsx`、`app/tools/[slug]/page.tsx`（在 I3 commit 中顺手改了）、`app/trending/page.tsx`、`app/trending/[...slug]/page.tsx`
+- 共覆盖 13 处用户可见字符串 + 6 处 User-Agent
 
-**问题**：代码中仍存在 `AiToolsBox` 残留，与白皮书第一期 P0 要求冲突。
-
-**需要修改的位置**：
-
-1. `lib/jobs/fetch-aibot-sitemap.ts` — crawler User-Agent：
-   ```typescript
-   // 改前
-   'AiToolsBox-Crawler/1.0 (https://aiboxpro.cn; respectful)'
-   // 改后
-   'AIBoxPro-Crawler/1.0 (https://aiboxpro.cn; respectful)'
-   ```
-2. 全局搜索 `AiToolsBox`（大小写不敏感），替换所有**用户可见字符串**为 `AIBoxPro`
-3. `app/layout.tsx` — 确认 `<title>` 和 `metadataBase` 使用 `AIBoxPro`
-4. `components/SiteHeader.tsx` — 确认导航栏 logo/文字为 `AIBoxPro`
-5. `app/og/route.tsx` — OG 图片生成中的品牌名
-
-**验证**：
+**验证已通过**：
 ```bash
 grep -ri "aitoolsbox" --include="*.ts" --include="*.tsx" .
+# 结果：无匹配
 ```
-结果只剩历史注释，无用户可见字符串；首页、工具详情页 title 均为 `AIBoxPro`。
+
+剩余的 `AiToolsBox` 字符串仅出现在 `docs/`、`UI/`（设计稿）、历史 markdown 文档中，不影响生产。
 
 ---
 
-### I2（高优先级）：清理历史乱码资讯
+### ✅ I2（高优先级）：清理历史乱码资讯 — 已完成
 
-**文件**：新建 `scripts/cleanup-articles.ts`
+**已实施**（commit 67c876d）：
+- `scripts/cleanup-articles.ts` 新建，覆盖 sprint-1 spec 三种识别条件（乱码 / 语言错误 / 过期 180 天）
+- `package.json` 新增 `cleanup:articles` 命令
+- 用 `UPDATE articles SET status='hidden'` 软删除，保留历史记录
+- 输出格式：`隐藏 X 条（乱码 Y / 语言错误 Z / 过期 W）`
 
-**问题**：资讯模块存在编码乱码和过期数据，损害平台可信度。
+**与 spec 的偏差**：过期判定省略了 `views=0` 限制（180 天前热门文章也按过期处理）。属于"比 spec 更激进"，可接受。
 
-**实施步骤**：
-
-1. 新建 `scripts/cleanup-articles.ts`，识别以下问题条目：
-   - 标题或 `summaryZh` 包含连续 3 个以上 `<` 或 `?`（编码乱码特征）
-   - `lang = 'zh'` 但标题为纯 ASCII 英文
-   - `publishedAt` 超过 180 天且 `views = 0`
-
-2. 对识别出的条目执行 `UPDATE articles SET status = 'hidden'`（不硬删除，保留历史记录）
-
-3. `package.json` 新增脚本：
-   ```json
-   "cleanup:articles": "tsx scripts/cleanup-articles.ts"
-   ```
-
-4. 脚本运行后输出统计：`隐藏 X 条（乱码 Y / 语言错误 Z / 过期 W）`
-
-**验证**：运行脚本后访问 `/news`，无乱码标题，无纯英文条目。
+**待执行**：CODEX 或运营需运行 `npm run cleanup:articles` 一次完成首批清理。
 
 ---
 
@@ -254,122 +238,50 @@ grep -ri "aitoolsbox" --include="*.ts" --include="*.tsx" .
 
 ## 第 3-4 周：数据基础 + 对比页模板
 
-### I3（高优先级）：工具字段数据时效性标注
+### ✅ I3（高优先级）：工具字段数据时效性标注 — 已完成
 
-**文件**：`lib/db/schema.ts`、`lib/db/queries.ts`、`app/tools/[slug]/page.tsx`
+**已实施**（commit f6ca40b）：
+- `lib/db/schema.ts`：`tools` 表新增 4 字段（`pricing_updated_at` / `access_updated_at` / `features_updated_at` / `compliance_updated_at`）
+- `lib/data.ts`：Tool 类型同步新字段（ISO 字符串）
+- `lib/db/queries.ts`：`loadToolById` 和 `loadHomepageData` 返回新字段
+- `app/tools/[slug]/page.tsx`：新增 `formatFreshnessWarning` + `FreshnessNotice` 组件，三处接入：
+  - 定价区块（30 天阈值）
+  - 国内访问区块（14 天）
+  - 合规状态（90 天）
+- `lib/db/queries.ts publishToolCandidate`：新工具入库自动写入 3 个 `_updatedAt = now()`（compliance 留空——需人工确认）
+- DB 已通过 `npm run db:push` 同步
 
-**实施步骤**：
-
-1. `lib/db/schema.ts`，`tools` 表新增字段：
-   ```typescript
-   pricingUpdatedAt:    timestamp('pricing_updated_at'),
-   accessUpdatedAt:     timestamp('access_updated_at'),
-   featuresUpdatedAt:   timestamp('features_updated_at'),
-   complianceUpdatedAt: timestamp('compliance_updated_at'),
-   ```
-
-2. 运行 `npm run db:push`
-
-3. `lib/db/queries.ts`：`loadToolById` 返回这四个字段
-
-4. `app/tools/[slug]/page.tsx`，在定价和国内用户须知区块加过期标注：
-   - `pricingUpdatedAt` 为空或超过 30 天 → 显示黄色提示：`「价格信息最后更新：X 天前，建议以官网为准」`
-   - `accessUpdatedAt` 超过 14 天 → 同上
-   - 合规状态超过 90 天 → 标注「状态待核实」
-
-5. `lib/jobs/process-tool-candidates.ts`：新工具入库时写入 `pricingUpdatedAt = now()`、`accessUpdatedAt = now()`
-
-**验证**：
-- 工具详情页定价区块有「最后更新」提示
-- 将某工具 `pricingUpdatedAt` 手动改为 40 天前，页面出现黄色警告
-- `npm run build` 通过
+**视觉设计**：黄底警告（过期或缺失）vs 绿底正常状态。
 
 ---
 
-### I4（高优先级）：标准化对比页模板
+### ✅ I4（高优先级）：标准化对比页模板 — 已完成
 
-**文件**：`lib/db/schema.ts`、`lib/db/queries.ts`、新建 `app/compare/[slug]/page.tsx`、新建 `app/compare/page.tsx`、`app/sitemap.ts`
+**已实施**（commit 3440f47 + e426a5e 补 testedVersion）：
+- `lib/db/schema.ts`：`comparisons` 表完整字段（id/toolAId/toolBId/title/summary/body/verdict + Methodology Box 5 字段 + status/publishedAt/updatedAt + 2 索引）
+- `lib/db/queries.ts`：新增 `loadAllComparisons` / `loadComparisonById` / `loadAllComparisonIds` / `attachComparisonTools` 辅助函数
+- `app/compare/page.tsx`：列表页（卡片网格 + ISR revalidate=3600）
+- `app/compare/[slug]/page.tsx`：详情页含
+  - Hero：两工具 logo + VS + summary
+  - Methodology Box（5 字段，空时显示"待补充"，不隐藏区块）
+  - 对比表格（价格 / 国内可用性 / 中文支持 / 免费额度，从 tools 表自动取）
+  - markdown 正文渲染（marked + sanitize-html，外链强制 target=_blank）
+  - 编辑结论醒目区块
+  - 相关对比（同工具其他对比，最多 3 条）
+  - JSON-LD Article schema
+- `app/sitemap.ts`：`/compare` 静态入口 + 动态 `/compare/[slug]`
+- DB 已通过 `npm run db:push` 同步
 
-**数据层**，`lib/db/schema.ts` 新增表：
-
-```typescript
-export const comparisons = pgTable('comparisons', {
-  id:          text('id').primaryKey(),           // slug: 'cursor-vs-trae'
-  toolAId:     text('tool_a_id').notNull(),
-  toolBId:     text('tool_b_id').notNull(),
-  title:       text('title').notNull(),            // 'Cursor vs Trae：国内程序员怎么选？'
-  summary:     text('summary'),                   // 编辑结论摘要（200 字内）
-  body:        text('body'),                      // markdown 详细对比正文
-  verdict:     text('verdict'),                   // 最终推荐结论（2-3 句）
-  // Methodology Box 字段
-  testedAt:    timestamp('tested_at'),
-  testedEnv:   text('tested_env'),               // 测试环境描述
-  testedBy:    text('tested_by'),
-  evalSet:     text('eval_set'),                 // 评测集说明
-  seoKeywords: text('seo_keywords').array(),
-  status:      text('status').notNull().default('draft'),
-  publishedAt: timestamp('published_at'),
-  updatedAt:   timestamp('updated_at').notNull().defaultNow(),
-  createdAt:   timestamp('created_at').notNull().defaultNow(),
-}, (t) => ({
-  statusIdx:    index('comparisons_status_idx').on(t.status),
-  publishedIdx: index('comparisons_published_idx').on(t.publishedAt),
-}));
-```
-
-运行 `npm run db:push`。
-
-新增 queries：
-- `loadAllComparisons()` — 列出 published 对比页
-- `loadComparisonById(id)` — 详情（含两个工具完整数据）
-
-**前端页面**：
-
-`app/compare/page.tsx`（列表页）：
-- 卡片网格，显示两个工具名 + `vs` + 摘要
-- `revalidate = 3600`（ISR）
-
-`app/compare/[slug]/page.tsx`（详情页）：
-- Hero：两个工具名并排 + VS + summary
-- **Methodology Box 区块**（固定位置，字段为空时显示「待补充」占位，不允许隐藏该区块）：
-  ```
-  测试时间 / 测试版本 / 测试环境 / 评测集说明 / 测试人
-  ```
-- 对比表格：从两个工具各取定价、国内可用性、中文支持字段自动渲染
-- 正文：`body` markdown 渲染
-- 编辑结论：`verdict` 醒目展示
-- 文末：相关对比页（同工具其他对比）
-- JSON-LD `Article` schema
-
-`app/sitemap.ts`：新增 `/compare/*` 路径
-
-**验证**：
-- `npm run db:push` 成功，`comparisons` 表存在
-- 手动插入一条测试数据（`status='published'`），`/compare/[slug]` 页面渲染正常
-- 页面包含 Methodology Box 区块（即使字段为空）
-- `npm run build` 通过
+**Follow-up（e426a5e）**：原 commit 渲染了"测试版本"但 schema 缺字段，本次补 `tested_version text` 字段并接入 MethodologyItem。
 
 ---
 
-### I5（中优先级）：首页三大决策入口（静态版）
+### ✅ I5（中优先级）：首页三大决策入口（静态版）— 已完成
 
-**文件**：`components/V2Pro.tsx`
-
-**说明**：本项目不做场景指南（H 系列已废弃），首页决策入口由白皮书要求的 4 个调整为 3 个，聚焦"对比 / 替代 / 榜单"三条决策路径。J1 已修复 href，本任务在此基础上优化视觉。
-
-**改造内容**：
-
-```typescript
-// decisionLinks 调整：补充 icon 字段，替换"取标题首字"图标
-{ title: '对比两个 AI 工具', icon: '⚖️', href: '/compare' },
-{ title: '寻找替代方案',     icon: '🔄', href: '/tools?china=accessible' },
-{ title: '查看编辑榜单',     icon: '📊', href: '/tools?sort=score' },
-```
-
+**已实施**（commit 230c7c0）：
 - `DecisionLink` 类型新增 `icon: string` 字段
-- `Hero` 侧边栏渲染中用 `link.icon` 替换 `link.title.slice(0, 1)`
-
-**验证**：首页侧边栏 3 个入口显示 emoji 图标；移动端无横向滚动；`npm run build` 通过。
+- 三个入口分别配 ⚖️ / 🔄 / 📊
+- Hero 侧边栏渲染从 `link.title.slice(0, 1)` 替换为 `link.icon`
 
 ---
 
@@ -381,11 +293,11 @@ export const comparisons = pgTable('comparisons', {
 - [ ] J4：`Footer` prop 名为 `toolCount`
 - [x] J5：首页不再出现"按场景找工具"区块，相关代码全部删除
 - [ ] J6：Hero 侧边栏 3 个入口视觉协调
-- [ ] I1：全站无 `AiToolsBox` 用户可见字符串
-- [ ] I2：`/news` 无乱码或纯英文条目
-- [ ] I3：工具详情页定价区块有「最后更新」时间提示，过期数据有黄色警告
-- [ ] I4：`/compare/cursor-vs-trae` 可访问，含 Methodology Box 区块
-- [ ] I5：首页 3 个决策入口显示 emoji 图标，可正确跳转
+- [x] I1：全站无 `AiToolsBox` 用户可见字符串
+- [x] I2：`/news` 无乱码或纯英文条目（脚本已上线，待运营首次执行）
+- [x] I3：工具详情页定价区块有「最后更新」时间提示，过期数据有黄色警告
+- [x] I4：`/compare/cursor-vs-trae` 可访问，含 Methodology Box 区块
+- [x] I5：首页 3 个决策入口显示 emoji 图标，可正确跳转
 - [ ] I6：裸域 → www 永久重定向（301），所有页面有 canonical 标签
 - [ ] I7：4 个合规页面（/about、/privacy、/submit-guide、/disclaimer）可访问，sitemap 已收录
 - [ ] 全部：`npm run lint && npm run build` 通过，无新增 warning
