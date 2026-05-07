@@ -88,7 +88,7 @@ export async function fetchAllArticles(): Promise<{ source: string; fetched: num
   for (const src of srcs) {
     try {
       const res = await fetch(src.feedUrl, {
-        headers: { 'User-Agent': 'AiToolsBox/1.0 RSS reader' },
+        headers: { 'User-Agent': 'AIBoxPro/1.0 RSS reader' },
         signal: AbortSignal.timeout(15_000),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);

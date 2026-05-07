@@ -24,7 +24,7 @@ export async function fetchTrending(period: TrendingPeriod): Promise<ScrapedRepo
   const url = `https://github.com/trending?since=${PERIOD_TO_SINCE[period]}`;
   const res = await fetch(url, {
     headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; AiToolsBox/0.1; +https://github.com/)',
+      'User-Agent': 'Mozilla/5.0 (compatible; AIBoxPro/0.1; +https://github.com/)',
       Accept: 'text/html,application/xhtml+xml',
       'Accept-Language': 'en-US,en;q=0.9',
     },

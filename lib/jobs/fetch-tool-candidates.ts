@@ -47,7 +47,7 @@ export async function fetchToolCandidates(): Promise<{ source: string; fetched: 
   for (const src of srcs) {
     try {
       const res = await fetch(src.feedUrl, {
-        headers: { 'User-Agent': 'AiToolsBox/1.0 tool discovery' },
+        headers: { 'User-Agent': 'AIBoxPro/1.0 tool discovery' },
         signal: AbortSignal.timeout(15_000),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);

@@ -41,7 +41,7 @@ export async function fetchHackerNewsToolCandidates(limit = 20): Promise<Discove
   try {
     const query = encodeURIComponent('(Show HN OR Launch HN) AI');
     const res = await fetch(`https://hn.algolia.com/api/v1/search_by_date?query=${query}&tags=story&hitsPerPage=${limit}`, {
-      headers: { 'User-Agent': 'AiToolsBox/1.0 tool discovery' },
+      headers: { 'User-Agent': 'AIBoxPro/1.0 tool discovery' },
       signal: AbortSignal.timeout(15_000),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);

@@ -6,7 +6,7 @@ import { loadSources, upsertToolCandidates } from '@/lib/db/queries';
 const BASE = 'https://ai-bot.cn';
 const SITEMAP = `${BASE}/sitemap.xml`;
 const ROBOTS = `${BASE}/robots.txt`;
-const UA = 'AiToolsBox-Crawler/1.0 (https://aiboxpro.cn; respectful)';
+const UA = 'AIBoxPro-Crawler/1.0 (https://aiboxpro.cn; respectful)';
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 200;
 
