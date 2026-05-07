@@ -40,6 +40,10 @@ export type Tool = {
   publicAccount?: string;
   cnAlternatives?: string[];
   tutorialLinks?: { platform: string; url: string; title: string }[];
+  pricingUpdatedAt?: string;
+  accessUpdatedAt?: string;
+  featuresUpdatedAt?: string;
+  complianceUpdatedAt?: string;
   upvotes?: number;
   downvotes?: number;
   howToUse?: string[];

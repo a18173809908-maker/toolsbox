@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import type React from 'react';
 import { SiteHeader } from '@/components/SiteHeader';
 import { AccessBadge, ToolIcon } from '@/components/ToolBadges';
 import { loadToolById, loadAllToolIds, loadToolsByCategory, loadRelatedArticles, loadToolsByIds } from '@/lib/db/queries';
@@ -29,10 +30,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const featureText = tool.features?.slice(0, 3).join('、');
   const description = [tool.zh, featureText, access?.label].filter(Boolean).join('。').slice(0, 180);
   return {
-    title: `${tool.name} — ${titlePrefix}${tool.catZh} AI 工具 | AiToolsBox`,
+    title: `${tool.name} — ${titlePrefix}${tool.catZh} AI 工具 | AIBoxPro`,
     description,
     openGraph: {
-      title: `${tool.name} | ${titlePrefix}AiToolsBox`,
+      title: `${tool.name} | ${titlePrefix}AIBoxPro`,
       description,
       url: `${BASE}/tools/${tool.id}`,
       type: 'website',
@@ -59,6 +60,40 @@ const ACCESS_BADGE: Record<string, { label: string; bg: string; color: string }>
 
 function fallbackToolUrl(name: string) {
   return `https://www.google.com/search?q=${encodeURIComponent(name + ' AI tool')}`;
+}
+
+function formatFreshnessWarning(iso: string | undefined, days: number, label: string) {
+  if (!iso) return `${label}最后更新时间未确认，建议以官网为准`;
+  const updatedAt = new Date(iso);
+  if (Number.isNaN(updatedAt.getTime())) return `${label}最后更新时间未确认，建议以官网为准`;
+  const diffDays = Math.floor((Date.now() - updatedAt.getTime()) / 86_400_000);
+  if (diffDays <= days) return `最后更新：${updatedAt.toLocaleDateString('zh-CN')}`;
+  return `${label}最后更新：${diffDays} 天前，建议以官网为准`;
+}
+
+function FreshnessNotice({
+  children,
+  warning,
+}: {
+  children?: React.ReactNode;
+  warning: boolean;
+}) {
+  return (
+    <div
+      style={{
+        marginTop: 8,
+        padding: '8px 10px',
+        borderRadius: 8,
+        background: warning ? '#FEF3C7' : '#F0FDF4',
+        color: warning ? '#92400E' : '#166534',
+        fontSize: 12,
+        lineHeight: 1.5,
+        fontWeight: 600,
+      }}
+    >
+      {children}
+    </div>
+  );
 }
 
 export default async function ToolDetailPage({ params }: Props) {
@@ -103,6 +138,9 @@ export default async function ToolDetailPage({ params }: Props) {
   const officialUrl = tool.url ?? fallbackToolUrl(tool.name);
   const registerText = tool.registerMethod?.length ? tool.registerMethod.join(' / ') : '未确认';
   const priceText = tool.priceCny ?? tool.pricingDetail ?? (tool.pricing === 'Free' ? '免费' : tool.pricing);
+  const pricingNotice = formatFreshnessWarning(tool.pricingUpdatedAt, 30, '价格信息');
+  const accessNotice = formatFreshnessWarning(tool.accessUpdatedAt, 14, '国内访问状态');
+  const complianceNotice = formatFreshnessWarning(tool.complianceUpdatedAt, 90, '合规状态');
 
   return (
     <>
@@ -211,6 +249,9 @@ export default async function ToolDetailPage({ params }: Props) {
               <div style={{ background: access.bg, borderRadius: 12, padding: '16px 18px' }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: access.color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>访问方式</div>
                 <div style={{ fontSize: 16, fontWeight: 700, color: access.color }}>{access.label}</div>
+                <FreshnessNotice warning={!tool.accessUpdatedAt || !accessNotice.startsWith('最后更新')}>
+                  {accessNotice}
+                </FreshnessNotice>
               </div>
               <div style={{ background: '#F9FAFB', borderRadius: 12, padding: '16px 18px', border: '1px solid #E5E7EB' }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>中文界面</div>
@@ -246,6 +287,9 @@ export default async function ToolDetailPage({ params }: Props) {
                 </div>
               ))}
             </div>
+            <FreshnessNotice warning={!tool.complianceUpdatedAt || !complianceNotice.startsWith('最后更新')}>
+              {complianceNotice}
+            </FreshnessNotice>
           </div>
 
           {alternativeTools.length > 0 && (
@@ -290,7 +334,7 @@ export default async function ToolDetailPage({ params }: Props) {
               <div key={label} style={{ background: '#fff', borderRadius: 12, border: '1px solid #E8D5B7', padding: '18px 22px' }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{label}</div>
                 {badge
-                  ? <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 13, fontWeight: 600, background: ps.bg, color: ps.color }}>{value}</span>
+                  ? <><span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 13, fontWeight: 600, background: ps.bg, color: ps.color }}>{value}</span><FreshnessNotice warning={!tool.pricingUpdatedAt || !pricingNotice.startsWith('最后更新')}>{pricingNotice}</FreshnessNotice></>
                   : <div style={{ fontSize: 15, fontWeight: 600, color: '#1F2937' }}>{value}</div>
                 }
               </div>
