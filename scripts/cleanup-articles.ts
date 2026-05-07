@@ -4,7 +4,7 @@
  */
 import { db } from '@/lib/db';
 import { articles, sources } from '@/lib/db/schema';
-import { and, eq, lt, sql } from 'drizzle-orm';
+import { and, eq, inArray, lt, sql } from 'drizzle-orm';
 
 const cutoff = new Date();
 cutoff.setDate(cutoff.getDate() - 180);
@@ -19,7 +19,7 @@ async function hideByIds(ids: number[]) {
   const result = await db
     .update(articles)
     .set({ status: 'hidden' })
-    .where(sql`${articles.id} = any(${ids})`);
+    .where(inArray(articles.id, ids));
   return result.rowCount ?? ids.length;
 }
 
