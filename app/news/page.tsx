@@ -8,10 +8,10 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'AI 资讯 News',
-  description: '每日精选 AI 行业动态，来自 OpenAI、DeepMind、MIT Tech Review 等权威来源。',
+  description: '每日精选中文 AI 行业动态，来自机器之心、量子位、36氪、InfoQ 中文、虎嗅、品玩、钛媒体等中文权威来源。',
   openGraph: {
-    title: 'AI 资讯 News | AIBoxPro',
-    description: '每日精选 AI 行业动态',
+    title: 'AI 工具动态 | AIBoxPro',
+    description: '每日精选中文 AI 行业动态',
   },
   alternates: { canonical: '/news' },
 };
@@ -36,9 +36,9 @@ export default async function NewsPage({ searchParams }: Props) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
-    name: 'AI 资讯 | AIBoxPro',
-    description: '每日精选 AI 行业动态',
-    url: 'https://aiboxpro.cn/news',
+    name: 'AI 工具动态 | AIBoxPro',
+    description: '每日精选中文 AI 行业动态',
+    url: 'https://www.aiboxpro.cn/news',
   };
 
   return (
@@ -54,14 +54,13 @@ export default async function NewsPage({ searchParams }: Props) {
           <div style={{ position: 'relative', maxWidth: 720 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 14px', borderRadius: 999, background: C.primaryBg, color: C.accent, fontSize: 12, fontWeight: 700, marginBottom: 20, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               <span style={{ width: 6, height: 6, borderRadius: 3, background: C.primary, display: 'inline-block' }} />
-              AI Pulse · 每日资讯
+              工具动态 · 每日更新
             </div>
             <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 'clamp(36px, 10vw, 52px)', lineHeight: 1, margin: '0 0 16px', color: C.ink, letterSpacing: '-0.03em' }}>
-              AI <span style={{ color: C.primary }}>资讯</span> News
+              AI <span style={{ color: C.primary }}>工具动态</span>
             </h1>
             <p style={{ fontSize: 16, color: C.inkSoft, margin: 0, lineHeight: 1.6 }}>
-              来自 DeepMind、MIT Tech Review、The Verge 等权威来源的每日 AI 动态。<br />
-              Daily AI industry updates from authoritative sources, curated and translated.
+              聚合机器之心、量子位、36氪、InfoQ 中文、虎嗅、品玩、钛媒体等中文权威来源的 AI 行业更新，每日整理。
             </p>
           </div>
         </section>
