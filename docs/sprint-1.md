@@ -24,17 +24,16 @@
 | I4 对比页模板 | ✅ 已完成 | 3440f47 + e426a5e（补 testedVersion） |
 | I5 首页三大决策入口（emoji 图标） | ✅ 已完成 | 230c7c0 |
 | I6 Canonical 链接 + 重定向规范 | ✅ 已完成 | 待提交 |
-| I7 合规页面（关于/隐私/工具提交说明/免责声明） | 🟡 待做 | — |
+| I7 合规页面（关于/隐私/工具提交说明/免责声明） | ✅ 已完成 | 待提交 |
 | I8 Admin 后台 + 审核流程 | 🟡 待做（白皮书 §4 内容审核流程） | — |
 | I9 审核提醒邮件（Vercel Cron + Resend） | 🟡 待做 | — |
 
-**Sprint 1 剩余任务**：I7 / I8 / I9
+**Sprint 1 剩余任务**：I8 / I9
 
-执行顺序建议：**I8 → I9 → I7**
+执行顺序建议：**I8 → I9**
 
 排序逻辑：
 - **I8 + I9（审核流程）必须先于 Sprint 2 内容生产，否则对比页和 Lab 报告无安全的发布路径**
-- I7（合规页）独立任务，可挪到任何位置
 
 ### Sprint 1 编号说明
 
@@ -180,39 +179,26 @@ grep -ri "aitoolsbox" --include="*.ts" --include="*.tsx" .
 
 ---
 
-### I7（高优先级）：合规页面建设
+### ✅ I7（高优先级）：合规页面建设 — 已完成
 
-**对应白皮书**：§7 第一期 W1-2 第 4 项 / §5.2 合规字段风险边界中的免责声明要求
+**已实施**：
 
-**说明**：白皮书要求上线 4 个合规页面。这些是静态文档页，不涉及交互逻辑，但**必须先于商业化入口存在**——白皮书 §5.3 规定第 45 天后开放商业化，前提是合规说明已就绪。
+- 新增共享布局 `components/LegalPage.tsx`（顶部 SiteHeader + 标题区 + 内容卡片 + 标准文档样式 token）
+- 4 个页面全部上线，渲染为 Static（`○` 标记）：
+  - `app/about/page.tsx` — 平台定位、内容来源说明、GitHub Issue 联系入口
+  - `app/privacy/page.tsx` — 数据收集口径、第三方服务清单（Vercel / Neon / DDG / DeepSeek）、cookie 说明
+  - `app/submit-guide/page.tsx` — 收录标准、提交流程（GitHub Issue）、审核周期、FAQ（页内 callout 明确"本页是说明文档不是表单"）
+  - `app/disclaimer/page.tsx` — 含白皮书 §5.2 免责声明逐字（用黄色 callout 突出）+ 各字段类型的责任边界
+- `app/sitemap.ts` 加入 4 个路径
+- 每页 `generateMetadata` 设独立 title / description / canonical
+- 不含"商务合作 / 测评合作 / 榜单赞助"等商业话术
 
-**4 个页面清单**：
+**验证已通过**：
+- `npm run build` 4 个路径全部生成静态 HTML
+- `npm run lint` 无新增 error（仅遗留 1 条与本次无关的旧 warning）
+- `app/disclaimer/page.tsx` 含 §5.2 原文："合规状态仅供参考，以工具官方公告及监管机构最新公示为准。AIBoxPro 不对因信息滞后导致的决策损失承担责任。"
 
-| 路径 | 内容要点 |
-|---|---|
-| `/about` | 平台定位（来自白皮书 §2 价值主张）、团队简介、联系方式、内容来源说明 |
-| `/privacy` | 数据收集（GA / Vercel Analytics 等）、Cookie 使用、用户数据如何处理、第三方服务清单 |
-| `/submit-guide` | **工具提交说明**（不是表单页）：收录标准、流程、审核周期、常见问题 |
-| `/disclaimer` | 免责声明（含白皮书 §5.2 要求的合规字段口径："合规状态仅供参考，以工具官方公告及监管机构最新公示为准。AIBoxPro 不对因信息滞后导致的决策损失承担责任。"） |
-
-**实施步骤**：
-
-1. 新建 `app/about/page.tsx`、`app/privacy/page.tsx`、`app/submit-guide/page.tsx`、`app/disclaimer/page.tsx`
-2. 每页静态内容，使用 markdown 渲染或直接 JSX，不需要数据库
-3. 每页 `generateMetadata` 设置独立 title / description / canonical
-4. **页脚（Footer）链接**：所有 4 个页面在站点 footer 区域可见——但本期 V2Pro.tsx 没有页脚结构，本任务**只建页面，不强制加入页脚**。页脚链接随后在新设计稿落地时补
-5. `app/sitemap.ts` 把 4 个新路径加入 sitemap
-
-**内容口径要求**：
-- `/disclaimer` 必须**逐字包含**白皮书 §5.2 的免责声明
-- `/submit-guide` 明确说明这是**说明文档**，不是表单页（白皮书未要求功能性提交表单）
-- `/about` 不出现"商务合作 / 测评合作 / 榜单赞助"等商业话术（白皮书 §5.3 商业化第 45 天后开放）
-
-**验证**：
-- 4 个路径直接访问可渲染，无 404
-- `/disclaimer` 包含白皮书 §5.2 原文的免责声明
-- Sitemap 包含 4 个新路径
-- `npm run lint && npm run build` 通过
+**未做（按 spec 推迟）**：4 个页面在站点 footer 的入口链接——V2Pro.tsx 当前无 footer 结构，等后续设计稿落地时再补。
 
 ---
 
@@ -468,7 +454,7 @@ ADMIN_PASSWORD=<高强度密码>
 - [x] I4：`/compare/cursor-vs-trae` 可访问，含 Methodology Box 区块
 - [x] I5：首页 3 个决策入口显示 emoji 图标，可正确跳转
 - [x] I6：裸域 → www 永久重定向（301），所有页面有 canonical 标签
-- [ ] I7：4 个合规页面（/about、/privacy、/submit-guide、/disclaimer）可访问，sitemap 已收录
+- [x] I7：4 个合规页面（/about、/privacy、/submit-guide、/disclaimer）可访问，sitemap 已收录
 - [ ] I8：`/admin` 受密码保护，三类内容（工具候选 / 对比页草稿 / 资讯）可审核；`process-tool-candidates` 不再直接 publish
 - [ ] I9：每日 09:00 邮件通知有待审核内容（数量为 0 时不发邮件）
 - [ ] 全部：`npm run lint && npm run build` 通过，无新增 warning

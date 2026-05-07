@@ -4,11 +4,15 @@ const BASE = 'https://www.aiboxpro.cn';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const statics: MetadataRoute.Sitemap = [
-    { url: BASE,               lastModified: new Date(), changeFrequency: 'hourly', priority: 1   },
-    { url: `${BASE}/tools`,    lastModified: new Date(), changeFrequency: 'daily',  priority: 0.9 },
-    { url: `${BASE}/compare`,  lastModified: new Date(), changeFrequency: 'daily',  priority: 0.9 },
-    { url: `${BASE}/trending`, lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
-    { url: `${BASE}/news`,     lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
+    { url: BASE,                    lastModified: new Date(), changeFrequency: 'hourly',  priority: 1   },
+    { url: `${BASE}/tools`,         lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
+    { url: `${BASE}/compare`,       lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
+    { url: `${BASE}/trending`,      lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.9 },
+    { url: `${BASE}/news`,          lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.9 },
+    { url: `${BASE}/about`,         lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
+    { url: `${BASE}/privacy`,       lastModified: new Date(), changeFrequency: 'yearly',  priority: 0.3 },
+    { url: `${BASE}/submit-guide`,  lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
+    { url: `${BASE}/disclaimer`,    lastModified: new Date(), changeFrequency: 'yearly',  priority: 0.3 },
   ];
 
   if (!process.env.DATABASE_URL) {
