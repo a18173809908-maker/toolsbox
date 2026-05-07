@@ -26,6 +26,7 @@
     "update:tool-meta": "tsx --env-file=.env.local scripts/update-tool-meta.ts",
     "update:cn-user-fields": "tsx --env-file=.env.local scripts/update-cn-user-fields.ts",
     "cleanup:tool-data": "tsx --env-file=.env.local scripts/cleanup-tool-data.ts",
+    "cleanup:articles": "tsx --env-file=.env.local scripts/cleanup-articles.ts",
     "seed:cn-tools": "tsx --env-file=.env.local scripts/seed-cn-tools.ts",
     "seed:domestic-categories": "tsx --env-file=.env.local scripts/seed-domestic-categories.ts"
   },
