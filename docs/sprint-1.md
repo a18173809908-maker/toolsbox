@@ -8,6 +8,42 @@
 
 ---
 
+## 给 CODEX 接手的 1 分钟概要（2026-05-07）
+
+**当前状态**：J1-J6 + I1-I7 全部完成 + 5 个附加任务（header/footer/news 文案/联系方式/废弃旧 seed）完成。**剩 I8.1-I8.5 + I9。**
+
+**接下来的事**：
+
+1. **I8.1（30 分钟）**：schema 加审核字段（9 个字段，三表）→ `npm run db:push`
+2. **I8.2（1-2 小时）**：admin 鉴权（middleware + login + cookie）
+3. **I8.3（3-4 小时）**：admin 列表页（总览 + 3 类）
+4. **I8.4（3-4 小时）**：审核详情页 + approve/reject/hide API
+5. **I8.5（30 分钟）**：改 process-tool-candidates 行为，**最后做**
+6. **I9（0.5 天）**：Resend 邮件提醒
+
+**关键约束**：
+- I8.5 必须最后做（停掉 auto-publish 之前必须确认 admin UI 已部署可用）
+- 改完 I8.5 后立即触发 Vercel redeploy
+- 全程不要动 `docs/whitepaper.md` 和 `docs/sprint-2.md`（它们已与白皮书对齐）
+- 每个子任务独立 commit，commit message 用 `feat(I8.X): ...` 模板
+
+**环境变量**：
+- I8.2 需要 Vercel 配 `ADMIN_PASSWORD`（用户去 Vercel Dashboard 加，不需要 CODEX 操作）
+- I9 需要 `RESEND_API_KEY`、`ADMIN_NOTIFY_EMAIL`（M11 manual 任务，用户负责）
+
+**已存在的代码可复用**：
+- `components/SiteHeader.tsx` / `components/SiteFooter.tsx` / `components/LegalPage.tsx`：合规页样式 token 可复用为 admin 页样式
+- `components/AccessBadge` / `components/ToolIcon`：审核详情页渲染工具卡片时复用
+- `lib/db/queries.ts` 已有完整的 tools / comparisons / articles 查询，扩展时直接加新函数即可
+
+**联系信息**（如果生产文档要引用）：
+- 邮箱：4514407@qq.com
+- 微信公众号：aiboxprocn
+
+---
+
+---
+
 ## 进度状态（最近更新：2026-05-07）
 
 | 任务 | 状态 | Commit |
@@ -23,17 +59,26 @@
 | I3 数据时效性标注 | ✅ 已完成 | f6ca40b |
 | I4 对比页模板 | ✅ 已完成 | 3440f47 + e426a5e（补 testedVersion） |
 | I5 首页三大决策入口（emoji 图标） | ✅ 已完成 | 230c7c0 |
-| I6 Canonical 链接 + 重定向规范 | ✅ 已完成 | 待提交 |
-| I7 合规页面（关于/隐私/工具提交说明/免责声明） | ✅ 已完成 | 待提交 |
-| I8 Admin 后台 + 审核流程 | 🟡 待做（白皮书 §4 内容审核流程） | — |
-| I9 审核提醒邮件（Vercel Cron + Resend） | 🟡 待做 | — |
+| I6 Canonical 链接 + 重定向规范 | ✅ 已完成 | 140071c |
+| I7 合规页面 | ✅ 已完成 | 27f3d9b |
+| **附加 1**：全站 header 统一（删 V2Pro.HomeHeader 用 SiteHeader） | ✅ 已完成 | ebab671 |
+| **附加 2**：全站 footer + 4 个合规页入口 | ✅ 已完成 | 111d604 |
+| **附加 3**：news 页文案与中文化资讯源对齐 | ✅ 已完成 | 99f7f7e |
+| **附加 4**：联系方式从 GitHub 切换为邮箱 + 公众号 | ✅ 已完成 | 838e865 + 2b61b80（QR 图） |
+| **附加 5**：废弃旧英文 seed 脚本（保留代码考古） | ✅ 已完成 | 838e865 |
+| **I8 Admin 后台 + 审核流程**（已拆为 I8.1-I8.5） | 🟡 待 CODEX 接手 | — |
+| I9 审核提醒邮件 | 🟡 待 CODEX 接手 | — |
 
-**Sprint 1 剩余任务**：I8 / I9
+**Sprint 1 剩余任务**：I8.1-I8.5 + I9
 
-执行顺序建议：**I8 → I9**
+执行顺序建议：**I8.1 → I8.2 + I8.3（可并行）→ I8.4 → I8.5 → I9**
 
-排序逻辑：
-- **I8 + I9（审核流程）必须先于 Sprint 2 内容生产，否则对比页和 Lab 报告无安全的发布路径**
+依赖关系：
+- I8.1（schema）必须最先
+- I8.2（认证层）和 I8.3（admin 列表页）可以并行做
+- I8.4（详情页 + API routes）依赖 I8.3
+- I8.5（改 process-tool-candidates 行为）放最后，避免在 admin UI 没验证前就丢失自动 publish 功能
+- I9 需要 I8.1 schema 才能查待审核数量
 
 ### Sprint 1 编号说明
 
@@ -251,43 +296,69 @@ grep -ri "aitoolsbox" --include="*.ts" --include="*.tsx" .
 
 ---
 
-### I8（P0）：Admin 后台 + 内容审核流程
+## I8（P0）：Admin 后台 + 内容审核流程
 
 **对应白皮书**：§4「内容审核流程与推送机制」
 
-**说明**：白皮书要求工具候选 / 对比页 / Lab 报告必须经人工审核才能上线，资讯需事后抽审。当前所有自动处理脚本直接 publish，必须改为"AI 起草 → 草稿状态 → 人工审核 → 发布"。
+**整体目标**：把"AI 自动处理 → 直接 publish"改为"AI 起草 → 草稿状态 → 人工审核 → 发布"。
 
-**Schema 改动**：
+I8 已拆分为 5 个子任务（I8.1 - I8.5），每个独立 commit。建议按 I8.1 → I8.2/I8.3（并行）→ I8.4 → I8.5 顺序执行。**I8.5 必须最后做**——它会停掉自动 publish，没有 Admin UI 兜底就等于停了内容入库流程。
+
+---
+
+### I8.1（P0）：Schema 加审核字段 + 推送 DB
+
+**预估工程量**：30 分钟
+
+**改动 `lib/db/schema.ts`**——三个表统一加审核字段：
 
 ```typescript
-// lib/db/schema.ts
+// tool_candidates 表
+reviewedBy:    text('reviewed_by'),       // 第一阶段固定为 'admin'
+reviewedAt:    timestamp('reviewed_at'),
+rejectReason:  text('reject_reason'),
 
-// tool_candidates 新增 status 'ai_drafted' 用于已 AI 处理但待人工审核
-// 不需要改 column，复用现有 status 字段，新增 'ai_drafted' 取值
+// comparisons 表
+reviewedBy:    text('reviewed_by'),
+reviewedAt:    timestamp('reviewed_at'),
+rejectReason:  text('reject_reason'),
 
-// tool_candidates 新增 audit 字段
-reviewedBy:  text('reviewed_by'),
-reviewedAt:  timestamp('reviewed_at'),
-rejectReason: text('reject_reason'),
-
-// comparisons 同上（新增 reviewedBy / reviewedAt / rejectReason）
-// articles 同上（用于事后抽审记录）
+// articles 表
+reviewedBy:    text('reviewed_by'),
+reviewedAt:    timestamp('reviewed_at'),
+rejectReason:  text('reject_reason'),
 ```
 
-运行 `npm run db:push`。
+**`tool_candidates` 的 `status` 取值约定**（不改 column 类型，仅扩取值）：
+- `pending` — 抓取后未处理
+- `processed` — 旧值，I8.5 完成后会迁移到 `ai_drafted`
+- `ai_drafted` — **新值**：AI 处理完，待人工审核
+- `approved` — 已通过审核并写入 tools 表
+- `rejected` — 拒绝
 
-**自动处理脚本调整**：
+**操作步骤**：
 
-`lib/jobs/process-tool-candidates.ts`：
-- AI 处理完后**不再直接** `INSERT INTO tools`
-- 改为更新 `tool_candidates` 的 `zh / catId / pricing / chinaAccess / features` 等字段（作为草稿数据），并设 `status='ai_drafted'`
-- `publishToolCandidate` 函数改为只在审核通过时调用
+1. 改 schema.ts 加 9 个字段
+2. 在主工作区 D:/toolsbox 执行 `npm run db:push`，确认 `[✓] Changes applied`
+3. 验证 Neon 控制台三个表都新增了 3 个字段
+4. 不需要改任何业务代码，本 commit 仅 schema 改动
 
-**身份认证**：
+**验证**：
+- `npm run db:push` 输出含 ALTER TABLE 三次
+- `npm run lint && npm run build` 通过
+- DB 中三个表的字段已就位
 
-第一阶段使用环境变量 `ADMIN_PASSWORD`，简单 cookie 鉴权。
+**Commit message 模板**：`feat(I8.1): add reviewedBy/reviewedAt/rejectReason to tool_candidates, comparisons, articles`
 
-新建 `middleware.ts`（项目根目录）：
+---
+
+### I8.2（P0）：Admin 鉴权层（middleware + login 页 + cookie）
+
+**预估工程量**：1-2 小时
+
+**前置依赖**：无（与 I8.3 可并行）
+
+**改动 1：`middleware.ts`**（项目根目录新建）
 
 ```typescript
 import { NextResponse } from 'next/server';
@@ -295,90 +366,252 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(req: NextRequest) {
   if (!req.nextUrl.pathname.startsWith('/admin')) return NextResponse.next();
+  // login 页本身不需要鉴权
+  if (req.nextUrl.pathname === '/admin/login') return NextResponse.next();
+
   const cookie = req.cookies.get('admin-auth')?.value;
-  if (cookie === process.env.ADMIN_PASSWORD) return NextResponse.next();
+  if (cookie && cookie === process.env.ADMIN_PASSWORD) return NextResponse.next();
   return NextResponse.redirect(new URL('/admin/login', req.url));
 }
 
 export const config = { matcher: '/admin/:path*' };
 ```
 
-新建 `app/admin/login/page.tsx` + `app/api/admin/login/route.ts`：登录表单，POST 校验密码并设 cookie（HttpOnly + Secure + SameSite=Lax，过期 7 天）。
+**改动 2：`app/admin/login/page.tsx`** — 简单密码表单（client component）
+- 单输入框（type=password）+ 登录按钮
+- 提交时 POST 到 `/api/admin/login`，成功跳 `/admin`
+- 失败显示"密码错误"
 
-**Admin 页面结构**：
-
-```
-app/admin/
-├── login/
-│   └── page.tsx              # 登录表单
-├── page.tsx                  # 列表总览：3 类待审核数量徽章
-├── tools/
-│   ├── page.tsx              # 工具候选列表（status='ai_drafted'）
-│   └── [id]/
-│       └── page.tsx          # 单条审核：渲染将上线后的样子 + 通过/拒绝按钮
-├── comparisons/
-│   ├── page.tsx              # 对比页草稿列表（status='draft'）
-│   └── [id]/
-│       └── page.tsx          # 单条审核
-└── articles/
-    └── page.tsx              # 资讯抽审（最近 30 天 + 已 published）
-```
-
-**API routes**：
-
-```
-app/api/admin/
-├── login/route.ts                          # POST: 校验密码、设 cookie
-├── logout/route.ts                         # POST: 清除 cookie
-├── tools/[id]/approve/route.ts             # POST: 写入 tools 表，更新候选 status='approved' + reviewedAt + reviewedBy
-├── tools/[id]/reject/route.ts              # POST: 候选 status='rejected' + rejectReason
-├── comparisons/[id]/approve/route.ts       # POST: comparisons.status='published' + publishedAt + reviewedAt
-└── comparisons/[id]/reject/route.ts
-```
-
-**详情页设计要点**（参考白皮书"审核者数据要求"）：
-
-工具候选审核详情页必须呈现：
-- AI 起草的所有字段（zh / 分类 / 定价 / 中国访问 / 功能 / howToUse / faqs）
-- 工具官网链接（直接可点击访问）
-- 该工具在其他源的描述（如 ai-bot.cn 抓取的简介，作为横向参考）
-- 通过 / 拒绝 / 编辑后通过 三个按钮
-
-对比页草稿审核详情页直接渲染 `/compare/[slug]` 的预览版本（仅审核者可见）。
-
-**审核者操作日志**：
-
-每次 approve/reject 写入数据库：
+**改动 3：`app/api/admin/login/route.ts`** — 校验密码并设 cookie
 
 ```typescript
-{
-  reviewedBy: 'admin',  // 第一阶段固定为 'admin'，未来多人时改为登录用户
-  reviewedAt: new Date(),
-  rejectReason: '...' // 仅拒绝时
+import { NextResponse } from 'next/server';
+
+export async function POST(req: Request) {
+  const { password } = await req.json();
+  if (password !== process.env.ADMIN_PASSWORD) {
+    return NextResponse.json({ ok: false }, { status: 401 });
+  }
+  const res = NextResponse.json({ ok: true });
+  res.cookies.set('admin-auth', password, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60, // 7 天
+    path: '/',
+  });
+  return res;
+}
+```
+
+**改动 4：`app/api/admin/logout/route.ts`** — 清 cookie
+
+```typescript
+import { NextResponse } from 'next/server';
+
+export async function POST() {
+  const res = NextResponse.json({ ok: true });
+  res.cookies.set('admin-auth', '', { maxAge: 0, path: '/' });
+  return res;
 }
 ```
 
 **环境变量**：
 
-`.env.local` 新增：
-```
-ADMIN_PASSWORD=<高强度密码>
-```
+`.env.local` 新增 `ADMIN_PASSWORD=<高强度密码>`。Vercel Env 也要加（生产 + 预览 + 开发三个环境）。
+
+**注意**：cookie 直接存密码不是最佳实践（应该存 session token），但第一阶段简化方案，密码强度足够 + httpOnly + secure 已经够用。后续多人协作时再升级。
 
 **验证**：
-- 访问 `/admin` 未登录 → 重定向到 `/admin/login`
-- 登录后能看到三类待审核内容数量
-- 工具候选审核：通过后 `tools` 表多一行；拒绝后候选 status='rejected' 且有 rejectReason
-- 对比页审核：通过后 `comparisons.status='published'` 且 publishedAt 有值
-- 已自动处理的资讯能在 `/admin/articles` 列出，可以单独 hide 异常条目
+- 本地：`.env.local` 加密码，访问 `/admin` 跳到 `/admin/login`，输错跳转回登录页（不闪烁），输对跳到 `/admin`
+- 浏览器 DevTools 看 cookie：`admin-auth` 存在，HttpOnly = true
 - `npm run lint && npm run build` 通过
 
-**风险与回滚**：
+**Commit message 模板**：`feat(I8.2): add admin auth middleware + login/logout`
 
-- 改动 `process-tool-candidates.ts` 后，**新候选不再自动 publish 到 tools**——这是预期行为
-- 但 Vercel 已有部署的旧代码仍在运行，可能在 cron 时再次自动 publish 已被 AI 处理过的候选
-- 部署本任务后立即触发 redeploy，避免旧代码继续跑
-- 如果发现审核流程不工作，临时回滚方案：env 变量 `ADMIN_AUTO_PUBLISH=true` 时跳过审核（不在本期实现，只作为应急口子，CODEX 可以预留代码注释）
+---
+
+### I8.3（P0）：Admin 列表页（总览 + 三类列表）
+
+**预估工程量**：3-4 小时
+
+**前置依赖**：I8.1（需要查 reviewedAt 是否为空判断"待审核"）
+
+**新建文件**：
+
+```
+app/admin/
+├── page.tsx                       # 总览：3 类待审核数量徽章
+├── tools/page.tsx                 # 工具候选列表（status='ai_drafted'）
+├── comparisons/page.tsx           # 对比页草稿列表（status='draft'）
+└── articles/page.tsx              # 资讯列表（最近 30 天 + status='published'）
+```
+
+**总览 `app/admin/page.tsx` 必须呈现**：
+- 当前登录状态 + logout 按钮（POST `/api/admin/logout`）
+- 3 个数字徽章：待审核工具候选数 / 待审核对比页数 / 最近 30 天资讯数
+- 点击徽章跳到对应列表页
+- "今日已审核 X 条"统计（基于 reviewedAt 在今天的记录）
+
+**列表页通用要求**：
+- 表格形式，每行：标题 / 来源（source） / 抓取时间 / 状态徽章 / 「审核」按钮
+- 默认按时间倒序，分页 20/页
+- 列表只显示待审核状态：
+  - tools：`status='ai_drafted'` 或 `status='processed'`（兼容 I8.5 之前的旧数据）
+  - comparisons：`status='draft'`
+  - articles：`status='published'` 且最近 30 天（用于事后抽审）
+- 资讯列表多一个「隐藏」按钮（不需要审核，只是抽查异常）
+
+**新增 queries**（写在 `lib/db/queries.ts`）：
+- `loadPendingToolCandidates(limit, offset)` — `WHERE status IN ('ai_drafted', 'processed')`
+- `loadDraftComparisons(limit, offset)` — `WHERE status='draft'`
+- `loadRecentPublishedArticles(limit, offset)` — `WHERE status='published' AND publishedAt > now() - interval '30 days'`
+- `loadAdminCounts()` — 一次性返回 3 类数量
+
+**视觉风格**：可以复用 `components/LegalPage.tsx` 的样式 token，或者用一个新的 `components/AdminLayout.tsx`（含登出按钮 header）保持简洁。
+
+**验证**：
+- `/admin` 总览页 3 个数字正确（与直接 SQL 查询一致）
+- 三类列表页能翻页、能跳详情、能正确过滤状态
+- `npm run lint && npm run build` 通过
+
+**Commit message 模板**：`feat(I8.3): add admin list pages (overview + 3 types)`
+
+---
+
+### I8.4（P0）：Admin 详情页 + approve/reject API routes
+
+**预估工程量**：3-4 小时
+
+**前置依赖**：I8.1 + I8.2 + I8.3
+
+**新建文件**：
+
+```
+app/admin/
+├── tools/[id]/page.tsx            # 工具候选审核详情
+└── comparisons/[id]/page.tsx      # 对比页草稿审核详情
+
+app/api/admin/
+├── tools/[id]/approve/route.ts    # POST: 写 tools 表 + 候选状态 approved
+├── tools/[id]/reject/route.ts     # POST: 候选 status='rejected' + rejectReason
+├── comparisons/[id]/approve/route.ts  # POST: comparisons.status='published'
+├── comparisons/[id]/reject/route.ts
+└── articles/[id]/hide/route.ts    # POST: articles.status='hidden'（资讯不需要 approve，只 hide）
+```
+
+**工具候选详情页必须呈现**（参考白皮书「审核者数据要求」）：
+- AI 起草的所有字段：zh / catId / pricing / chinaAccess / chineseUi / features / howToUse / faqs / 国内用户字段
+- 工具官网链接（直接可点击访问，target=_blank）
+- 来源 + 来源原始描述（如果是从 RSS 或 ai-bot.cn 抓的，把原文显示一栏作为横向参考）
+- 操作区：「通过」「拒绝（要求填理由）」「编辑后通过」三个按钮
+  - 「编辑后通过」第一阶段简化：仅允许编辑 zh 描述字段，其他字段不改
+  - 拒绝时弹窗输入 rejectReason
+
+**对比页详情页**：
+- 直接 iframe 或重新渲染 `/compare/[slug]` 的草稿版本（即使 status='draft'）
+- 旁边浮动操作面板：「通过」「拒绝」「在新标签编辑」（编辑暂不实现，第一阶段只能 SQL 改 body）
+
+**API approve/tools 逻辑**：
+
+```typescript
+// app/api/admin/tools/[id]/approve/route.ts 伪代码
+1. 校验 cookie（已由 middleware 处理，但 API 也要检查）
+2. SELECT tool_candidates WHERE id=$1
+3. INSERT INTO tools (...) VALUES (来自 candidate 的 AI 起草字段)
+   - 包括 pricingUpdatedAt = now() / accessUpdatedAt = now() / featuresUpdatedAt = now()
+4. UPDATE tool_candidates SET status='approved', reviewedBy='admin', reviewedAt=now()
+5. revalidatePath('/admin/tools')
+6. revalidatePath('/tools')
+```
+
+**API reject 逻辑**：
+
+```typescript
+1. 接收 { reason: string }
+2. UPDATE tool_candidates SET status='rejected', rejectReason=$reason, reviewedBy='admin', reviewedAt=now()
+3. revalidatePath('/admin/tools')
+```
+
+**对比页 approve 逻辑**：
+
+```typescript
+1. UPDATE comparisons SET status='published', publishedAt=now(), reviewedBy='admin', reviewedAt=now()
+2. revalidatePath('/compare')
+3. revalidatePath(`/compare/${id}`)
+```
+
+**资讯 hide 逻辑**：
+
+```typescript
+1. UPDATE articles SET status='hidden', reviewedBy='admin', reviewedAt=now()
+2. revalidatePath('/news')
+```
+
+**API 共同要求**：
+- 全部 POST，使用 JSON body
+- 返回 `{ ok: true }` 或 `{ ok: false, error: '...' }`
+- 客户端调用后跳回列表页
+
+**验证**：
+- 工具候选 approve → tools 表多一行 + 候选 status='approved'
+- 工具候选 reject → 候选 status='rejected'，有 rejectReason
+- 对比页 approve → comparisons.status='published'，前台 `/compare/[slug]` 可访问
+- 资讯 hide → articles.status='hidden'，前台 `/news` 不再出现
+- 每个操作 reviewedBy 和 reviewedAt 都有值
+- `npm run lint && npm run build` 通过
+
+**Commit message 模板**：`feat(I8.4): add admin detail pages + approve/reject/hide API routes`
+
+---
+
+### I8.5（P0，必须最后做）：改 process-tool-candidates 行为为不再自动 publish
+
+**预估工程量**：30 分钟
+
+**前置依赖**：I8.1 + I8.2 + I8.3 + I8.4 全部完成且**部署到 Vercel 验证可用**
+
+**警告**：本 commit 会**永久停掉自动 publish 逻辑**。如果 Admin UI 没经过验证就推这个 commit，会出现"AI 处理过的工具候选无法上线（脚本不再写 tools 表，又没人用 admin 审核）"的死锁状态。
+
+**改动 `lib/jobs/process-tool-candidates.ts`**：
+
+之前逻辑（伪代码）：
+```
+for each pending candidate:
+  AI 处理 → 拿到 zh/catId/pricing/...
+  → publishToolCandidate()  # 写入 tools 表 + 设 status='approved'
+```
+
+新逻辑：
+```
+for each pending candidate:
+  AI 处理 → 拿到 zh/catId/pricing/...
+  → UPDATE tool_candidates SET
+        zh=$1, catId=$2, pricing=$3, chinaAccess=$4, features=$5,
+        howToUse=$6, faqs=$7, ...,
+        status='ai_drafted'  # 不再 publish，等 admin 审核
+     WHERE id=$candidateId
+  → 不调用 publishToolCandidate()
+```
+
+**`publishToolCandidate` 函数保留不删**——仍由 I8.4 的 admin approve API 路由调用。但要清理：让它只接受已审核数据，不再被 process 脚本直接调用。
+
+**部署同步要点**：
+- 推送 commit 后立即在 Vercel 触发 redeploy（避免旧代码 cron 还在跑 auto-publish）
+- 监控部署后第一次 `/api/cron/refresh-tools` 调用：检查日志确认走的是新逻辑（搜索 "status='ai_drafted'" 关键词）
+
+**回滚方案**（万一出问题）：
+- 暂时把 `lib/jobs/process-tool-candidates.ts` 文件 revert 到本 commit 之前的版本
+- 已经被标记 `ai_drafted` 的候选不会自动 publish，需要在 admin 通过
+
+**验证**：
+- 手动触发 `npm run process:tool-candidates` 一次（在主工作区跑），观察：
+  - 候选 status 从 'pending' → 'ai_drafted'，**不**进入 tools 表
+  - admin `/admin/tools` 列表页能看到这些新候选
+- 在 admin 通过其中 1-2 条 → tools 表新增对应行
+- `npm run lint && npm run build` 通过
+
+**Commit message 模板**：`feat(I8.5): stop auto-publish in process-tool-candidates, mark as ai_drafted instead`
 
 ---
 
@@ -455,6 +688,10 @@ ADMIN_PASSWORD=<高强度密码>
 - [x] I5：首页 3 个决策入口显示 emoji 图标，可正确跳转
 - [x] I6：裸域 → www 永久重定向（301），所有页面有 canonical 标签
 - [x] I7：4 个合规页面（/about、/privacy、/submit-guide、/disclaimer）可访问，sitemap 已收录
-- [ ] I8：`/admin` 受密码保护，三类内容（工具候选 / 对比页草稿 / 资讯）可审核；`process-tool-candidates` 不再直接 publish
+- [ ] I8.1：tool_candidates / comparisons / articles 三表新增 reviewedBy/reviewedAt/rejectReason 字段，已 db:push
+- [ ] I8.2：`middleware.ts` 鉴权 + `/admin/login` 登录页 + cookie 设置可用
+- [ ] I8.3：`/admin` 总览页 + 三类列表页可访问，数字徽章正确
+- [ ] I8.4：审核详情页 + approve/reject/hide API 路由可用，操作后状态正确流转
+- [ ] I8.5：`process-tool-candidates` 改为只设 status='ai_drafted'，不再写 tools 表（部署后 cron 验证走新逻辑）
 - [ ] I9：每日 09:00 邮件通知有待审核内容（数量为 0 时不发邮件）
 - [ ] 全部：`npm run lint && npm run build` 通过，无新增 warning
