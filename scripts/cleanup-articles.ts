@@ -4,7 +4,7 @@
  */
 import { db } from '@/lib/db';
 import { articles, sources } from '@/lib/db/schema';
-import { and, eq, lt, or, sql } from 'drizzle-orm';
+import { and, eq, lt, sql } from 'drizzle-orm';
 
 const cutoff = new Date();
 cutoff.setDate(cutoff.getDate() - 180);
@@ -24,19 +24,31 @@ async function hideByIds(ids: number[]) {
 }
 
 async function main() {
+  // 乱码识别覆盖以下模式：
+  // 1. U+FFFD 替换字符 �（UTF-8 解码失败的标记）—— 一个就算
+  // 2. 锟斤拷 / 锟 系列（GBK 解码失败回到 UTF-8 的典型 mojibake）—— 一个就算
+  // 3. 连续 3+ 个 ? 或 < —— 编码错误的另一种表现
+  // 4. mojibake â€ / ä¸ 系列（Windows-1252 ↔ UTF-8 误转）
+  const mojibakePatterns = sql`
+    ${articles.title} LIKE '%' || chr(65533) || '%'
+    OR coalesce(${articles.titleZh}, '') LIKE '%' || chr(65533) || '%'
+    OR coalesce(${articles.summaryZh}, '') LIKE '%' || chr(65533) || '%'
+    OR ${articles.title} LIKE '%锟%'
+    OR coalesce(${articles.titleZh}, '') LIKE '%锟%'
+    OR coalesce(${articles.summaryZh}, '') LIKE '%锟%'
+    OR ${articles.title} ~ '(\\?|<){3,}'
+    OR coalesce(${articles.titleZh}, '') ~ '(\\?|<){3,}'
+    OR coalesce(${articles.summaryZh}, '') ~ '(\\?|<){3,}'
+    OR ${articles.title} LIKE '%â€%'
+    OR coalesce(${articles.titleZh}, '') LIKE '%â€%'
+    OR ${articles.title} LIKE '%ä¸%'
+    OR coalesce(${articles.titleZh}, '') LIKE '%ä¸%'
+  `;
+
   const mojibakeRows = await db
     .select({ id: articles.id })
     .from(articles)
-    .where(
-      and(
-        eq(articles.status, 'published'),
-        or(
-          sql`${articles.title} ~ '(<|\\?){3,}'`,
-          sql`${articles.titleZh} ~ '(<|\\?){3,}'`,
-          sql`${articles.summaryZh} ~ '(<|\\?){3,}'`
-        )
-      )
-    );
+    .where(and(eq(articles.status, 'published'), mojibakePatterns));
 
   const zhSourceRows = await db
     .select({ id: articles.id, title: articles.title, titleZh: articles.titleZh })
