@@ -440,7 +440,7 @@ function Hero({
               }}
             />
             <Link
-              href="/tools"
+              href={`/tools${query.trim() ? `?q=${encodeURIComponent(query.trim())}` : ''}`}
               style={{
                 minHeight: 42,
                 padding: '10px 18px',
