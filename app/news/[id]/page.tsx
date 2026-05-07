@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title,
     description: desc,
     openGraph: {
-      title: `${title} | AiToolsBox`,
+      title: `${title} | AIBoxPro`,
       description: desc,
       url: `${BASE}/news/${id}`,
       type: 'article',
@@ -54,8 +54,8 @@ export default async function NewsDetailPage({ params }: Props) {
     description: art.summaryZh || art.summary,
     url: art.url,
     datePublished: art.publishedAt?.toISOString(),
-    publisher: { '@type': 'Organization', name: art.sourceName ?? 'AiToolsBox' },
-    isPartOf: { '@type': 'WebSite', name: 'AiToolsBox', url: BASE },
+    publisher: { '@type': 'Organization', name: art.sourceName ?? 'AIBoxPro' },
+    isPartOf: { '@type': 'WebSite', name: 'AIBoxPro', url: BASE },
   };
 
   return (

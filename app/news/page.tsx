@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: 'AI 资讯 News',
   description: '每日精选 AI 行业动态，来自 OpenAI、DeepMind、MIT Tech Review 等权威来源。',
   openGraph: {
-    title: 'AI 资讯 News | AiToolsBox',
+    title: 'AI 资讯 News | AIBoxPro',
     description: '每日精选 AI 行业动态',
   },
   alternates: { canonical: '/news' },
@@ -36,7 +36,7 @@ export default async function NewsPage({ searchParams }: Props) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
-    name: 'AI 资讯 | AiToolsBox',
+    name: 'AI 资讯 | AIBoxPro',
     description: '每日精选 AI 行业动态',
     url: 'https://aiboxpro.cn/news',
   };

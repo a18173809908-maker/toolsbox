@@ -5,7 +5,7 @@ const GH_TOKEN = process.env.GITHUB_TOKEN;
 
 const headers: HeadersInit = {
   Accept: 'application/vnd.github+json',
-  'User-Agent': 'AiToolsBox/1.0',
+  'User-Agent': 'AIBoxPro/1.0',
   ...(GH_TOKEN ? { Authorization: `Bearer ${GH_TOKEN}` } : {}),
 };
 

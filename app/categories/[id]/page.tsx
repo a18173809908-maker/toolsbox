@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${cat.zh} AI 工具 — ${cat.en}`,
     description: `精选 ${cat.zh} 类别下的 ${cat.count} 款 AI 工具，涵盖 ${cat.en} 领域最佳应用。`,
     openGraph: {
-      title: `${cat.zh} AI 工具 | AiToolsBox`,
+      title: `${cat.zh} AI 工具 | AIBoxPro`,
       description: `${cat.count} 款精选 ${cat.zh} AI 工具`,
       url: `${BASE}/categories/${cat.id}`,
       type: 'website',
@@ -56,7 +56,7 @@ export default async function CategoryPage({ params }: Props) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
-    name: `${cat.zh} AI 工具 | AiToolsBox`,
+    name: `${cat.zh} AI 工具 | AIBoxPro`,
     description: `精选 ${cat.zh} 类别 AI 工具`,
     url: `${BASE}/categories/${cat.id}`,
   };

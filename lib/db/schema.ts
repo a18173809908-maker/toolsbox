@@ -153,6 +153,7 @@ export const comparisons = pgTable(
     body: text('body'),
     verdict: text('verdict'),
     testedAt: timestamp('tested_at'),
+    testedVersion: text('tested_version'),
     testedEnv: text('tested_env'),
     testedBy: text('tested_by'),
     evalSet: text('eval_set'),

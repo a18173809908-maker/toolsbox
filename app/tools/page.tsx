@@ -41,7 +41,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const sp = await searchParams;
   const cats = await loadAllCategories();
   const catMeta = cats.find((c) => c.id === sp.cat);
-  const title = catMeta ? `${catMeta.zh} AI 工具 | AiToolsBox` : 'AI 工具库 | AiToolsBox';
+  const title = catMeta ? `${catMeta.zh} AI 工具 | AIBoxPro` : 'AI 工具库 | AIBoxPro';
   const desc = catMeta
     ? `精选${catMeta.zh}类 AI 工具，含国内可用标注与定价信息。`
     : '精选 AI 工具导航，国内可用标注、定价与功能对比一览。';
@@ -80,7 +80,7 @@ export default async function ToolsPage({ searchParams }: Props) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
-    name: 'AI 工具库 | AiToolsBox',
+    name: 'AI 工具库 | AIBoxPro',
     description: '精选 AI 工具导航，国内可用标注、定价与功能对比一览。',
     url: `${BASE}/tools`,
   };

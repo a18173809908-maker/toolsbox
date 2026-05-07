@@ -35,10 +35,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const desc = r.descriptionZh || r.description;
   const gained = rows.find((row) => row.period === 'today')?.gained ?? r.gained;
   return {
-    title: `${repo} — GitHub ${r.lang} 开源项目 今日 +${gained} Stars | AiToolsBox`,
+    title: `${repo} — GitHub ${r.lang} 开源项目 今日 +${gained} Stars | AIBoxPro`,
     description: `${desc}。${r.lang} 开源项目，GitHub 今日新增 ${gained} Stars。`,
     openGraph: {
-      title: `${repo} | AiToolsBox`,
+      title: `${repo} | AIBoxPro`,
       description: `${desc}。${r.lang} 开源项目，GitHub 今日新增 ${gained} Stars。`,
       url: `${BASE}/trending/${repo}`,
       type: 'website',

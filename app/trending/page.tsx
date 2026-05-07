@@ -32,7 +32,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     title,
     description: desc,
     openGraph: {
-      title: `${title} | AiToolsBox`,
+      title: `${title} | AIBoxPro`,
       description: desc,
       url: `${BASE}/trending?period=${safe}`,
       type: 'website',

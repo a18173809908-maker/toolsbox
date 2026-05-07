@@ -179,7 +179,7 @@ export default async function CompareDetailPage({ params }: Props) {
           <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px, 100%), 1fr))', gap: 14, background: C.panel, border: `1px solid ${C.rule}`, borderRadius: 12, padding: 20, marginBottom: 24 }}>
             <div style={{ gridColumn: '1 / -1', color: C.ink, fontSize: 18, fontWeight: 800 }}>Methodology Box</div>
             <MethodologyItem label="测试时间" value={formatDate(comparison.testedAt)} />
-            <MethodologyItem label="测试版本" />
+            <MethodologyItem label="测试版本" value={comparison.testedVersion} />
             <MethodologyItem label="测试环境" value={comparison.testedEnv} />
             <MethodologyItem label="评测集说明" value={comparison.evalSet} />
             <MethodologyItem label="测试人" value={comparison.testedBy} />
