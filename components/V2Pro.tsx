@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { SiteHeader } from '@/components/SiteHeader';
 import { v2Tokens as T } from '@/lib/tokens';
 import type { Category, HomepageStats, RepoItem, Tool, TrendingPeriod } from '@/lib/data';
 
@@ -90,81 +91,6 @@ const compareCards: CompareCard[] = [
     badges: ['AI 绘图', '创作者'],
   },
 ];
-
-function HomeHeader({ mobile }: { mobile: boolean }) {
-  const navItems = [
-    ['首页', '/'],
-    ['工具库', '/tools'],
-    ['对比', '/compare'],
-    ['排行榜', '/tools?sort=score'],
-    ['开发者趋势', '/trending'],
-  ];
-
-  return (
-    <header
-      style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 20,
-        borderBottom: `1px solid ${T.rule}`,
-        background: 'rgba(255, 253, 247, .92)',
-        backdropFilter: 'blur(14px)',
-      }}
-    >
-      <div
-        style={{
-          ...shellStyle,
-          minHeight: mobile ? 58 : 66,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: mobile ? 12 : 24,
-          padding: mobile ? '10px 0' : 0,
-        }}
-      >
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, fontWeight: 800 }}>
-          <span
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: 8,
-              display: 'grid',
-              placeItems: 'center',
-              background: 'conic-gradient(from 210deg, #0F6B57, #245F8F, #B7472A, #0F6B57)',
-              color: '#fff',
-              fontWeight: 900,
-            }}
-          >
-            A
-          </span>
-          <span>AIBoxPro</span>
-        </Link>
-
-        {!mobile ? (
-          <nav style={{ display: 'flex', alignItems: 'center', gap: 2, color: T.inkSoft, fontSize: 14 }}>
-            {navItems.map(([label, href], index) => (
-              <Link
-                key={label}
-                href={href}
-                style={{
-                  padding: '9px 12px',
-                  borderRadius: 8,
-                  color: index === 0 ? T.ink : T.inkSoft,
-                  background: index === 0 ? T.primaryBg : 'transparent',
-                  fontWeight: index === 0 ? 700 : 500,
-                }}
-              >
-                {label}
-              </Link>
-            ))}
-          </nav>
-        ) : null}
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }} />
-      </div>
-    </header>
-  );
-}
 
 function useIsMobile() {
   const [mobile, setMobile] = React.useState(false);
@@ -749,7 +675,7 @@ export default function V2ProHomepage({ tools, categories, trending, stats }: Ho
         fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif',
       }}
     >
-      <HomeHeader mobile={mobile} />
+      <SiteHeader />
 
       <Hero stats={stats} query={query} setQuery={setQuery} mobile={mobile} />
 
