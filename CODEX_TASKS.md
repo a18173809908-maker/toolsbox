@@ -1047,9 +1047,9 @@ PRODUCT_HUNT_TOKEN=             # Product Hunt API token（任务 E2，可选）
 
 ---
 
-## 六、常用命令
+## 七、常用命令
 
-## 七、Codex 更新（2026-05-02，Task 5 移动端响应式）
+## 八、Codex 更新（2026-05-02，Task 5 移动端响应式）
 
 已处理移动端基础响应式，不改变现有数据逻辑：
 
@@ -1066,7 +1066,7 @@ PRODUCT_HUNT_TOKEN=             # Product Hunt API token（任务 E2，可选）
 
 ---
 
-## 八、Codex 更新（2026-05-02，工具 RSS 源恢复）
+## 九、Codex 更新（2026-05-02，工具 RSS 源恢复）
 
 已恢复工具自动抓取输入源：
 
@@ -1093,7 +1093,7 @@ PRODUCT_HUNT_TOKEN=             # Product Hunt API token（任务 E2，可选）
 
 ---
 
-## 九、Codex 更新（2026-05-02，D2 / E1 / F1）
+## 十、Codex 更新（2026-05-02，D2 / E1 / F1）
 
 已完成用户指定任务：
 
@@ -1243,3 +1243,514 @@ Validation:
 - `npm run discover:tool-signals` completed successfully; no new candidates were inserted in that run.
 - `npm run lint` passed with the pre-existing `scripts/cleanup-tool-data.ts` unused `sql` warning.
 - `npm run build` passed.
+
+---
+
+## 📋 I 系列任务：决策平台重构（来自白皮书，2026-05-07）
+
+> 本系列任务来自 `docs/whitepaper.md` 的 60 天两期计划，与 H 系列（场景指南）**并行推进**，不互相阻塞。
+>
+> **执行关系说明**：
+> - I1-I5 是第一期（前 30 天）：修信任基础，不要求任何新功能上线
+> - I6-I10 是第二期（第 31-60 天）：上线决策内容矩阵
+> - H 系列（场景指南）与 I6-I10 可并行，内容产出可互补（场景页 = 深度用法，对比页 = 横向选型）
+> - **I1 最高优先级**，影响所有后续工作的信任基础
+
+---
+
+### I1（最高优先级）：品牌名全站统一为 AIBoxPro
+
+**问题**：白皮书第一期 P0 任务，当前代码里仍存在 `AiToolsBox` 残留。
+
+**需要修改的位置**：
+
+1. `lib/jobs/fetch-aibot-sitemap.ts` — crawler User-Agent 字符串：
+   ```typescript
+   // 改前
+   'AiToolsBox-Crawler/1.0 (https://aiboxpro.cn; respectful)'
+   // 改后
+   'AIBoxPro-Crawler/1.0 (https://aiboxpro.cn; respectful)'
+   ```
+2. 全局搜索 `AiToolsBox`（大小写不敏感），替换所有面向用户可见的字符串为 `AIBoxPro`
+3. `app/layout.tsx` — 确认 `<title>` 和 `metadataBase` 使用 `AIBoxPro`
+4. `components/SiteHeader.tsx` — 确认导航栏 logo/文字为 `AIBoxPro`
+5. `app/og/route.tsx` — OG 图片生成中的品牌名
+
+**验证标准**：
+- `grep -ri "aitoolsbox" --include="*.ts" --include="*.tsx"` 结果只剩历史注释，无用户可见字符串
+- 首页、工具详情页、OG 图片均显示 `AIBoxPro`
+
+---
+
+### I2（高优先级）：清理历史乱码资讯
+
+**问题**：资讯模块存在编码乱码和过期数据，白皮书第一期要求清理。
+
+**实施步骤**：
+
+1. **编写清理脚本 `scripts/cleanup-articles.ts`**，识别并标记问题数据：
+   ```typescript
+   // 识别乱码：标题或 summaryZh 包含连续 3 个以上 �（替换字符）
+   // 或标题为纯英文且 lang='zh'（抓到了但未正确识别语言）
+   // 或 publishedAt 超过 180 天且 views=0
+   ```
+2. 对识别出的问题条目执行 `UPDATE articles SET status='hidden'`，不硬删除
+3. 新增 `package.json` 脚本：`"cleanup:articles": "tsx scripts/cleanup-articles.ts"`
+4. 运行后输出：隐藏数量 / 分类（乱码/过期/语言错误）
+
+**验证标准**：
+- `/news` 页面无乱码标题、无纯英文条目（当前资讯源已全为中文源）
+- 脚本运行后输出清理数量日志
+
+---
+
+### I3（高优先级）：工具字段数据时效性标注
+
+**问题**：工具定价、可用性等字段缺乏时效标注，用户无法判断数据是否过期。
+
+**实施步骤**：
+
+1. **`lib/db/schema.ts`**：`tools` 表追加字段：
+   ```typescript
+   pricingUpdatedAt:     timestamp('pricing_updated_at')
+   accessUpdatedAt:      timestamp('access_updated_at')
+   featuresUpdatedAt:    timestamp('features_updated_at')
+   complianceUpdatedAt:  timestamp('compliance_updated_at')
+   ```
+2. **`npm run db:push`** 同步到 Neon
+3. **`lib/db/queries.ts`**：`loadToolById` 返回这四个字段
+4. **`app/tools/[slug]/page.tsx`**：在以下区块加过期标注逻辑：
+   - 定价区块：若 `pricingUpdatedAt` 为空或超过 30 天，显示黄色警告：`「价格信息最后更新：X 天前，建议以官网为准」`
+   - 国内用户须知区块：若 `accessUpdatedAt` 超过 14 天，同上
+   - 合规状态（若有）：超过 90 天标注「状态待核实」
+5. **`lib/jobs/process-tool-candidates.ts`**：新工具入库时写入 `pricingUpdatedAt = now()`、`accessUpdatedAt = now()`
+
+**验证标准**：
+- 打开任意工具详情页，定价区块有「最后更新」提示
+- 新工具入库后 `pricingUpdatedAt` 有值
+- 人工把某工具 `pricingUpdatedAt` 改为 40 天前，页面应出现黄色警告
+
+---
+
+### I4（高优先级）：标准化对比页模板
+
+**问题**：白皮书核心功能，当前无对比页，高意图流量（Cursor vs Trae）全部流失。
+
+**数据层**：
+
+新建表 `comparisons`：
+
+```typescript
+// lib/db/schema.ts
+export const comparisons = pgTable('comparisons', {
+  id:          text('id').primaryKey(),           // slug: 'cursor-vs-trae'
+  toolAId:     text('tool_a_id').notNull(),        // 关联 tools.id
+  toolBId:     text('tool_b_id').notNull(),        // 关联 tools.id
+  title:       text('title').notNull(),            // 'Cursor vs Trae：国内程序员怎么选？'
+  summary:     text('summary'),                   // 编辑结论（200字内）
+  body:        text('body'),                      // markdown 详细对比正文
+  verdict:     text('verdict'),                   // 最终推荐结论（简短）
+  seoKeywords: text('seo_keywords').array(),
+  status:      text('status').notNull().default('draft'),
+  publishedAt: timestamp('published_at'),
+  updatedAt:   timestamp('updated_at').notNull().defaultNow(),
+  createdAt:   timestamp('created_at').notNull().defaultNow(),
+}, (t) => ({
+  slugIdx: index('comparisons_slug_idx').on(t.id),
+  statusIdx: index('comparisons_status_idx').on(t.status),
+}));
+```
+
+新增 queries：
+- `loadAllComparisons()` — 列表
+- `loadComparisonById(id)` — 详情（含两个工具完整数据）
+
+**前端页面**：
+
+新建 `/compare/[slug]` 详情页：
+- Hero：两个工具 logo 并排 + `vs` + 编辑结论摘要
+- Methodology Box（固定区块，对应白皮书要求）：
+  ```
+  测试说明：测试时间 / 测试版本 / 测试人 / 数据来源
+  ```
+- 对比表格：从两个工具各取关键字段（定价 / 国内可用性 / 中文支持 / 主要功能）自动渲染
+- 正文：`body` markdown 渲染
+- 编辑结论：`verdict` 醒目展示
+- 文末：相关对比页（同工具的其他对比）+ 相关场景指南（H 系列反向引用）
+- JSON-LD `Article` schema
+
+新建 `/compare` 列表页：
+- 卡片网格，显示两个工具 logo + 标题 + 简短结论
+
+**首页静态入口**（I5 前置）：
+- 在首页显著位置加「工具对比」入口，先硬编码 3-5 个热门对比词链接（`Cursor vs Trae`、`Claude Code vs Codex`、`豆包 vs Kimi`），不依赖动态数据
+
+**sitemap.ts**：新增 `/compare/*` 路径
+
+**验证标准**：
+- `/compare/cursor-vs-trae` 页面渲染正常，有 Methodology Box 区块（即使内容为空也要有占位）
+- `/compare` 列表页有卡片
+- 首页有「工具对比」静态入口可点击跳转
+- `npm run lint && npm run build` 通过
+
+---
+
+### I5（中优先级）：首页四大决策入口（静态版）
+
+**说明**：白皮书要求首页首屏四个核心决策入口。第一期只做静态版（固定链接），不接动态引擎。
+
+**四个入口**：
+
+| 入口 | 标题 | 目标路径 | 第一期实现 |
+|---|---|---|---|
+| 工具对比 | 横评哪个更适合你 | `/compare` | 静态链接，I4 完成后可用 |
+| 场景搜索 | 按我的使用场景找工具 | `/scenes` | 静态链接，H2 完成后可用 |
+| 寻找替代品 | 找国产平替 | `/tools?china=accessible` | 已有筛选页，直接跳 |
+| 编辑榜单 | 实测评分周榜 | `/tools?sort=score` | 第二期前可先跳工具库 |
+
+**实施**：在 `components/V2Pro.tsx`（或首页组件）hero 下方加一个四格入口区块，每格含图标 + 标题 + 副标题，纯静态 `<Link>` 实现。
+
+**验证标准**：
+- 首页 hero 下方可见四个入口卡片，点击可跳转
+- 移动端无横向滚动
+
+---
+
+### I6（第二期，第 31-45 天）：AI 编程核心对比页内容
+
+**依赖**：I4 完成
+
+**第一批 10 个对比页**（按搜索热度排序，优先做）：
+
+| slug | 标题 | 目标 SEO 词 |
+|---|---|---|
+| cursor-vs-trae | Cursor vs Trae：国内程序员怎么选 | Cursor vs Trae, Trae 和 Cursor 哪个好 |
+| claude-code-vs-cursor | Claude Code vs Cursor：AI 编程助手深度对比 | Claude Code vs Cursor |
+| cursor-vs-github-copilot | Cursor vs GitHub Copilot：2025 年最新横评 | Cursor 和 Copilot 哪个好 |
+| deepseek-vs-kimi | DeepSeek vs Kimi：国内 AI 助手横评 | DeepSeek 和 Kimi 哪个好用 |
+| doubao-vs-kimi | 豆包 vs Kimi：日常使用哪个更好 | 豆包和 Kimi 区别 |
+| claude-code-vs-codex | Claude Code vs OpenAI Codex | Claude Code vs Codex |
+| trae-vs-github-copilot | Trae vs GitHub Copilot：国内开发者对比 | Trae 哪个好 |
+| cursor-vs-windsurf | Cursor vs Windsurf：AI IDE 横评 | Cursor vs Windsurf |
+| deepseek-vs-chatgpt | DeepSeek vs ChatGPT：中文场景对比 | DeepSeek 和 ChatGPT 哪个好 |
+| kimi-vs-wenxin | Kimi vs 文心一言：长文本处理对比 | Kimi 和文心一言比较 |
+
+**内容生产流程**（每篇约 60-90 分钟）：
+
+```
+1. DeepSeek 起草对比正文（prompt 见下）
+2. 人工补填 Methodology Box（测试时间/环境/版本/样本）
+3. 核对两个工具的定价和可用性字段
+4. 写 verdict（编辑结论，2-3 句话）
+5. 写入 comparisons 表 status=draft → 审核后 published
+```
+
+**DeepSeek prompt 模板**（写入 `scripts/draft-comparison.ts`）：
+
+```
+你是一位国内 AI 工具实测专家，正在写《[工具A] vs [工具B]》横评文章。
+
+对比维度（必须覆盖）：
+1. 核心功能差异（各自擅长什么）
+2. 国内可用性（直连/需代理/稳定性）
+3. 中文支持质量（界面/文档/输出）
+4. 定价与性价比（含人民币参考价）
+5. 适合的用户场景（谁应该选 A，谁应该选 B）
+
+输出格式：3000-4000 字 markdown，含结论段（明确说谁更适合什么场景）。
+避免模糊表述，每个维度给出明确判断。
+```
+
+**验证标准**：
+- 10 个对比页 status=published，`/compare` 列表页均可见
+- 每篇有 Methodology Box（允许部分字段标注"编辑实测/待补充"）
+- `npm run build` 通过
+
+---
+
+### I7（第二期，第 31-45 天）：AIBoxPro Lab 首份实测报告
+
+**说明**：白皮书 3.3 节，每份 Lab 报告必须有 Methodology Box。
+
+**第一份报告**：`Claude Code vs Cursor` 深度压测（与 I6 对应，内容更深）
+
+**报告结构**（写入 `comparisons` 表的 `body` 字段，或单独建 `lab_reports` 表）：
+
+```markdown
+## AIBoxPro Lab 实测报告
+**报告编号**: LAB-202501-001
+**测试时间**: YYYY-MM-DD
+**测试版本**: Claude Code CLI vX.X.X / Cursor vX.X.X
+**测试环境**: macOS / 网络运营商 / 是否代理
+**评测集**: [具体说明，可链接到 GitHub]
+**样本量**: N 次独立测试，取中位数
+**测试人**: 编辑实测（可署名或匿名）
+
+---
+
+## 测试结果
+[详细数据]
+
+## 编辑结论
+[2-3 段，明确说适合谁、不适合谁]
+```
+
+**如果单独建表**：
+
+```typescript
+export const labReports = pgTable('lab_reports', {
+  id:          text('id').primaryKey(),         // 'lab-claude-code-cursor-202501'
+  title:       text('title').notNull(),
+  toolIds:     text('tool_ids').array(),         // 涉及工具
+  body:        text('body').notNull(),           // markdown 完整报告
+  testedAt:    timestamp('tested_at').notNull(), // 实测日期（非发布日期）
+  testedBy:    text('tested_by'),
+  status:      text('status').notNull().default('draft'),
+  publishedAt: timestamp('published_at'),
+  updatedAt:   timestamp('updated_at').notNull().defaultNow(),
+});
+```
+
+对应路径：`/lab/[slug]`
+
+**验证标准**：
+- `/lab/claude-code-vs-cursor-202501` 页面渲染正常
+- Methodology Box 所有字段有值（不允许空占位）
+- 工具详情页（Claude Code、Cursor）底部反向引用该报告
+
+---
+
+### I8（第二期，第 46-60 天）：Cursor 替代品专题 + SEO 基础设施
+
+**I8-1：替代品专题页**
+
+新建 `/alternatives/[slug]` 路径，如 `/alternatives/cursor`：
+- 标题：`Cursor 的国产替代方案`
+- 列出经验证的国内可用替代工具（从 `tools` 表 `cnAlternatives` 字段反向查询，G7 已有此字段）
+- 每个替代品给出简短理由和访问方式
+- JSON-LD `ItemList` schema
+
+**I8-2：SEO 基础设施**（所有新页面必须覆盖）
+
+- `/compare/[slug]`：部署 `FAQPage` schema（从 `body` 提取 H2 标题生成 FAQ）
+- `/compare/[slug]`：`BreadcrumbList`（首页 → 工具对比 → [具体对比页]）
+- `app/sitemap.ts`：新增 `/compare/*`、`/lab/*`、`/alternatives/*` 路径
+- 向 Google Search Console 提交新版 Sitemap
+
+**验证标准**：
+- `/alternatives/cursor` 页面渲染正常，列出至少 3 个工具
+- 用 Google Rich Results Test 验证 `/compare/cursor-vs-trae` 的 FAQ schema 有效
+- Search Console 新 Sitemap 提交成功
+
+---
+
+### I9（第二期，第 46-60 天）：连通性地图冷启动
+
+**说明**：白皮书 3.2 节，第一期不做（依赖用户量），第二期编辑实测填充初始数据。
+
+**数据层**：
+
+```typescript
+export const toolConnectivity = pgTable('tool_connectivity', {
+  id:          text('id').primaryKey().default(sql`gen_random_uuid()`),
+  toolId:      text('tool_id').notNull(),
+  carrier:     text('carrier').notNull(),     // 'telecom' | 'unicom' | 'mobile'
+  region:      text('region'),                // '上海' | '北京' 等，可选
+  status:      text('status').notNull(),      // 'direct' | 'proxy-needed' | 'blocked'
+  latencyMs:   integer('latency_ms'),
+  source:      text('source').notNull(),      // 'editor' | 'user-report'
+  reportedAt:  timestamp('reported_at').notNull().defaultNow(),
+  reportedBy:  text('reported_by'),           // 编辑署名或用户 ID（匿名）
+  note:        text('note'),
+});
+```
+
+**编辑实测脚本**：
+
+`scripts/seed-connectivity.ts` — 手动录入初始实测数据（10 个核心工具 × 3 运营商）
+
+**前端展示**：
+
+在工具详情页「国内用户须知」区块下方新增小表格：
+
+```
+| 运营商 | 状态     | 延迟   | 更新时间    | 来源     |
+|--------|----------|--------|-------------|----------|
+| 电信   | 需代理   | -      | 2025-01-15  | 编辑实测 |
+| 联通   | 直连     | 450ms  | 2025-01-15  | 编辑实测 |
+| 移动   | 需代理   | -      | 2025-01-15  | 编辑实测 |
+```
+
+**重要**：所有数据必须显示 `reportedAt` 和 `source`，不得声称"实时"。
+
+**验证标准**：
+- `scripts/seed-connectivity.ts` 跑完后 DB 中有至少 10 工具 × 3 运营商 = 30 条记录
+- 工具详情页（Claude Code、Cursor、豆包等）可见连通性表格
+- 超过 14 天未更新的条目在前端显示「状态待确认」
+
+---
+
+### I 系列验证标准汇总
+
+**第一期完成标准（第 30 天）**：
+- [ ] I1：全站无 `AiToolsBox` 用户可见字符串，品牌统一为 `AIBoxPro`
+- [ ] I2：`/news` 无乱码或纯英文条目
+- [ ] I3：任意工具详情页定价区块有「最后更新」时间提示
+- [ ] I4：`/compare/cursor-vs-trae` 页面可访问，有 Methodology Box 区块
+- [ ] I5：首页四个决策入口可点击，`npm run build` 通过
+
+**第二期完成标准（第 60 天）**：
+- [ ] I6：10 个对比页 published，Search Console 有收录
+- [ ] I7：1 份 Lab 报告上线，所有 Methodology Box 字段有值
+- [ ] I8：`/alternatives/cursor` 上线，新页面 Sitemap 已提交
+- [ ] I9：30 条连通性数据入库，工具详情页连通性表格可见
+- [ ] SEO：核心对比词在 Search Console 有展示量，至少 3 个页面进入目标词前 50
+
+---
+
+## Codex review 2026-05-07 (J 系列)：首页 V2Pro.tsx 问题修复
+
+> Claude review `components/V2Pro.tsx` 后发现的问题，按优先级由高到低排列。**每个任务独立 commit。**
+
+---
+
+### J1（P0）：修复决策入口和对比卡的 href 全部指向 `/tools`
+
+**文件**：`components/V2Pro.tsx`
+
+**问题**：`decisionLinks`、`compareCards`、`scenarioCards` 三个数组里所有 `href` 全写死为 `'/tools'`，导致首页四个决策入口毫无差异，所有对比卡和场景卡点击后都跳到工具库，没有实际导流价值。
+
+**修复**：
+
+```typescript
+// decisionLinks（第 39-68 行）
+{ title: '对比两个 AI 工具',    href: '/compare' },
+{ title: '按工作场景找工具',    href: '/scenes' },
+{ title: '寻找替代方案',        href: '/tools?china=accessible' },
+{ title: '查看编辑榜单',        href: '/tools?sort=score' },
+
+// compareCards（第 70-95 行）
+{ title: 'Claude Code vs Codex', href: '/compare/claude-code-vs-codex' },
+{ title: 'Cursor vs Trae',       href: '/compare/cursor-vs-trae' },
+{ title: 'ChatGPT vs Kimi',      href: '/compare/chatgpt-vs-kimi' },
+{ title: 'Midjourney vs 即梦',   href: '/compare/midjourney-vs-jimeng' },
+
+// scenarioCards（第 97-116 行）
+{ title: '适合国内程序员的 AI 编程工具', href: '/scenes/ai-coding-assistant' },
+{ title: '适合做 PPT 的 AI 工具',        href: '/scenes/ai-make-ppt-cn' },
+{ title: '适合小红书运营的 AI 工具',     href: '/scenes/ai-xiaohongshu' },
+```
+
+**注意**：`/compare/*` 和 `/scenes/*` 页面 I4/H2 完成前尚不存在，Next.js 会返回 404，这是预期行为。不要因为目标页不存在就继续用 `/tools` 兜底——404 比误导性跳转更诚实，且有助于后续通过 Search Console 识别哪些路径有流量需求。
+
+**验证**：
+- `decisionLinks` 四个 href 各不相同
+- `compareCards` 四个 href 格式为 `/compare/[slug]`
+- `scenarioCards` 三个 href 格式为 `/scenes/[slug]`
+- `npm run lint && npm run build` 通过
+
+---
+
+### J2（P0）：搜索 query 不透传到工具库
+
+**文件**：`components/V2Pro.tsx`，`Hero` 组件（约第 375-391 行）
+
+**问题**：热门搜索词点击后更新本地 `query` state，但"进入工具库"按钮的 `href` 是写死的 `'/tools'`，不携带搜索词。用户点"Claude Code vs Codex"后再点进入工具库，搜索词丢失。
+
+**修复**：把"进入工具库"的 `<Link>` 改为动态 href：
+
+```tsx
+// Hero 组件内，约第 375-391 行
+<Link
+  href={`/tools${query.trim() ? `?q=${encodeURIComponent(query.trim())}` : ''}`}
+  style={{ /* 保持原有样式不变 */ }}
+>
+  进入工具库
+</Link>
+```
+
+**验证**：
+- 点击热门词"Cursor 替代品" → 搜索框出现该词 → 点"进入工具库" → 跳转到 `/tools?q=Cursor%20%E6%9B%BF%E4%BB%A3%E5%93%81`
+- query 为空时跳转 `/tools`（不带 `?q=`）
+
+---
+
+### J3（P1）：移除 `news` prop 的无效数据获取
+
+**文件**：`components/V2Pro.tsx`、`lib/db/queries.ts`
+
+**问题**：`HomeData` 类型定义了 `news: NewsItem[]`，`loadHomepageData()` 也查询了资讯数据，但 `V2ProHomepage` 组件内从未渲染 `news`，是一次纯浪费的数据库查询。
+
+**修复步骤**：
+
+1. `components/V2Pro.tsx`：从 `HomeData` 类型中移除 `news` 字段，从组件入参解构中移除 `news`
+2. `lib/db/queries.ts`：找到 `loadHomepageData()` 函数，移除其中资讯相关的查询语句（保留 tools / categories / trending / stats 查询）
+3. `app/page.tsx` 不需要改动（它只透传 `data`）
+
+**验证**：
+- `npm run lint && npm run build` 通过，无 unused variable 警告
+- 开发环境 Network 面板中首页加载不再触发资讯相关的 DB 查询
+
+---
+
+### J4（P1）：修复 `Footer` prop 命名错误
+
+**文件**：`components/V2Pro.tsx`，`Footer` 组件（约第 806-856 行）及调用处（约第 1029 行）
+
+**问题**：
+```tsx
+// 调用处
+<Footer newsCount={tools.length} />
+
+// Footer 内部渲染
+<div>已整理工具：{newsCount}</div>
+```
+prop 叫 `newsCount` 但存的是工具数量，命名错误。
+
+**修复**：将 `Footer` 的 prop 从 `newsCount` 改为 `toolCount`，调用处和 Footer 内部同步修改：
+
+```tsx
+// Footer props 类型
+function Footer({ toolCount }: { toolCount: number }) { ... }
+
+// 内部显示
+<div>已整理工具：{toolCount}</div>
+
+// 调用处
+<Footer toolCount={tools.length} />
+```
+
+**验证**：`npm run lint` 无 warning，页面底部数字显示正常。
+
+---
+
+### J5（P2）：移除 scenarioCards 的硬编码工具数量
+
+**文件**：`components/V2Pro.tsx`，`scenarioCards` 数组（约第 97-116 行）及 `ScenarioSection` 渲染
+
+**问题**：卡片 `meta` 字段写死了"12 个工具候选"、"8 个工具候选"、"15 个工具候选"，与实际工具库数量无关，会误导用户。
+
+**修复**：直接删除 `meta` 字段及其渲染，不用动态计算替代（场景页上线前没有准确数据源，不如不显示）：
+
+```typescript
+// scenarioCards 中删除所有 meta 字段
+const scenarioCards: ScenarioCard[] = [
+  { title: '...', summary: '...', href: '...' },
+  // meta 字段全部删除
+];
+```
+
+同步从 `ScenarioCard` 类型中删除 `meta?: string`，从 `ScenarioSection` 渲染中删除 `{card.meta}` 那行。
+
+**验证**：场景卡底部不再显示工具数量，`npm run build` 通过。
+
+---
+
+### J 系列完成标准
+
+- [ ] J1：首页四个决策入口 href 各自不同，对比卡和场景卡 href 格式正确
+- [ ] J2：搜索框热词点击后再点"进入工具库"，URL 携带 `?q=` 参数
+- [ ] J3：`loadHomepageData()` 不再查询资讯，`HomeData` 类型无 `news` 字段
+- [ ] J4：`Footer` prop 名为 `toolCount`，无 lint 警告
+- [ ] J5：场景卡无硬编码工具数量
+- [ ] 全部：`npm run lint && npm run build` 通过，无新增 warning
