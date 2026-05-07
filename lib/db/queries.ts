@@ -1,7 +1,8 @@
 import { db } from './index';
-import { categories, tools, githubTrending, articles, sources, toolCandidates } from './schema';
+import { categories, tools, githubTrending, articles, sources, toolCandidates, comparisons } from './schema';
 import { desc, asc, eq, ilike, or, isNull, count, max, and, inArray } from 'drizzle-orm';
 import type { TrendingPeriod, Tool, Category, RepoItem, HomepageStats } from '@/lib/data';
+import type { Comparison, Tool as DbTool } from './schema';
 
 // ── Homepage ─────────────────────────────────────────────────────────────────
 
@@ -311,6 +312,99 @@ export async function loadToolsByIds(ids: string[]) {
     })
     .from(tools)
     .where(inArray(tools.id, ids));
+}
+
+export type ComparisonWithTools = Comparison & {
+  toolA: Tool;
+  toolB: Tool;
+};
+
+function mapDbTool(row: DbTool): Tool {
+  return {
+    id: row.id,
+    name: row.name,
+    mono: row.mono,
+    brand: row.brand,
+    cat: row.catId,
+    en: row.en,
+    zh: row.zh,
+    pricing: row.pricing as Tool['pricing'],
+    url: row.url ?? undefined,
+    chinaAccess: row.chinaAccess as Tool['chinaAccess'],
+    chineseUi: row.chineseUi,
+    freeQuota: row.freeQuota ?? undefined,
+    apiAvailable: row.apiAvailable,
+    openSource: row.openSource,
+    githubRepo: row.githubRepo ?? undefined,
+    features: row.features ?? undefined,
+    priceCny: row.priceCny ?? undefined,
+    pricingDetail: row.pricingDetail ?? undefined,
+    pricingUpdatedAt: row.pricingUpdatedAt?.toISOString(),
+    accessUpdatedAt: row.accessUpdatedAt?.toISOString(),
+    featuresUpdatedAt: row.featuresUpdatedAt?.toISOString(),
+    complianceUpdatedAt: row.complianceUpdatedAt?.toISOString(),
+    alternatives: row.alternatives ?? undefined,
+    registerMethod: row.registerMethod ?? undefined,
+    needsOverseasPhone: row.needsOverseasPhone,
+    needsRealName: row.needsRealName,
+    overseasPaymentOnly: row.overseasPaymentOnly,
+    miniProgram: row.miniProgram ?? undefined,
+    appStoreCn: row.appStoreCn,
+    publicAccount: row.publicAccount ?? undefined,
+    cnAlternatives: row.cnAlternatives ?? undefined,
+    tutorialLinks: row.tutorialLinks ?? undefined,
+    upvotes: row.upvotes,
+    downvotes: row.downvotes,
+    featured: row.featured,
+    date: row.publishedAt,
+    howToUse: row.howToUse ?? undefined,
+    faqs: row.faqs ?? undefined,
+  };
+}
+
+async function attachComparisonTools(rows: Comparison[]): Promise<ComparisonWithTools[]> {
+  const ids = Array.from(new Set(rows.flatMap((row) => [row.toolAId, row.toolBId])));
+  if (ids.length === 0) return [];
+
+  const toolRows = await db
+    .select()
+    .from(tools)
+    .where(inArray(tools.id, ids));
+
+  const toolMap = new Map(toolRows.map((row) => [row.id, mapDbTool(row)]));
+  return rows.flatMap((row) => {
+    const toolA = toolMap.get(row.toolAId);
+    const toolB = toolMap.get(row.toolBId);
+    if (!toolA || !toolB) return [];
+    return [{ ...row, toolA, toolB }];
+  });
+}
+
+export async function loadAllComparisons(): Promise<ComparisonWithTools[]> {
+  const rows = await db
+    .select()
+    .from(comparisons)
+    .where(eq(comparisons.status, 'published'))
+    .orderBy(desc(comparisons.publishedAt), desc(comparisons.updatedAt));
+  return attachComparisonTools(rows);
+}
+
+export async function loadAllComparisonIds(): Promise<string[]> {
+  const rows = await db
+    .select({ id: comparisons.id })
+    .from(comparisons)
+    .where(eq(comparisons.status, 'published'));
+  return rows.map((row) => row.id);
+}
+
+export async function loadComparisonById(id: string): Promise<ComparisonWithTools | null> {
+  const rows = await db
+    .select()
+    .from(comparisons)
+    .where(and(eq(comparisons.id, id), eq(comparisons.status, 'published')))
+    .limit(1);
+  const withTools = await attachComparisonTools(rows);
+  return withTools[0] ?? null;
 }
 
 export async function loadPendingArticles(limit = 20) {

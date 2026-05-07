@@ -6,6 +6,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const statics: MetadataRoute.Sitemap = [
     { url: BASE,               lastModified: new Date(), changeFrequency: 'hourly', priority: 1   },
     { url: `${BASE}/tools`,    lastModified: new Date(), changeFrequency: 'daily',  priority: 0.9 },
+    { url: `${BASE}/compare`,  lastModified: new Date(), changeFrequency: 'daily',  priority: 0.9 },
     { url: `${BASE}/trending`, lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
     { url: `${BASE}/news`,     lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
   ];
@@ -20,10 +21,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     import('drizzle-orm'),
   ]);
 
-  const { tools, categories, articles, githubTrending } = schemaModule;
+  const { tools, categories, articles, githubTrending, comparisons } = schemaModule;
   const { eq, desc, asc } = drizzleModule;
 
-  const [ts, cats, arts, repos] = await Promise.all([
+  const [ts, cats, arts, repos, comps] = await Promise.all([
     db.select({ id: tools.id }).from(tools),
     db.select({ id: categories.id }).from(categories),
     db.select({ id: articles.id, publishedAt: articles.publishedAt })
@@ -35,6 +36,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .from(githubTrending)
       .orderBy(asc(githubTrending.repo))
       .limit(200),
+    db.select({ id: comparisons.id, updatedAt: comparisons.updatedAt })
+      .from(comparisons)
+      .where(eq(comparisons.status, 'published'))
+      .orderBy(desc(comparisons.publishedAt))
+      .limit(500),
   ]);
 
   const toolPages: MetadataRoute.Sitemap = ts.map((t) => ({
@@ -62,5 +68,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...statics, ...toolPages, ...catPages, ...newsPages, ...repoPages];
+  const comparePages: MetadataRoute.Sitemap = comps.map((c) => ({
+    url: `${BASE}/compare/${c.id}`,
+    lastModified: c.updatedAt,
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }));
+
+  return [...statics, ...toolPages, ...catPages, ...newsPages, ...repoPages, ...comparePages];
 }

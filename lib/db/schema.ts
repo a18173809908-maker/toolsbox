@@ -142,9 +142,36 @@ export const articles = pgTable(
   }),
 );
 
+export const comparisons = pgTable(
+  'comparisons',
+  {
+    id: text('id').primaryKey(),
+    toolAId: text('tool_a_id').notNull(),
+    toolBId: text('tool_b_id').notNull(),
+    title: text('title').notNull(),
+    summary: text('summary'),
+    body: text('body'),
+    verdict: text('verdict'),
+    testedAt: timestamp('tested_at'),
+    testedEnv: text('tested_env'),
+    testedBy: text('tested_by'),
+    evalSet: text('eval_set'),
+    seoKeywords: text('seo_keywords').array(),
+    status: text('status').notNull().default('draft'),
+    publishedAt: timestamp('published_at'),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    statusIdx: index('comparisons_status_idx').on(t.status),
+    publishedIdx: index('comparisons_published_idx').on(t.publishedAt),
+  }),
+);
+
 export type Category = typeof categories.$inferSelect;
 export type Tool = typeof tools.$inferSelect;
 export type RepoItem = typeof githubTrending.$inferSelect;
 export type Source = typeof sources.$inferSelect;
 export type ToolCandidate = typeof toolCandidates.$inferSelect;
 export type Article = typeof articles.$inferSelect;
+export type Comparison = typeof comparisons.$inferSelect;
