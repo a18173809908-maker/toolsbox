@@ -60,6 +60,16 @@ async function main() {
     .filter((row) => isAsciiOnly(row.titleZh || row.title))
     .map((row) => row.id);
 
+  // 白皮书 §2.5 主力用户是中文用户，G4 任务已经关停了英文源（source.active=false）。
+  // 所有来自 lang='en' 源的 published 文章都应该 hide，包括早期入库的历史数据。
+  // 这一类型独立于"乱码"和"过期"，不会被前两个规则覆盖。
+  const enSourceRows = await db
+    .select({ id: articles.id })
+    .from(articles)
+    .leftJoin(sources, eq(articles.sourceId, sources.id))
+    .where(and(eq(articles.status, 'published'), eq(sources.lang, 'en')));
+  const enSourceIds = enSourceRows.map((row) => row.id);
+
   const staleRows = await db
     .select({ id: articles.id })
     .from(articles)
@@ -67,11 +77,11 @@ async function main() {
 
   const mojibakeIds = mojibakeRows.map((row) => row.id);
   const staleIds = staleRows.map((row) => row.id);
-  const allIds = [...new Set([...mojibakeIds, ...languageMismatchIds, ...staleIds])];
+  const allIds = [...new Set([...mojibakeIds, ...languageMismatchIds, ...enSourceIds, ...staleIds])];
   const hidden = await hideByIds(allIds);
 
   console.log(
-    `隐藏 ${hidden} 条（乱码 ${mojibakeIds.length} / 语言错误 ${languageMismatchIds.length} / 过期 ${staleIds.length}）`
+    `隐藏 ${hidden} 条（乱码 ${mojibakeIds.length} / 语言错误 ${languageMismatchIds.length} / 英文源 ${enSourceIds.length} / 过期 ${staleIds.length}）`
   );
 }
 
