@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter, Fraunces } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/react';
+import { SiteFooter } from '@/components/SiteFooter';
 import './globals.css';
 
 const inter = Inter({
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="zh-CN" className={`${inter.variable} ${fraunces.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         {children}
+        <SiteFooter />
         <Analytics />
       </body>
     </html>
