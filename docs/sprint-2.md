@@ -1,10 +1,13 @@
 # Sprint 2 任务清单（第 31-60 天）：决策内容上线
 
-> **前置条件**：Sprint 1 全部完成（`/compare` 模板存在、品牌统一、数据时效标注上线）。
+> **前置条件**：Sprint 1 全部完成（`/compare` 模板存在、品牌统一、数据时效标注上线）；小红书账号已注册（I13）。
 >
-> **目标**：建立核心内容矩阵，启动 SEO 流量积累。
+> **目标**：建立核心内容矩阵，启动 SEO + 站外冷启动 + 私域沉淀三条流量积累。
 >
-> **完成标准**：至少 10 个对比页被 Search Console 收录，核心对比词有展示量，至少 3 个页面进入目标词前 50 名。
+> **完成标准**：
+> - SEO：至少 10 个对比页被 Search Console 收录，核心对比词有展示量，至少 3 个页面进入目标词前 50 名
+> - 站外冷启动：累计社区分发 ≥ 20 次、工具方互推合作 ≥ 5 次
+> - 私域沉淀：公众号 ≥ 3 篇 / 关注 ≥ 50；小红书 ≥ 5 篇 / 粉丝 ≥ 30；知乎 ≥ 10 条
 >
 > **执行规则**：每个任务独立 commit，commit message 注明任务编号（如 `feat(I6): 发布 cursor-vs-trae 对比页`）。
 
@@ -119,6 +122,88 @@ reproducible: true（需提供可复现的测试步骤描述）
 
 ---
 
+### I10（高优先级）：跨平台图文自动生成系统
+
+**对应白皮书**：§6.4.5
+
+**说明**：W7 启动私域分发的前置依赖。从一个 published 状态的对比页 markdown 自动产出微信公众号 / 小红书 / 知乎三平台的草稿包（文案 + 配图）。**只生成草稿，不自动发布**——发布动作必须人工把关。
+
+**技术栈**：
+- 文案改写：复用 `lib/llm/index.ts` 的 DeepSeek wrapper
+- 图片渲染：`puppeteer` + `@sparticuz/chromium`（Vercel/serverless 兼容方案）
+- 输出：本地文件系统的 `draft-package/[comparison-slug]/` 目录
+
+**安装依赖**：
+
+```bash
+npm install puppeteer-core @sparticuz/chromium
+# puppeteer-core 不打包 Chromium 二进制，与 @sparticuz/chromium 配合在 Vercel 等 serverless 环境正常运行
+```
+
+**目录结构**：
+
+```
+scripts/draft-social/
+├── generate.ts                  # 主入口：node scripts/draft-social/generate.ts <comparison-slug>
+├── prompts/
+│   ├── wechat.md                # 公众号长图文 prompt 模板
+│   ├── xiaohongshu.md           # 小红书短图文 prompt 模板（含 emoji + 话题标签）
+│   └── zhihu.md                 # 知乎答案 prompt 模板
+├── templates/
+│   ├── wechat-cover.html        # 横版 900×383，中文字体 PingFang SC
+│   ├── xiaohongshu-cover.html   # 竖版 1242×1660，大字标题
+│   ├── xiaohongshu-slide.html   # 竖版 1080×1440，单页一信息
+│   └── shared.css               # 品牌色 + 字体 + logo 样式
+└── render.ts                    # puppeteer 截图函数：HTML → PNG
+```
+
+**输出包结构**（写入 `draft-package/[slug]/`，gitignore 忽略）：
+
+```
+draft-package/cursor-vs-trae/
+├── wechat/
+│   ├── article.md
+│   ├── cover.png         (900×383)
+│   └── inline-1.png
+├── xiaohongshu/
+│   ├── caption.md        (含话题标签：#AI编程 #Cursor #Trae)
+│   ├── cover.png         (1242×1660)
+│   ├── slide-1.png       (1080×1440)
+│   ├── slide-2.png
+│   └── slide-3.png
+└── zhihu/
+    └── answer.md
+```
+
+**`package.json` 新增脚本**：
+
+```json
+"draft:social": "tsx scripts/draft-social/generate.ts"
+```
+
+用法：`npm run draft:social -- cursor-vs-trae`
+
+**Prompt 模板要点**（写在对应 .md 文件中）：
+
+- `wechat.md`：长段落、小标题、信息密度高、避免营销词；引用对比页 60-70% 内容；末尾引导关注公众号
+- `xiaohongshu.md`：短句、emoji 间隔、悬念标题、3-5 张图分点；正文末尾"主页找完整链接"（小红书外链限流）
+- `zhihu.md`：明确推荐结论、引用具体数据、30%+ 是真分析（避免被折叠）；末尾自然引导"完整对比看 AIBoxPro"
+
+**截图渲染要求**：
+
+- 字体加载：通过 `@sparticuz/chromium` 的 `font` 选项加载 PingFang SC / Noto Sans SC
+- 渲染稳定性：等待 fonts ready + 100ms 缓冲再 screenshot
+- 输出格式：PNG，质量优先于体积（小红书封面是流量决定因素）
+
+**验证**：
+- `npm run draft:social -- cursor-vs-trae` 在 5 分钟内生成完整草稿包
+- 三平台的封面图字体正确显示（无方框乱码）
+- 三个 markdown 草稿调性区分明显（不是同一文案的复制粘贴）
+- `npm run lint && npm run build` 通过
+- `.gitignore` 包含 `draft-package/`
+
+---
+
 ## 第 7 周：SEO 基础设施
 
 ### I8（中优先级）：Cursor 替代品专题 + SEO 结构化数据
@@ -154,6 +239,84 @@ reproducible: true（需提供可复现的测试步骤描述）
 - `/alternatives/cursor` 渲染正常，列出至少 3 个工具
 - 用 Google Rich Results Test 验证 `/compare/cursor-vs-trae` 的 FAQ schema 有效
 - `npm run build` 通过，sitemap 包含 `/alternatives/*`
+
+---
+
+### I11：社区分发 SOP + 渠道账号清单（运营文档）
+
+**对应白皮书**：§6.4.1
+
+**说明**：本任务**不是工程任务**——产出物是一份运营 SOP 文档，由运营/编辑使用，CODEX 写文档框架，但实际渠道账号需要真人去注册。
+
+**产出**：新建 `docs/community-distribution-sop.md`，至少包含：
+
+1. **渠道账号清单**：知乎 / V2EX / 即刻 / 稀土掘金 / SegmentFault / GitHub
+   - 每个渠道一行：账号名、注册状态（已有 / 待注册）、负责人、登录信息归档位置
+2. **每篇对比页的分发 checklist**（运营每次发新对比页都要走一遍）：
+   - [ ] 知乎：找 1-2 个目标问题，回答正文 ≤ 对比页 30%，文末附完整链接
+   - [ ] V2EX 或即刻：1 句结论 + 对比表截图 + 链接
+   - [ ] 稀土掘金 或 SegmentFault：长文同步，正文末尾"原文首发于 AIBoxPro"
+   - [ ] GitHub：检查相关 awesome-list / repo Discussion 是否有合适提交机会
+3. **反模式清单**（什么不要做）：
+   - 不要在所有平台粘贴同一篇文章原文
+   - 不要私信用户拉访
+   - 不要做小号矩阵互相点赞
+4. **数据追踪表**模板（每篇对比页 × 各平台的发布时间 / 链接 / 阅读量 / 引流到站点的 PV）
+
+**验证**：
+- `docs/community-distribution-sop.md` 文件存在，包含上述 4 个段落
+- 渠道账号清单至少标出 6 个渠道的注册状态
+
+---
+
+### I12：工具方互推外联模板 + 跟进表（运营文档）
+
+**对应白皮书**：§6.4.2
+
+**说明**：同 I11，运营 SOP 文档。
+
+**产出**：新建 `docs/vendor-outreach-sop.md`，至少包含：
+
+1. **目标工具方清单**（按合作意愿排序）：
+   - 国产新锐：豆包、Kimi、DeepSeek、Trae、即梦、可灵、海螺等（写出每家的运营/商务联系方式或公众号入口）
+   - 国产成熟：文心、通义、讯飞星火（备选）
+   - 海外厂商：标记为低优先级，不主动外联
+2. **外联模板**（标准邮件 / 私信内容）：
+   - 主题模板：`[AIBoxPro 评测] [工具名] 在 [核心维度] 表现 [优势]`
+   - 正文模板：自我介绍 1 句 + 评测内容 TL;DR 3 句 + 完整链接 + 转发素材打包链接 + 不强求语
+3. **转发素材包**结构：评测页链接、标题、摘要、配图（从 I10 自动生成的图复用）
+4. **跟进表**模板：工具方 / 联系日期 / 联系人 / 是否回复 / 是否转发 / 转发渠道
+
+**验证**：
+- `docs/vendor-outreach-sop.md` 文件存在，包含上述 4 个段落
+- 目标工具方清单至少 10 家国产工具，每家有可执行的联系方式
+
+---
+
+### I13：小红书账号准备（运营前置依赖）
+
+**对应白皮书**：§6.4.5
+
+**说明**：微信公众号已有，本任务只覆盖小红书。**这不是 CODEX 任务**——需要真人手机号实名注册。
+
+**前置条件**：
+- 准备一个手机号用于绑定（建议主营运营手机号，不是临时小号）
+- 准备一份 Logo / 头像 / 简介文案（来自 §2 价值主张）
+
+**注册步骤**：
+
+1. 下载小红书 App，手机号注册
+2. 完善账号信息：
+   - 昵称：`AIBoxPro`（与品牌一致）
+   - 简介：从白皮书 §2 价值主张提炼，例如"中文用户的 AI 工具决策平台 ｜ 对比 / 替代 / 实测"
+   - 头像：与公众号统一
+3. 实名认证（可选，但建议完成，认证后流量倾斜更好）
+4. 把账号登录信息归档到 `docs/community-distribution-sop.md` 的渠道账号清单中
+
+**验证**：
+- 账号 `AIBoxPro` 在小红书可搜到
+- 简介、头像、昵称统一
+- 登录信息已归档
 
 ---
 
@@ -230,9 +393,26 @@ export const toolConnectivity = pgTable('tool_connectivity', {
 
 ## Sprint 2 完成标准
 
+**工程任务**
+
 - [ ] I6：10 个对比页 `status='published'`，`/compare` 列表页均可见，每篇有 Methodology Box
 - [ ] I7：Lab 报告上线，Methodology Box 所有字段有真实值，Claude Code / Cursor 详情页反向引用
 - [ ] I8：`/alternatives/cursor` 上线，至少 3 个工具；FAQ schema 通过 Rich Results Test
 - [ ] I9：30 条连通性数据入库，10 个工具详情页显示连通性表格
+- [ ] I10：图文自动生成系统跑通，单篇对比页 5 分钟内产出三平台草稿包
+
+**运营任务**（CODEX 写文档框架，真人执行）
+
+- [ ] I11：`docs/community-distribution-sop.md` 上线，6+ 渠道账号清单完整
+- [ ] I12：`docs/vendor-outreach-sop.md` 上线，10+ 国产工具方联系清单
+- [ ] I13：小红书账号 `AIBoxPro` 已注册并完善信息
+
+**指标完成度**
+
 - [ ] SEO：新 sitemap 已提交 Search Console，核心对比词有可统计展示量，至少 3 个页面进入目标词前 50 名
-- [ ] 全部：`npm run lint && npm run build` 通过，无新增 warning
+- [ ] 站外冷启动：累计社区分发 ≥ 20 次、工具方互推合作 ≥ 5 次
+- [ ] 私域沉淀：公众号 ≥ 3 篇 / 关注 ≥ 50；小红书 ≥ 5 篇 / 粉丝 ≥ 30；知乎 ≥ 10 条
+
+**通用**
+
+- [ ] `npm run lint && npm run build` 通过，无新增 warning
