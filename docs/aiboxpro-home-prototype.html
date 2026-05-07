@@ -1,0 +1,933 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AIBoxPro 首页原型 - AI 工具决策平台</title>
+  <meta name="description" content="AIBoxPro 首页重构原型：面向中文用户的 AI 工具决策平台。">
+  <style>
+    :root {
+      --ink: #17201c;
+      --muted: #65706b;
+      --soft: #f6f1e8;
+      --paper: #fffdf7;
+      --line: #ded6c7;
+      --field: #ffffff;
+      --green: #0f6b57;
+      --green-2: #dcebe5;
+      --brick: #b7472a;
+      --brick-2: #ffe1d4;
+      --blue: #245f8f;
+      --blue-2: #dbe9f4;
+      --gold: #a06b08;
+      --gold-2: #f4e5bd;
+      --shadow: 0 18px 44px rgba(24, 32, 28, .10);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(23, 32, 28, .035) 1px, transparent 1px),
+        linear-gradient(rgba(23, 32, 28, .035) 1px, transparent 1px),
+        var(--soft);
+      background-size: 24px 24px;
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid rgba(222, 214, 199, .86);
+      background: rgba(255, 253, 247, .92);
+      backdrop-filter: blur(14px);
+    }
+
+    .nav {
+      height: 66px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      letter-spacing: .2px;
+      white-space: nowrap;
+    }
+
+    .mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: conic-gradient(from 210deg, var(--green), var(--blue), var(--brick), var(--green));
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .navlinks {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .navlinks a {
+      padding: 9px 12px;
+      border-radius: 8px;
+    }
+
+    .navlinks a.active,
+    .navlinks a:hover {
+      color: var(--ink);
+      background: var(--green-2);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ghost-btn,
+    .solid-btn {
+      min-height: 38px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      padding: 0 14px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .ghost-btn {
+      background: var(--field);
+      color: var(--ink);
+    }
+
+    .solid-btn {
+      border-color: var(--green);
+      background: var(--green);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .hero {
+      padding: 54px 0 34px;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(360px, .72fr);
+      gap: 34px;
+      align-items: end;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 30px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: var(--green-2);
+      color: var(--green);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    h1 {
+      max-width: 760px;
+      margin: 22px 0 16px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(48px, 7.6vw, 86px);
+      line-height: .96;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      max-width: 720px;
+      margin: 0 0 28px;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.75;
+    }
+
+    .search-panel {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      max-width: 760px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .search-icon {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: var(--blue-2);
+      color: var(--blue);
+      font-weight: 900;
+    }
+
+    .search-panel input {
+      flex: 1;
+      min-width: 0;
+      border: 0;
+      outline: 0;
+      color: var(--ink);
+      background: transparent;
+      font-size: 16px;
+    }
+
+    .quick-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .quick-tags a {
+      min-height: 30px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 253, 247, .78);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .decision-board {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .board-head {
+      padding: 18px;
+      border-bottom: 1px solid var(--line);
+      background: #fff8ea;
+    }
+
+    .board-head strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 16px;
+    }
+
+    .board-head span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .route-list {
+      display: grid;
+    }
+
+    .route {
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .route:last-child {
+      border-bottom: 0;
+    }
+
+    .route i {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: var(--green-2);
+      color: var(--green);
+      font-style: normal;
+      font-weight: 900;
+    }
+
+    .route:nth-child(2) i {
+      background: var(--blue-2);
+      color: var(--blue);
+    }
+
+    .route:nth-child(3) i {
+      background: var(--brick-2);
+      color: var(--brick);
+    }
+
+    .route:nth-child(4) i {
+      background: var(--gold-2);
+      color: var(--gold);
+    }
+
+    .route strong {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 15px;
+    }
+
+    .route span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .route em {
+      color: var(--muted);
+      font-style: normal;
+      font-weight: 900;
+    }
+
+    section {
+      padding: 34px 0;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    h2 {
+      margin: 0 0 6px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 34px;
+      letter-spacing: 0;
+    }
+
+    .section-head p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .view-all {
+      color: var(--green);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .compare-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .compare-card,
+    .scenario-card,
+    .tool-row,
+    .trend-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      box-shadow: 0 8px 26px rgba(24, 32, 28, .06);
+    }
+
+    .compare-card {
+      min-height: 210px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .vs {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .product {
+      min-width: 0;
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      background: #fff8ea;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .vs span {
+      color: var(--brick);
+      font-weight: 900;
+    }
+
+    .compare-card h3,
+    .scenario-card h3 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.35;
+    }
+
+    .compare-card p,
+    .scenario-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: auto;
+    }
+
+    .badge {
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: var(--green-2);
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .badge.blue {
+      background: var(--blue-2);
+      color: var(--blue);
+    }
+
+    .badge.brick {
+      background: var(--brick-2);
+      color: var(--brick);
+    }
+
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .scenario-card {
+      min-height: 184px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .scenario-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: auto;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .tool-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .tool-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .tool-row {
+      display: grid;
+      grid-template-columns: 52px minmax(0, 1fr) 170px 120px;
+      gap: 14px;
+      align-items: center;
+      padding: 14px;
+    }
+
+    .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: var(--blue);
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .tool-row:nth-child(2) .logo {
+      background: var(--green);
+    }
+
+    .tool-row:nth-child(3) .logo {
+      background: var(--brick);
+    }
+
+    .tool-row:nth-child(4) .logo {
+      background: var(--gold);
+    }
+
+    .tool-main strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 16px;
+    }
+
+    .tool-main span,
+    .tool-fit span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .score {
+      justify-self: end;
+      min-width: 82px;
+      padding: 7px 10px;
+      border-radius: 8px;
+      background: var(--green-2);
+      color: var(--green);
+      text-align: center;
+      font-weight: 900;
+    }
+
+    .trend-panel {
+      padding: 18px;
+    }
+
+    .trend-panel h3 {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+
+    .trend-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      padding: 12px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .trend-item:first-of-type {
+      border-top: 0;
+    }
+
+    .trend-item strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+
+    .trend-item span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .stars {
+      color: var(--brick);
+      font-size: 13px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .footer-cta {
+      margin: 38px 0 54px;
+      padding: 26px;
+      border-radius: 8px;
+      background: var(--ink);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .footer-cta h2 {
+      margin-bottom: 8px;
+      color: #fff;
+      font-size: 30px;
+    }
+
+    .footer-cta p {
+      margin: 0;
+      color: rgba(255, 255, 255, .72);
+      line-height: 1.65;
+    }
+
+    .footer-cta .solid-btn {
+      background: #fff;
+      color: var(--ink);
+      border-color: #fff;
+    }
+
+    @media (max-width: 980px) {
+      .navlinks {
+        display: none;
+      }
+
+      .hero-grid,
+      .tool-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .compare-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .scenario-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .tool-row {
+        grid-template-columns: 52px minmax(0, 1fr);
+      }
+
+      .tool-fit,
+      .score {
+        grid-column: 2;
+        justify-self: start;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .shell {
+        width: min(100% - 28px, 1180px);
+      }
+
+      .nav {
+        height: auto;
+        padding: 12px 0;
+        align-items: flex-start;
+      }
+
+      .nav-actions .ghost-btn {
+        display: none;
+      }
+
+      .hero {
+        padding-top: 34px;
+      }
+
+      h1 {
+        font-size: 46px;
+      }
+
+      .lead {
+        font-size: 16px;
+      }
+
+      .search-panel {
+        align-items: stretch;
+        flex-wrap: wrap;
+      }
+
+      .search-panel input {
+        min-height: 42px;
+      }
+
+      .search-panel .solid-btn {
+        width: 100%;
+      }
+
+      .compare-grid,
+      .scenario-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .section-head,
+      .footer-cta {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell nav">
+      <a class="brand" href="#">
+        <span class="mark">A</span>
+        <span>AIBoxPro</span>
+      </a>
+      <nav class="navlinks" aria-label="主导航">
+        <a class="active" href="#">首页</a>
+        <a href="#">工具库</a>
+        <a href="#">对比</a>
+        <a href="#">场景</a>
+        <a href="#">排行榜</a>
+        <a href="#">开发者趋势</a>
+      </nav>
+      <div class="nav-actions">
+        <button class="ghost-btn">提交工具</button>
+        <button class="solid-btn">商务合作</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="shell hero-grid">
+        <div>
+          <div class="eyebrow"><span class="dot"></span>114 个工具已结构化评估 · 今日更新</div>
+          <h1>选 AI 工具，先看 AIBoxPro</h1>
+          <p class="lead">比较价格、中文支持、国内使用情况、适合场景和替代方案。把“有哪些工具”升级成“我该用哪个”。</p>
+          <form class="search-panel">
+            <span class="search-icon">⌕</span>
+            <input aria-label="搜索 AI 工具、对比或场景" placeholder="搜索工具、对比或场景，例如 Claude Code vs Codex">
+            <button class="solid-btn" type="button">搜索</button>
+          </form>
+          <div class="quick-tags">
+            <a href="#">Claude Code vs Codex</a>
+            <a href="#">Cursor 替代品</a>
+            <a href="#">国内 AI 编程工具</a>
+            <a href="#">免费 AI 绘图工具</a>
+            <a href="#">AI PPT 工具推荐</a>
+          </div>
+        </div>
+
+        <aside class="decision-board" aria-label="决策入口">
+          <div class="board-head">
+            <strong>今天想解决什么问题？</strong>
+            <span>从决策入口开始，比翻分类更快。</span>
+          </div>
+          <div class="route-list">
+            <a class="route" href="#">
+              <i>比</i>
+              <span><strong>对比两个 AI 工具</strong><span>功能、价格、中文体验、适合谁</span></span>
+              <em>→</em>
+            </a>
+            <a class="route" href="#">
+              <i>景</i>
+              <span><strong>按工作场景找工具</strong><span>编程、写作、PPT、自媒体、电商</span></span>
+              <em>→</em>
+            </a>
+            <a class="route" href="#">
+              <i>替</i>
+              <span><strong>寻找替代方案</strong><span>国产替代、免费替代、低门槛替代</span></span>
+              <em>→</em>
+            </a>
+            <a class="route" href="#">
+              <i>榜</i>
+              <span><strong>查看编辑榜单</strong><span>最适合新手、团队、国内用户</span></span>
+              <em>→</em>
+            </a>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section>
+      <div class="shell">
+        <div class="section-head">
+          <div>
+            <h2>热门对比</h2>
+            <p>对比页承接高意图搜索，结论按人群和场景给出。</p>
+          </div>
+          <a class="view-all" href="#">查看全部对比</a>
+        </div>
+
+        <div class="compare-grid">
+          <a class="compare-card" href="#">
+            <div class="vs"><div class="product">Claude Code</div><span>VS</span><div class="product">Codex</div></div>
+            <h3>哪个更适合程序员？</h3>
+            <p>终端开发、任务委派、团队协作和国内使用门槛一次讲清。</p>
+            <div class="badge-row"><span class="badge">AI 编程</span><span class="badge blue">开发者</span></div>
+          </a>
+
+          <a class="compare-card" href="#">
+            <div class="vs"><div class="product">Cursor</div><span>VS</span><div class="product">Trae</div></div>
+            <h3>AI IDE 该怎么选？</h3>
+            <p>适合个人开发、中文项目、低成本尝试和团队落地的不同选择。</p>
+            <div class="badge-row"><span class="badge">代码助手</span><span class="badge brick">中文体验</span></div>
+          </a>
+
+          <a class="compare-card" href="#">
+            <div class="vs"><div class="product">ChatGPT</div><span>VS</span><div class="product">Kimi</div></div>
+            <h3>通用助手谁更顺手？</h3>
+            <p>从长文档、搜索、中文写作、使用门槛和价格成本比较。</p>
+            <div class="badge-row"><span class="badge">智能对话</span><span class="badge blue">办公</span></div>
+          </a>
+
+          <a class="compare-card" href="#">
+            <div class="vs"><div class="product">Midjourney</div><span>VS</span><div class="product">即梦</div></div>
+            <h3>AI 绘图谁更适合国内创作者？</h3>
+            <p>看画质、中文提示词、商用场景、上手成本和访问条件。</p>
+            <div class="badge-row"><span class="badge">AI 绘图</span><span class="badge brick">创作者</span></div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="shell">
+        <div class="section-head">
+          <div>
+            <h2>按场景找工具</h2>
+            <p>场景页比泛新闻更接近转化，适合做 SEO 和商业合作。</p>
+          </div>
+          <a class="view-all" href="#">查看全部场景</a>
+        </div>
+
+        <div class="scenario-grid">
+          <a class="scenario-card" href="#">
+            <span class="badge">编程开发</span>
+            <h3>适合国内程序员的 AI 编程工具</h3>
+            <p>覆盖代码生成、代码审查、终端代理、IDE 助手和团队协作。</p>
+            <div class="scenario-meta"><span>12 个工具</span><strong>选型指南 →</strong></div>
+          </a>
+
+          <a class="scenario-card" href="#">
+            <span class="badge blue">办公效率</span>
+            <h3>适合做 PPT 的 AI 工具</h3>
+            <p>从一句话生成、文档转 PPT、模板质量和可编辑性来筛选。</p>
+            <div class="scenario-meta"><span>8 个工具</span><strong>选型指南 →</strong></div>
+          </a>
+
+          <a class="scenario-card" href="#">
+            <span class="badge brick">自媒体</span>
+            <h3>适合小红书运营的 AI 工具</h3>
+            <p>选题、标题、封面、文案、图片生成和批量改写一页看完。</p>
+            <div class="scenario-meta"><span>15 个工具</span><strong>选型指南 →</strong></div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="shell">
+        <div class="section-head">
+          <div>
+            <h2>编辑推荐</h2>
+            <p>卡片不只展示简介，还给出推荐理由和适合人群。</p>
+          </div>
+          <a class="view-all" href="#">进入工具库</a>
+        </div>
+
+        <div class="tool-layout">
+          <div class="tool-list">
+            <a class="tool-row" href="#">
+              <div class="logo">Ki</div>
+              <div class="tool-main">
+                <strong>Kimi</strong>
+                <span>中文长文档、联网搜索和报告阅读体验突出。</span>
+              </div>
+              <div class="tool-fit">
+                <strong>适合</strong><br>
+                <span>学生、研究员、职场办公</span>
+              </div>
+              <div class="score">4.6 / 5</div>
+            </a>
+
+            <a class="tool-row" href="#">
+              <div class="logo">Cu</div>
+              <div class="tool-main">
+                <strong>Cursor</strong>
+                <span>AI 编程 IDE，适合在真实项目里读代码、改代码。</span>
+              </div>
+              <div class="tool-fit">
+                <strong>适合</strong><br>
+                <span>个人开发者、AI 编程</span>
+              </div>
+              <div class="score">4.5 / 5</div>
+            </a>
+
+            <a class="tool-row" href="#">
+              <div class="logo">豆</div>
+              <div class="tool-main">
+                <strong>豆包</strong>
+                <span>中文对话、写作、音视频相关能力覆盖较广。</span>
+              </div>
+              <div class="tool-fit">
+                <strong>适合</strong><br>
+                <span>新手、内容创作者</span>
+              </div>
+              <div class="score">4.3 / 5</div>
+            </a>
+
+            <a class="tool-row" href="#">
+              <div class="logo">Co</div>
+              <div class="tool-main">
+                <strong>Codex</strong>
+                <span>面向工程任务的 AI 编码代理，适合 OpenAI 生态用户。</span>
+              </div>
+              <div class="tool-fit">
+                <strong>适合</strong><br>
+                <span>工程任务、代码审查</span>
+              </div>
+              <div class="score">4.4 / 5</div>
+            </a>
+          </div>
+
+          <aside class="trend-panel">
+            <h3>开发者趋势</h3>
+            <div class="trend-item">
+              <div><strong>awesome-codex-skills</strong><span>Codex 技能与自动化工作流精选列表。</span></div>
+              <span class="stars">+3.3k</span>
+            </div>
+            <div class="trend-item">
+              <div><strong>free-claude-code</strong><span>Claude Code 相关终端和扩展项目。</span></div>
+              <span class="stars">+4.5k</span>
+            </div>
+            <div class="trend-item">
+              <div><strong>markitdown</strong><span>Office、PDF 等文件转 Markdown 工具。</span></div>
+              <span class="stars">+2.1k</span>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <div class="shell">
+      <div class="footer-cta">
+        <div>
+          <h2>让厂商提交信息，让编辑确认结论</h2>
+          <p>工具提交、测评合作、榜单赞助和企业选型咨询可以从这里进入。</p>
+        </div>
+        <button class="solid-btn">提交工具 / 商务合作</button>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

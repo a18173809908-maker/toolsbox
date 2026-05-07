@@ -2,7 +2,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { SiteHeader } from '@/components/SiteHeader';
 import { v2Tokens as T } from '@/lib/tokens';
 import type { Category, HomepageStats, RepoItem, Tool, TrendingPeriod, NewsItem } from '@/lib/data';
 
@@ -35,6 +34,14 @@ type ScenarioCard = {
   href: string;
   meta: string;
 };
+
+const shellStyle: React.CSSProperties = {
+  width: 'min(1180px, calc(100% - 40px))',
+  margin: '0 auto',
+};
+
+const cardShadow = '0 8px 26px rgba(24, 32, 28, .06)';
+const heroShadow = '0 18px 44px rgba(24, 32, 28, .10)';
 
 const decisionLinks: DecisionLink[] = [
   {
@@ -114,6 +121,114 @@ const scenarioCards: ScenarioCard[] = [
     meta: '15 个工具候选',
   },
 ];
+
+function HomeHeader({ mobile }: { mobile: boolean }) {
+  const navItems = [
+    ['首页', '/'],
+    ['工具库', '/tools'],
+    ['对比', '/tools'],
+    ['场景', '/tools'],
+    ['排行榜', '/tools'],
+    ['开发者趋势', '/trending'],
+  ];
+
+  return (
+    <header
+      style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 20,
+        borderBottom: `1px solid ${T.rule}`,
+        background: 'rgba(255, 253, 247, .92)',
+        backdropFilter: 'blur(14px)',
+      }}
+    >
+      <div
+        style={{
+          ...shellStyle,
+          minHeight: mobile ? 58 : 66,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: mobile ? 12 : 24,
+          padding: mobile ? '10px 0' : 0,
+        }}
+      >
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, fontWeight: 800 }}>
+          <span
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: 8,
+              display: 'grid',
+              placeItems: 'center',
+              background: 'conic-gradient(from 210deg, #0F6B57, #245F8F, #B7472A, #0F6B57)',
+              color: '#fff',
+              fontWeight: 900,
+            }}
+          >
+            A
+          </span>
+          <span>AIBoxPro</span>
+        </Link>
+
+        {!mobile ? (
+          <nav style={{ display: 'flex', alignItems: 'center', gap: 2, color: T.inkSoft, fontSize: 14 }}>
+            {navItems.map(([label, href], index) => (
+              <Link
+                key={label}
+                href={href}
+                style={{
+                  padding: '9px 12px',
+                  borderRadius: 8,
+                  color: index === 0 ? T.ink : T.inkSoft,
+                  background: index === 0 ? T.primaryBg : 'transparent',
+                  fontWeight: index === 0 ? 700 : 500,
+                }}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+        ) : null}
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {!mobile ? (
+            <Link
+              href="/tools"
+              style={{
+                minHeight: 38,
+                borderRadius: 8,
+                border: `1px solid ${T.rule}`,
+                padding: '8px 14px',
+                background: '#fff',
+                color: T.ink,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              提交工具
+            </Link>
+          ) : null}
+          <Link
+            href="/tools"
+            style={{
+              minHeight: 38,
+              borderRadius: 8,
+              border: `1px solid ${T.primary}`,
+              padding: '8px 14px',
+              background: T.primary,
+              color: '#fff',
+              fontWeight: 700,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            商务合作
+          </Link>
+        </div>
+      </div>
+    </header>
+  );
+}
 
 function useIsMobile() {
   const [mobile, setMobile] = React.useState(false);
@@ -215,19 +330,6 @@ function getRecommendationReason(tool: Tool) {
   return reasons[0] ?? '适合放入第一批结构化评测候选';
 }
 
-function getChinaAccessLabel(access?: Tool['chinaAccess']) {
-  switch (access) {
-    case 'accessible':
-      return '可直接使用';
-    case 'vpn-required':
-      return '需确认访问条件';
-    case 'blocked':
-      return '使用门槛高';
-    default:
-      return '待确认';
-  }
-}
-
 function getPricingLabel(pricing: Tool['pricing']) {
   switch (pricing) {
     case 'Free':
@@ -263,16 +365,16 @@ function Hero({
   return (
     <section
       style={{
-        padding: mobile ? '34px 16px 22px' : '54px 56px 34px',
-        background: T.bg,
+        padding: mobile ? '34px 0 22px' : '54px 0 34px',
       }}
     >
       <div
         style={{
+          ...shellStyle,
           display: 'grid',
-          gridTemplateColumns: mobile ? '1fr' : 'minmax(0, 1.08fr) minmax(320px, 0.72fr)',
-          gap: 28,
-          alignItems: 'stretch',
+          gridTemplateColumns: mobile ? '1fr' : 'minmax(0, 1.08fr) minmax(360px, 0.72fr)',
+          gap: 34,
+          alignItems: 'end',
         }}
       >
         <div>
@@ -287,7 +389,7 @@ function Hero({
               background: T.primaryBg,
               color: T.accent,
               fontSize: 13,
-              fontWeight: 700,
+              fontWeight: 800,
             }}
           >
             <span
@@ -306,7 +408,7 @@ function Hero({
             style={{
               margin: '22px 0 14px',
               fontFamily: 'Georgia, serif',
-              fontSize: mobile ? 46 : 82,
+              fontSize: mobile ? 46 : 86,
               lineHeight: mobile ? 1.05 : 0.96,
               color: T.ink,
               letterSpacing: 0,
@@ -337,21 +439,21 @@ function Hero({
               flexWrap: mobile ? 'wrap' : 'nowrap',
               padding: 8,
               maxWidth: 760,
-              borderRadius: 12,
+              borderRadius: 8,
               background: T.panel,
               border: `1px solid ${T.rule}`,
-              boxShadow: '0 18px 44px rgba(24, 32, 28, .10)',
+              boxShadow: heroShadow,
             }}
           >
             <div
               style={{
                 width: 42,
                 height: 42,
-                borderRadius: 10,
+                borderRadius: 8,
                 display: 'grid',
                 placeItems: 'center',
-                background: T.primaryBg,
-                color: T.accent,
+                background: '#DBE9F4',
+                color: '#245F8F',
                 fontWeight: 900,
                 flexShrink: 0,
               }}
@@ -364,7 +466,8 @@ function Hero({
               placeholder="搜索工具、对比或场景，例如 Claude Code vs Codex"
               style={{
                 flex: 1,
-                minWidth: mobile ? '100%' : 0,
+                minWidth: 0,
+                minHeight: 42,
                 border: 'none',
                 outline: 'none',
                 background: 'transparent',
@@ -377,7 +480,7 @@ function Hero({
               style={{
                 minHeight: 42,
                 padding: '10px 18px',
-                borderRadius: 10,
+                borderRadius: 8,
                 background: T.primary,
                 color: '#fff',
                 fontWeight: 700,
@@ -387,7 +490,7 @@ function Hero({
                 whiteSpace: 'nowrap',
               }}
             >
-              进入工具库
+              搜索
             </Link>
           </div>
 
@@ -399,9 +502,9 @@ function Hero({
                 onClick={() => setQuery(item)}
                 style={{
                   padding: '6px 10px',
-                  borderRadius: 999,
+                  borderRadius: 8,
                   border: `1px solid ${T.rule}`,
-                  background: T.panel,
+                  background: 'rgba(255, 253, 247, .78)',
                   color: T.inkSoft,
                   fontSize: 13,
                   cursor: 'pointer',
@@ -415,17 +518,17 @@ function Hero({
 
         <aside
           style={{
-            borderRadius: 14,
+            borderRadius: 8,
             background: T.panel,
             border: `1px solid ${T.rule}`,
-            boxShadow: '0 8px 26px rgba(24, 32, 28, .06)',
+            boxShadow: heroShadow,
             overflow: 'hidden',
           }}
         >
           <div style={{ padding: 18, borderBottom: `1px solid ${T.rule}`, background: '#FFF3E6' }}>
             <strong style={{ display: 'block', fontSize: 16, marginBottom: 4 }}>今天想解决什么问题？</strong>
             <span style={{ color: T.inkSoft, fontSize: 13, lineHeight: 1.55 }}>
-              从决策入口开始，比先翻几十个分类更快。
+              从决策入口开始，比翻分类更快。
             </span>
           </div>
           <div>
@@ -485,10 +588,10 @@ function DecisionSection({ cards, mobile }: { cards: CompareCard[]; mobile: bool
           href={card.href}
           style={{
             minHeight: 214,
-            borderRadius: 12,
+            borderRadius: 8,
             background: T.panel,
             border: `1px solid ${T.rule}`,
-            boxShadow: '0 8px 26px rgba(24, 32, 28, .06)',
+            boxShadow: cardShadow,
             padding: 18,
             display: 'flex',
             flexDirection: 'column',
@@ -573,10 +676,10 @@ function ScenarioSection({ cards, mobile }: { cards: ScenarioCard[]; mobile: boo
           href={card.href}
           style={{
             minHeight: 188,
-            borderRadius: 12,
+            borderRadius: 8,
             background: T.panel,
             border: `1px solid ${T.rule}`,
-            boxShadow: '0 8px 26px rgba(24, 32, 28, .06)',
+            boxShadow: cardShadow,
             padding: 20,
             display: 'flex',
             flexDirection: 'column',
@@ -630,241 +733,157 @@ function FeaturedTools({
   mobile: boolean;
 }) {
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: mobile ? '1fr' : 'minmax(0, 1fr) 330px',
-        gap: 18,
-      }}
-    >
-      <div style={{ display: 'grid', gap: 10 }}>
-        {tools.map((tool) => {
-          const category = categories.find((item) => item.id === tool.cat);
-          return (
-            <Link
-              key={tool.id}
-              href={`/tools/${tool.id}`}
-              style={{
-                display: 'grid',
-                gridTemplateColumns: mobile ? '48px minmax(0, 1fr)' : '48px minmax(0, 1fr) 160px 92px',
-                gap: 14,
-                alignItems: 'center',
-                padding: 14,
-                borderRadius: 12,
-                background: T.panel,
-                border: `1px solid ${T.rule}`,
-                boxShadow: '0 8px 26px rgba(24, 32, 28, .06)',
-              }}
-            >
-              <ToolLogo tool={tool} size={44} />
-              <div style={{ minWidth: 0 }}>
-                <strong style={{ display: 'block', marginBottom: 4, fontSize: 16 }}>{tool.name}</strong>
-                <span style={{ display: 'block', color: T.inkSoft, fontSize: 13, lineHeight: 1.55 }}>
-                  {tool.zh || tool.en}
-                </span>
-                <span style={{ display: 'block', color: T.inkMuted, fontSize: 12, marginTop: 6 }}>
-                  推荐理由：{getRecommendationReason(tool)}
+    <div style={{ display: 'grid', gap: 10 }}>
+      {tools.map((tool, index) => {
+        const category = categories.find((item) => item.id === tool.cat);
+        return (
+          <Link
+            key={tool.id}
+            href={`/tools/${tool.id}`}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: mobile ? '52px minmax(0, 1fr)' : '52px minmax(0, 1fr) 170px 120px',
+              gap: 14,
+              alignItems: 'center',
+              padding: 14,
+              borderRadius: 8,
+              background: T.panel,
+              border: `1px solid ${T.rule}`,
+              boxShadow: cardShadow,
+            }}
+          >
+            <ToolLogo tool={{ ...tool, brand: ['#245F8F', '#0F6B57', '#B7472A', '#A06B08'][index % 4] }} size={44} />
+            <div style={{ minWidth: 0 }}>
+              <strong style={{ display: 'block', marginBottom: 4, fontSize: 16 }}>{tool.name}</strong>
+              <span style={{ display: 'block', color: T.inkSoft, fontSize: 13, lineHeight: 1.5 }}>
+                {tool.zh || tool.en}
+              </span>
+            </div>
+            {!mobile ? (
+              <div>
+                <strong style={{ display: 'block', marginBottom: 3, fontSize: 13 }}>适合</strong>
+                <span style={{ color: T.inkSoft, fontSize: 12, lineHeight: 1.5 }}>
+                  {tool.features?.slice(0, 2).join('、') || category?.zh || getRecommendationReason(tool)}
                 </span>
               </div>
-              {!mobile ? (
-                <div>
-                  <strong style={{ display: 'block', marginBottom: 3, fontSize: 13 }}>适合</strong>
-                  <span style={{ color: T.inkSoft, fontSize: 12, lineHeight: 1.5 }}>
-                    {tool.features?.slice(0, 2).join('、') || category?.zh || '通用场景'}
-                  </span>
-                </div>
-              ) : null}
-              {!mobile ? (
-                <div
-                  style={{
-                    justifySelf: 'end',
-                    minWidth: 84,
-                    padding: '7px 10px',
-                    borderRadius: 8,
-                    background: T.primaryBg,
-                    color: T.accent,
-                    textAlign: 'center',
-                    fontWeight: 800,
-                    fontSize: 12,
-                  }}
-                >
-                  {getPricingLabel(tool.pricing)}
-                </div>
-              ) : null}
-            </Link>
-          );
-        })}
-      </div>
-
-      <aside
-        style={{
-          borderRadius: 12,
-          background: T.panel,
-          border: `1px solid ${T.rule}`,
-          boxShadow: '0 8px 26px rgba(24, 32, 28, .06)',
-          padding: 18,
-        }}
-      >
-        <h3 style={{ margin: '0 0 12px', fontSize: 18 }}>快速决策维度</h3>
-        <div style={{ display: 'grid', gap: 12 }}>
-          {[
-            ['国内访问', '把“能不能稳定用”单独拿出来，不和功能混在一起。'],
-            ['中文支持', '界面、文档和输出质量分别判断，不用一句“支持中文”带过。'],
-            ['价格透明度', '区分免费、免费增值、订阅和按量计费。'],
-            ['替代方案', '高门槛工具一定要配国产替代和低成本替代。'],
-          ].map(([title, desc], index) => (
-            <div key={title} style={{ paddingTop: index === 0 ? 0 : 12, borderTop: index === 0 ? 'none' : `1px solid ${T.rule}` }}>
-              <strong style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>{title}</strong>
-              <span style={{ color: T.inkSoft, fontSize: 13, lineHeight: 1.6 }}>{desc}</span>
+            ) : null}
+            <div
+              style={{
+                gridColumn: mobile ? '2' : 'auto',
+                justifySelf: mobile ? 'start' : 'end',
+                minWidth: 82,
+                padding: '7px 10px',
+                borderRadius: 8,
+                background: T.primaryBg,
+                color: T.accent,
+                textAlign: 'center',
+                fontWeight: 900,
+                fontSize: 13,
+              }}
+            >
+              {getPricingLabel(tool.pricing)}
             </div>
-          ))}
-        </div>
-      </aside>
+          </Link>
+        );
+      })}
     </div>
   );
 }
 
-function TrendingRail({
-  repos,
-  mobile,
-}: {
-  repos: RepoItem[];
-  mobile: boolean;
-}) {
+function TrendingRail({ repos }: { repos: RepoItem[] }) {
   return (
     <aside
       style={{
-        borderRadius: 14,
+        borderRadius: 8,
         background: T.panel,
         border: `1px solid ${T.rule}`,
-        boxShadow: '0 8px 26px rgba(24, 32, 28, .06)',
+        boxShadow: cardShadow,
         padding: 18,
         alignSelf: 'start',
-        position: mobile ? 'static' : 'sticky',
-        top: 90,
       }}
     >
-      <h3 style={{ margin: '0 0 6px', fontFamily: 'Georgia, serif', fontSize: 24 }}>开发者趋势</h3>
-      <p style={{ margin: '0 0 16px', color: T.inkSoft, fontSize: 13, lineHeight: 1.6 }}>
-        只保留更贴近 AI 工程工作流的趋势项目，让首页右侧服务开发者决策。
-      </p>
+      <h3 style={{ margin: '0 0 12px', fontSize: 18 }}>开发者趋势</h3>
 
-      <div style={{ display: 'grid', gap: 12 }}>
-        {repos.slice(0, 6).map((repo, index) => (
+      <div>
+        {repos.slice(0, 3).map((repo, index) => (
           <Link
             key={repo.repo}
             href={`/trending/${repo.repo}`}
             style={{
               display: 'grid',
-              gridTemplateColumns: '28px 1fr auto',
+              gridTemplateColumns: '1fr auto',
               gap: 12,
-              paddingTop: index === 0 ? 0 : 12,
+              padding: '12px 0',
               borderTop: index === 0 ? 'none' : `1px solid ${T.rule}`,
             }}
           >
-            <span
-              style={{
-                color: index < 3 ? T.primary : T.inkMuted,
-                fontWeight: 900,
-                fontFamily: 'Georgia, serif',
-                fontSize: index < 3 ? 22 : 14,
-                lineHeight: 1,
-              }}
-            >
-              {String(index + 1).padStart(2, '0')}
-            </span>
             <div style={{ minWidth: 0 }}>
               <strong style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>{repo.repo}</strong>
               <span style={{ color: T.inkSoft, fontSize: 12, lineHeight: 1.55 }}>
                 {repo.descZh || repo.desc}
               </span>
             </div>
-            <span style={{ color: T.green, fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap' }}>
+            <span style={{ color: '#B7472A', fontSize: 13, fontWeight: 900, whiteSpace: 'nowrap' }}>
               +{repo.gained.toLocaleString()}
             </span>
           </Link>
         ))}
       </div>
-
-      <Link
-        href="/trending"
-        style={{
-          display: 'block',
-          marginTop: 16,
-          textAlign: 'center',
-          color: T.accent,
-          fontWeight: 700,
-          fontSize: 13,
-        }}
-      >
-        查看全部开发者趋势 →
-      </Link>
     </aside>
   );
 }
 
-function Footer({ newsCount }: { newsCount: number }) {
+function FooterCta() {
   return (
-    <footer
-      style={{
-        marginTop: 40,
-        padding: '32px 20px',
-        borderTop: `1px solid ${T.rule}`,
-        background: T.bg,
-      }}
-    >
+    <div style={{ ...shellStyle, marginTop: 38, marginBottom: 54 }}>
       <div
         style={{
-          maxWidth: 1180,
-          margin: '0 auto',
+          padding: 26,
+          borderRadius: 8,
+          background: T.ink,
+          color: '#fff',
           display: 'flex',
+          alignItems: 'center',
           justifyContent: 'space-between',
           gap: 20,
           flexWrap: 'wrap',
         }}
       >
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <div
-              style={{
-                width: 30,
-                height: 30,
-                borderRadius: 8,
-                background: `linear-gradient(135deg, ${T.primary} 0%, #FBBF24 100%)`,
-                display: 'grid',
-                placeItems: 'center',
-                color: '#fff',
-                fontFamily: 'Georgia, serif',
-                fontWeight: 900,
-              }}
-            >
-              A
-            </div>
-            <strong style={{ fontFamily: 'Georgia, serif', fontSize: 18 }}>AIBoxPro</strong>
-          </div>
-          <p style={{ margin: 0, color: T.inkSoft, fontSize: 13, lineHeight: 1.7 }}>
-            面向中文用户的 AI 工具决策平台，核心不是收录多少工具，而是帮用户更快做出靠谱选择。
+          <h2 style={{ margin: '0 0 8px', color: '#fff', fontFamily: 'Georgia, serif', fontSize: 30 }}>
+            让厂商提交信息，让编辑确认结论
+          </h2>
+          <p style={{ margin: 0, color: 'rgba(255, 255, 255, .72)', lineHeight: 1.65 }}>
+            工具提交、测评合作、榜单赞助和企业选型咨询可以从这里进入。
           </p>
         </div>
-        <div style={{ color: T.inkMuted, fontSize: 12, lineHeight: 1.7 }}>
-          <div>已整理工具：{newsCount}</div>
-          <div>下一步：对比页、场景页、替代方案页</div>
-        </div>
+        <Link
+          href="/tools"
+          style={{
+            minHeight: 42,
+            borderRadius: 8,
+            border: '1px solid #fff',
+            padding: '10px 18px',
+            background: '#fff',
+            color: T.ink,
+            fontWeight: 700,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          提交工具 / 商务合作
+        </Link>
       </div>
-    </footer>
+    </div>
   );
 }
 
-export default function V2ProHomepage({ tools, categories, trending, stats, news }: HomeData) {
+export default function V2ProHomepage({ tools, categories, trending, stats }: HomeData) {
   const mobile = useIsMobile();
   const [query, setQuery] = React.useState('');
-  const [category, setCategory] = React.useState('all');
 
   const featuredTools = tools.filter((tool) => tool.featured).slice(0, 4);
-  const visibleCategories = categories.filter((item) => item.count > 0).slice(0, 10);
 
   const filteredTools = tools.filter((tool) => {
-    const matchesCategory = category === 'all' || tool.cat === category;
     const needle = query.trim().toLowerCase();
     const matchesQuery =
       needle.length === 0 ||
@@ -872,7 +891,7 @@ export default function V2ProHomepage({ tools, categories, trending, stats, news
       tool.en.toLowerCase().includes(needle) ||
       tool.zh.toLowerCase().includes(query.trim());
 
-    return matchesCategory && matchesQuery;
+    return matchesQuery;
   });
 
   const recommendedTools = (filteredTools.length > 0 ? filteredTools : tools).slice(0, 4);
@@ -881,152 +900,92 @@ export default function V2ProHomepage({ tools, categories, trending, stats, news
     <div
       style={{
         minHeight: '100vh',
-        background: T.bg,
+        background:
+          'linear-gradient(90deg, rgba(23, 32, 28, .035) 1px, transparent 1px), linear-gradient(rgba(23, 32, 28, .035) 1px, transparent 1px), #F6F1E8',
+        backgroundSize: '24px 24px',
         color: T.ink,
         fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif',
       }}
     >
-      <SiteHeader />
+      <HomeHeader mobile={mobile} />
 
       <Hero stats={stats} query={query} setQuery={setQuery} mobile={mobile} />
 
-      <section style={{ padding: mobile ? '14px 16px 0' : '0 56px' }}>
-        <div
-          style={{
-            display: 'flex',
-            gap: 8,
-            overflowX: 'auto',
-            paddingBottom: 8,
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => setCategory('all')}
-            style={{
-              padding: '8px 14px',
-              borderRadius: 999,
-              border: 'none',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              background: category === 'all' ? T.ink : T.panel,
-              color: category === 'all' ? '#fff' : T.inkSoft,
-              fontWeight: category === 'all' ? 700 : 500,
-              outline: category === 'all' ? 'none' : `1px solid ${T.rule}`,
-            }}
-          >
-            全部 · {tools.length}
-          </button>
-          {visibleCategories.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setCategory(item.id)}
+      <main style={{ padding: mobile ? '24px 0 32px' : '34px 0 42px' }}>
+        <section style={{ marginBottom: 34 }}>
+          <div style={shellStyle}>
+            <SectionTitle
+              title="热门对比"
+              description="对比页承接高意图搜索，结论按人群和场景给出。"
+              actionLabel="查看全部对比"
+              actionHref="/tools"
+            />
+            <DecisionSection cards={compareCards} mobile={mobile} />
+          </div>
+        </section>
+
+        <section style={{ marginBottom: 34 }}>
+          <div style={shellStyle}>
+            <SectionTitle
+              title="按场景找工具"
+              description="场景页比泛新闻更接近转化，适合做 SEO 和商业合作。"
+              actionLabel="查看全部场景"
+              actionHref="/tools"
+            />
+            <ScenarioSection cards={scenarioCards} mobile={mobile} />
+          </div>
+        </section>
+
+        <section style={{ marginBottom: 34 }}>
+          <div style={shellStyle}>
+            <SectionTitle
+              title="编辑推荐"
+              description="卡片不只展示简介，还给出推荐理由和适合人群。"
+              actionLabel="进入工具库"
+              actionHref="/tools"
+            />
+            <div
               style={{
-                padding: '8px 14px',
-                borderRadius: 999,
-                border: 'none',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                background: category === item.id ? T.primaryBg : T.panel,
-                color: category === item.id ? T.accent : T.inkSoft,
-                fontWeight: category === item.id ? 700 : 500,
-                outline: `1px solid ${category === item.id ? T.primaryBg : T.rule}`,
+                display: 'grid',
+                gridTemplateColumns: mobile ? '1fr' : 'minmax(0, 1fr) 360px',
+                gap: 18,
+                alignItems: 'start',
               }}
             >
-              {item.zh} · {item.count}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <main style={{ padding: mobile ? '24px 16px 32px' : '36px 56px 42px' }}>
-        <section style={{ marginBottom: 34 }}>
-          <SectionTitle
-            title="热门对比"
-            description="先把高意图搜索的入口摆到首页，逐步从工具目录过渡到决策页体系。"
-            actionLabel="查看工具库"
-            actionHref="/tools"
-          />
-          <DecisionSection cards={compareCards} mobile={mobile} />
-        </section>
-
-        <section style={{ marginBottom: 34 }}>
-          <SectionTitle
-            title="按场景找工具"
-            description="用户不一定先知道工具名，但一定先知道自己想解决什么问题。"
-            actionLabel="浏览更多候选"
-            actionHref="/tools"
-          />
-          <ScenarioSection cards={scenarioCards} mobile={mobile} />
-        </section>
-
-        <section style={{ marginBottom: 34 }}>
-          <SectionTitle
-            title="编辑推荐"
-            description="先给推荐理由、适合场景和价格类型，不再只放简介和链接。"
-            actionLabel="查看全部工具"
-            actionHref="/tools"
-          />
-          <FeaturedTools tools={featuredTools.length > 0 ? featuredTools : recommendedTools} categories={categories} mobile={mobile} />
-        </section>
-
-        <section
-          style={{
-            display: 'grid',
-            gridTemplateColumns: mobile ? '1fr' : 'minmax(0, 1fr) 320px',
-            gap: 20,
-            alignItems: 'start',
-          }}
-        >
-          <div
-            style={{
-              borderRadius: 14,
-              background: T.panel,
-              border: `1px solid ${T.rule}`,
-              boxShadow: '0 8px 26px rgba(24, 32, 28, .06)',
-              padding: 20,
-            }}
-          >
-            <SectionTitle
-              title="当前推荐候选"
-              description="先用现有数据库做出第一层筛选，后续再接入更完整的对比页和场景页。"
-            />
-            <div style={{ display: 'grid', gap: 10 }}>
-              {recommendedTools.map((tool) => (
-                <Link
-                  key={tool.id}
-                  href={`/tools/${tool.id}`}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '44px minmax(0, 1fr)',
-                    gap: 12,
-                    alignItems: 'center',
-                    padding: 12,
-                    borderRadius: 10,
-                    background: '#FFF8EA',
-                    border: `1px solid ${T.rule}`,
-                  }}
-                >
-                  <ToolLogo tool={tool} size={40} />
-                  <div style={{ minWidth: 0 }}>
-                    <strong style={{ display: 'block', marginBottom: 3 }}>{tool.name}</strong>
-                    <span style={{ display: 'block', color: T.inkSoft, fontSize: 13, lineHeight: 1.55 }}>
-                      {tool.zh || tool.en}
-                    </span>
-                    <span style={{ display: 'block', color: T.inkMuted, fontSize: 12, marginTop: 6 }}>
-                      {getPricingLabel(tool.pricing)} · {getChinaAccessLabel(tool.chinaAccess)}
-                    </span>
-                  </div>
-                </Link>
-              ))}
+              <FeaturedTools
+                tools={featuredTools.length > 0 ? featuredTools : recommendedTools}
+                categories={categories}
+                mobile={mobile}
+              />
+              <TrendingRail repos={trending.today} />
             </div>
           </div>
-
-          <TrendingRail repos={trending.today} mobile={mobile} />
         </section>
+
+        {query.trim() ? (
+          <section
+            style={{
+              ...shellStyle,
+              marginBottom: 34,
+            }}
+          >
+            <div
+              style={{
+                borderRadius: 8,
+                background: T.panel,
+                border: `1px solid ${T.rule}`,
+                boxShadow: cardShadow,
+                padding: 20,
+              }}
+            >
+              <SectionTitle title="搜索候选" description="先用现有数据库做轻量筛选，完整决策页会在后续上线。" />
+              <FeaturedTools tools={recommendedTools} categories={categories} mobile={mobile} />
+            </div>
+          </section>
+        ) : null}
       </main>
 
-      <Footer newsCount={tools.length} />
+      <FooterCta />
     </div>
   );
 }
