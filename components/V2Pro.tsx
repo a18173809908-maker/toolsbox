@@ -156,23 +156,7 @@ function HomeHeader({ mobile }: { mobile: boolean }) {
           </nav>
         ) : null}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Link
-            href="/submit"
-            style={{
-              minHeight: 38,
-              borderRadius: 8,
-              border: `1px solid ${T.primary}`,
-              padding: '8px 14px',
-              background: T.primary,
-              color: '#fff',
-              fontWeight: 700,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            推荐工具
-          </Link>
-        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }} />
       </div>
     </header>
   );
@@ -731,50 +715,6 @@ function TrendingRail({ repos }: { repos: RepoItem[] }) {
   );
 }
 
-function FooterCta() {
-  return (
-    <div style={{ ...shellStyle, marginTop: 38, marginBottom: 54 }}>
-      <div
-        style={{
-          padding: 26,
-          borderRadius: 8,
-          background: T.ink,
-          color: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 20,
-          flexWrap: 'wrap',
-        }}
-      >
-        <div>
-          <h2 style={{ margin: '0 0 8px', color: '#fff', fontFamily: 'Georgia, serif', fontSize: 30 }}>
-            没找到你常用的工具？
-          </h2>
-          <p style={{ margin: 0, color: 'rgba(255, 255, 255, .72)', lineHeight: 1.65 }}>
-            告诉我们工具名和官网链接，我们会评估后收录进对比库。
-          </p>
-        </div>
-        <Link
-          href="/submit"
-          style={{
-            minHeight: 42,
-            borderRadius: 8,
-            border: '1px solid #fff',
-            padding: '10px 18px',
-            background: '#fff',
-            color: T.ink,
-            fontWeight: 700,
-            whiteSpace: 'nowrap',
-          }}
-        >
-          推荐一个工具
-        </Link>
-      </div>
-    </div>
-  );
-}
-
 export default function V2ProHomepage({ tools, categories, trending, stats }: HomeData) {
   const mobile = useIsMobile();
   const [query, setQuery] = React.useState('');
@@ -870,8 +810,6 @@ export default function V2ProHomepage({ tools, categories, trending, stats }: Ho
           </section>
         ) : null}
       </main>
-
-      <FooterCta />
     </div>
   );
 }
