@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { refreshAllTrending } from '@/lib/jobs/refresh-trending';
-import { translateMissingTrending } from '@/lib/jobs/translate-trending';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,6 +10,11 @@ export async function GET(req: NextRequest) {
   if (expected && auth !== `Bearer ${expected}`) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
+
+  const [{ refreshAllTrending }, { translateMissingTrending }] = await Promise.all([
+    import('@/lib/jobs/refresh-trending'),
+    import('@/lib/jobs/translate-trending'),
+  ]);
 
   const refresh = await refreshAllTrending();
   const refreshOk = refresh.every((r) => !r.error);

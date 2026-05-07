@@ -4,589 +4,1029 @@ import React from 'react';
 import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
 import { v2Tokens as T } from '@/lib/tokens';
-import { LANG_COLOR, type Tool, type Category, type RepoItem, type TrendingPeriod, type HomepageStats, type NewsItem } from '@/lib/data';
+import type { Category, HomepageStats, RepoItem, Tool, TrendingPeriod, NewsItem } from '@/lib/data';
 
-/* ─── Data context ─────────────────────────────────────────────────────────── */
-type DataCtx = {
+type HomeData = {
   tools: Tool[];
   categories: Category[];
   trending: Record<TrendingPeriod, RepoItem[]>;
   stats: HomepageStats;
   news: NewsItem[];
 };
-const DataContext = React.createContext<DataCtx | null>(null);
-function useData(): DataCtx {
-  const v = React.useContext(DataContext);
-  if (!v) throw new Error('DataContext missing');
-  return v;
-}
 
-/* ─── Helpers ──────────────────────────────────────────────────────────────── */
-function formatNumber(n: number): string { return n.toLocaleString('en-US'); }
+type DecisionLink = {
+  title: string;
+  description: string;
+  href: string;
+  accent: string;
+  tone: string;
+};
+
+type CompareCard = {
+  title: string;
+  summary: string;
+  href: string;
+  badges: string[];
+};
+
+type ScenarioCard = {
+  title: string;
+  summary: string;
+  href: string;
+  meta: string;
+};
+
+const decisionLinks: DecisionLink[] = [
+  {
+    title: '对比两个 AI 工具',
+    description: '适合承接 Claude Code vs Codex、Cursor vs Trae 这类高意图需求。',
+    href: '/tools',
+    accent: T.accent,
+    tone: T.primaryBg,
+  },
+  {
+    title: '按工作场景找工具',
+    description: '把“写代码、做 PPT、做内容”直接映射成推荐结果。',
+    href: '/tools',
+    accent: '#245F8F',
+    tone: '#DBE9F4',
+  },
+  {
+    title: '寻找替代方案',
+    description: '为价格高、接入难或不稳定的工具提供更合适的替代路径。',
+    href: '/tools',
+    accent: '#B7472A',
+    tone: '#FFE1D4',
+  },
+  {
+    title: '查看编辑榜单',
+    description: '按新手、团队、中文环境和低成本尝试等维度排序。',
+    href: '/tools',
+    accent: '#8A5A00',
+    tone: '#F4E5BD',
+  },
+];
+
+const compareCards: CompareCard[] = [
+  {
+    title: 'Claude Code vs Codex',
+    summary: '看终端开发、本地代码代理、任务委派和 OpenAI 生态协作的差异。',
+    href: '/tools',
+    badges: ['AI 编程', '开发者'],
+  },
+  {
+    title: 'Cursor vs Trae',
+    summary: '比较 AI IDE、中文体验、上手门槛和团队落地难度。',
+    href: '/tools',
+    badges: ['代码助手', '中文体验'],
+  },
+  {
+    title: 'ChatGPT vs Kimi',
+    summary: '从长文档、联网搜索、中文写作和日常办公角度看谁更顺手。',
+    href: '/tools',
+    badges: ['智能对话', '办公'],
+  },
+  {
+    title: 'Midjourney vs 即梦',
+    summary: '比较画质、商用可行性、中文提示词和国内使用门槛。',
+    href: '/tools',
+    badges: ['AI 绘图', '创作者'],
+  },
+];
+
+const scenarioCards: ScenarioCard[] = [
+  {
+    title: '适合国内程序员的 AI 编程工具',
+    summary: '围绕代码生成、代码审查、终端代理、IDE 助手和团队协作做选择。',
+    href: '/tools',
+    meta: '12 个工具候选',
+  },
+  {
+    title: '适合做 PPT 的 AI 工具',
+    summary: '从一句话生成、模板质量、文档转 PPT 和可编辑性来筛选。',
+    href: '/tools',
+    meta: '8 个工具候选',
+  },
+  {
+    title: '适合小红书运营的 AI 工具',
+    summary: '选题、文案、封面、图像和批量改写放到一个场景里统一决策。',
+    href: '/tools',
+    meta: '15 个工具候选',
+  },
+];
 
 function useIsMobile() {
   const [mobile, setMobile] = React.useState(false);
 
   React.useEffect(() => {
-    const check = () => setMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
+    const update = () => setMobile(window.innerWidth < 860);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
   }, []);
 
   return mobile;
 }
 
-/* ─── Tool Logo ───────────────────────────────────────────────────────────── */
-function ToolLogo({ tool, size = 56 }: { tool: Tool; size?: number }) {
+function formatDateLabel(iso?: string) {
+  if (!iso) return '今日更新';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '今日更新';
+  return date.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' });
+}
+
+function ToolLogo({ tool, size = 48 }: { tool: Tool; size?: number }) {
   return (
-    <div style={{
-      width: size, height: size, borderRadius: Math.round(size * 0.22),
-      background: tool.brand, color: '#fff',
-      display: 'grid', placeItems: 'center',
-      fontFamily: 'Georgia, serif', fontWeight: 700,
-      fontSize: tool.mono.length === 1 ? size * 0.5 : size * 0.34,
-      flexShrink: 0, letterSpacing: '-0.04em',
-    }}>{tool.mono}</div>
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: 8,
+        display: 'grid',
+        placeItems: 'center',
+        background: tool.brand,
+        color: '#fff',
+        fontFamily: 'Georgia, serif',
+        fontWeight: 900,
+        fontSize: tool.mono.length === 1 ? size * 0.48 : size * 0.3,
+        flexShrink: 0,
+      }}
+    >
+      {tool.mono}
+    </div>
   );
 }
 
-function Hero({ query, setQuery, stats, onPopularTag, mobile }: {
-  query: string; setQuery: (q: string) => void;
-  stats: HomepageStats; onPopularTag: (tag: string) => void;
+function SectionTitle({
+  title,
+  description,
+  actionLabel,
+  actionHref,
+}: {
+  title: string;
+  description: string;
+  actionLabel?: string;
+  actionHref?: string;
+}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-end',
+        gap: 16,
+        marginBottom: 18,
+        flexWrap: 'wrap',
+      }}
+    >
+      <div>
+        <h2
+          style={{
+            margin: '0 0 6px',
+            fontFamily: 'Georgia, serif',
+            fontSize: 34,
+            lineHeight: 1.05,
+            color: T.ink,
+          }}
+        >
+          {title}
+        </h2>
+        <p style={{ margin: 0, color: T.inkSoft, fontSize: 14, lineHeight: 1.65 }}>{description}</p>
+      </div>
+      {actionLabel && actionHref ? (
+        <Link href={actionHref} style={{ color: T.accent, fontWeight: 700, fontSize: 14 }}>
+          {actionLabel}
+        </Link>
+      ) : null}
+    </div>
+  );
+}
+
+function getRecommendationReason(tool: Tool) {
+  const reasons: string[] = [];
+
+  if (tool.chinaAccess === 'accessible') reasons.push('国内访问门槛相对更低');
+  if (tool.chineseUi) reasons.push('中文界面更友好');
+  if (tool.apiAvailable) reasons.push('支持 API 接入');
+  if (tool.features && tool.features.length > 0) reasons.push(`覆盖 ${tool.features.slice(0, 2).join('、')}`);
+  if (tool.pricing === 'Free') reasons.push('适合低成本尝试');
+  if (tool.pricing === 'Freemium') reasons.push('有免费试用空间');
+
+  return reasons[0] ?? '适合放入第一批结构化评测候选';
+}
+
+function getChinaAccessLabel(access?: Tool['chinaAccess']) {
+  switch (access) {
+    case 'accessible':
+      return '可直接使用';
+    case 'vpn-required':
+      return '需确认访问条件';
+    case 'blocked':
+      return '使用门槛高';
+    default:
+      return '待确认';
+  }
+}
+
+function getPricingLabel(pricing: Tool['pricing']) {
+  switch (pricing) {
+    case 'Free':
+      return '免费';
+    case 'Freemium':
+      return '免费增值';
+    case 'Paid':
+      return '付费';
+    default:
+      return pricing;
+  }
+}
+
+function Hero({
+  stats,
+  query,
+  setQuery,
+  mobile,
+}: {
+  stats: HomepageStats;
+  query: string;
+  setQuery: (value: string) => void;
   mobile: boolean;
 }) {
-  const dateLabel = new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' });
+  const hotQueries = [
+    'Claude Code vs Codex',
+    'Cursor 替代品',
+    '国内 AI 编程工具',
+    '免费 AI 绘图工具',
+    'AI PPT 工具推荐',
+  ];
+
   return (
-    <section style={{ padding: mobile ? '36px 20px 28px' : '64px 56px 48px', background: T.bg, position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', right: -100, top: -100, width: 480, height: 480, borderRadius: '50%', background: 'radial-gradient(circle, rgba(249,115,22,0.13) 0%, transparent 70%)', pointerEvents: 'none' }} />
-      <div style={{ position: 'absolute', left: -60, bottom: -100, width: 340, height: 340, borderRadius: '50%', background: 'radial-gradient(circle, rgba(251,191,36,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
-      <div style={{ position: 'relative', maxWidth: 920 }}>
-        {/* Badge */}
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 999, background: T.primaryBg, color: T.accent, fontSize: 13, fontWeight: 600, marginBottom: 28 }}>
-          <span style={{ width: 6, height: 6, borderRadius: 3, background: T.primary, display: 'inline-block' }} />
-          {formatNumber(stats.toolsTotal)} tools curated &nbsp;·&nbsp; 更新于 {dateLabel}
+    <section
+      style={{
+        padding: mobile ? '34px 16px 22px' : '54px 56px 34px',
+        background: T.bg,
+      }}
+    >
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: mobile ? '1fr' : 'minmax(0, 1.08fr) minmax(320px, 0.72fr)',
+          gap: 28,
+          alignItems: 'stretch',
+        }}
+      >
+        <div>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              minHeight: 30,
+              padding: '0 12px',
+              borderRadius: 999,
+              background: T.primaryBg,
+              color: T.accent,
+              fontSize: 13,
+              fontWeight: 700,
+            }}
+          >
+            <span
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: '50%',
+                background: T.primary,
+                display: 'inline-block',
+              }}
+            />
+            {stats.toolsTotal} 个工具已整理 · {formatDateLabel(stats.lastUpdatedAt)}
+          </div>
+
+          <h1
+            style={{
+              margin: '22px 0 14px',
+              fontFamily: 'Georgia, serif',
+              fontSize: mobile ? 46 : 82,
+              lineHeight: mobile ? 1.05 : 0.96,
+              color: T.ink,
+              letterSpacing: 0,
+            }}
+          >
+            选 AI 工具，
+            <br />
+            先看 AIBoxPro
+          </h1>
+
+          <p
+            style={{
+              margin: '0 0 26px',
+              maxWidth: 720,
+              fontSize: mobile ? 16 : 18,
+              color: T.inkSoft,
+              lineHeight: 1.75,
+            }}
+          >
+            比较价格、中文支持、国内使用情况、适合场景和替代方案。把“有哪些工具”升级成“我该用哪个”。
+          </p>
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              flexWrap: mobile ? 'wrap' : 'nowrap',
+              padding: 8,
+              maxWidth: 760,
+              borderRadius: 12,
+              background: T.panel,
+              border: `1px solid ${T.rule}`,
+              boxShadow: '0 18px 44px rgba(24, 32, 28, .10)',
+            }}
+          >
+            <div
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: 10,
+                display: 'grid',
+                placeItems: 'center',
+                background: T.primaryBg,
+                color: T.accent,
+                fontWeight: 900,
+                flexShrink: 0,
+              }}
+            >
+              搜
+            </div>
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="搜索工具、对比或场景，例如 Claude Code vs Codex"
+              style={{
+                flex: 1,
+                minWidth: mobile ? '100%' : 0,
+                border: 'none',
+                outline: 'none',
+                background: 'transparent',
+                color: T.ink,
+                fontSize: 16,
+              }}
+            />
+            <Link
+              href="/tools"
+              style={{
+                minHeight: 42,
+                padding: '10px 18px',
+                borderRadius: 10,
+                background: T.primary,
+                color: '#fff',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              进入工具库
+            </Link>
+          </div>
+
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
+            {hotQueries.map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => setQuery(item)}
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: 999,
+                  border: `1px solid ${T.rule}`,
+                  background: T.panel,
+                  color: T.inkSoft,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
         </div>
-        {/* Title */}
-        <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: mobile ? 40 : 84, lineHeight: mobile ? 1.1 : 0.95, color: T.ink, margin: '0 0 26px', letterSpacing: '-0.04em' }}>
-          The thoughtful<br />
-          <span style={{ color: T.primary }}>directory</span> of AI.
-        </h1>
-        {/* Subtitle */}
-        <p style={{ fontSize: mobile ? 15 : 19, color: T.inkSoft, lineHeight: 1.55, margin: '0 0 36px', maxWidth: 620 }}>
-          每天精选最值得收藏的 AI 工具，并实时追踪 GitHub 上的 AI 趋势项目。<br />
-          A hand-picked AI directory and a live pulse of what&rsquo;s trending on GitHub.
-        </p>
-        {/* Search */}
-        <div style={{ display: 'flex', alignItems: 'center', background: T.panel, borderRadius: 14, padding: 6, boxShadow: '0 24px 60px -20px rgba(249,115,22,0.3), 0 4px 12px rgba(31,41,55,0.06)', border: `1px solid ${T.rule}`, maxWidth: 640, width: '100%' }}>
-          <div style={{ padding: '0 14px', color: T.inkMuted, fontSize: 18 }}>⌕</div>
-          <input
-            value={query} onChange={(e) => setQuery(e.target.value)}
-            placeholder="搜索 AI 工具，例如 ChatGPT、Midjourney、Cursor…"
-            style={{ flex: 1, border: 'none', outline: 'none', fontSize: 16, padding: '14px 4px', background: 'transparent', color: T.ink, fontFamily: 'inherit' }}
-          />
-          <button style={{ padding: mobile ? '12px 15px' : '12px 22px', borderRadius: 10, border: 'none', background: T.primary, color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>{mobile ? '搜' : 'Search'}</button>
-        </div>
-        {/* Popular tags */}
-        <div style={{ display: 'flex', gap: 8, marginTop: 18, fontSize: 13, color: T.inkMuted, alignItems: 'center', flexWrap: 'wrap' }}>
-          <span>热门 Popular:</span>
-          {['Claude', 'Cursor', 'Midjourney', 'Suno', 'v0', 'Perplexity'].map((tag) => (
-            <button key={tag} onClick={() => onPopularTag(tag)} style={{ padding: '4px 12px', borderRadius: 999, background: T.panel, border: `1px solid ${T.rule}`, color: T.inkSoft, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = T.primary; e.currentTarget.style.color = T.accent; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = T.rule; e.currentTarget.style.color = T.inkSoft; }}
-            >{tag}</button>
-          ))}
-        </div>
+
+        <aside
+          style={{
+            borderRadius: 14,
+            background: T.panel,
+            border: `1px solid ${T.rule}`,
+            boxShadow: '0 8px 26px rgba(24, 32, 28, .06)',
+            overflow: 'hidden',
+          }}
+        >
+          <div style={{ padding: 18, borderBottom: `1px solid ${T.rule}`, background: '#FFF3E6' }}>
+            <strong style={{ display: 'block', fontSize: 16, marginBottom: 4 }}>今天想解决什么问题？</strong>
+            <span style={{ color: T.inkSoft, fontSize: 13, lineHeight: 1.55 }}>
+              从决策入口开始，比先翻几十个分类更快。
+            </span>
+          </div>
+          <div>
+            {decisionLinks.map((link, index) => (
+              <Link
+                key={link.title}
+                href={link.href}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '40px 1fr auto',
+                  gap: 12,
+                  alignItems: 'center',
+                  padding: '16px 18px',
+                  borderTop: index === 0 ? 'none' : `1px solid ${T.rule}`,
+                }}
+              >
+                <div
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: 8,
+                    background: link.tone,
+                    color: link.accent,
+                    display: 'grid',
+                    placeItems: 'center',
+                    fontWeight: 900,
+                  }}
+                >
+                  {link.title.slice(0, 1)}
+                </div>
+                <div>
+                  <strong style={{ display: 'block', marginBottom: 3, fontSize: 15 }}>{link.title}</strong>
+                  <span style={{ color: T.inkSoft, fontSize: 12, lineHeight: 1.5 }}>{link.description}</span>
+                </div>
+                <span style={{ color: T.inkMuted, fontWeight: 700 }}>→</span>
+              </Link>
+            ))}
+          </div>
+        </aside>
       </div>
     </section>
   );
 }
 
-/* ─── Category strip ──────────────────────────────────────────────────────── */
-function CategoryStrip({ cat, setCat, mobile }: { cat: string; setCat: (c: string) => void; mobile: boolean }) {
-  const { categories: CATEGORIES, tools: ALL_TOOLS } = useData();
+function DecisionSection({ cards, mobile }: { cards: CompareCard[]; mobile: boolean }) {
   return (
-    <section style={{ background: T.bg, borderBottom: `1px solid ${T.rule}` }}>
-      <div style={{ display: 'flex', gap: 8, padding: mobile ? '12px 16px' : '16px 56px', overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
-        <CatPill active={cat === 'all'} onClick={() => setCat('all')}>全部 All · {ALL_TOOLS.length}</CatPill>
-        {CATEGORIES.map((c) => (
-          <CatPill key={c.id} active={cat === c.id} onClick={() => setCat(c.id)} href={`/categories/${c.id}`}>
-            {c.icon} {c.zh} <span style={{ opacity: 0.5, fontSize: 11 }}>{c.count}</span>
-          </CatPill>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: mobile ? '1fr' : 'repeat(4, minmax(0, 1fr))',
+        gap: 14,
+      }}
+    >
+      {cards.map((card) => (
+        <Link
+          key={card.title}
+          href={card.href}
+          style={{
+            minHeight: 214,
+            borderRadius: 12,
+            background: T.panel,
+            border: `1px solid ${T.rule}`,
+            boxShadow: '0 8px 26px rgba(24, 32, 28, .06)',
+            padding: 18,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 16,
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 8,
+            }}
+          >
+            <div
+              style={{
+                flex: 1,
+                minWidth: 0,
+                padding: '10px 8px',
+                borderRadius: 8,
+                background: '#FFF8EA',
+                textAlign: 'center',
+                fontWeight: 800,
+              }}
+            >
+              {card.title.split(' vs ')[0]}
+            </div>
+            <span style={{ color: T.accent, fontWeight: 900 }}>VS</span>
+            <div
+              style={{
+                flex: 1,
+                minWidth: 0,
+                padding: '10px 8px',
+                borderRadius: 8,
+                background: '#FFF8EA',
+                textAlign: 'center',
+                fontWeight: 800,
+              }}
+            >
+              {card.title.split(' vs ')[1]}
+            </div>
+          </div>
+          <div>
+            <h3 style={{ margin: '0 0 8px', fontSize: 18, lineHeight: 1.35 }}>{card.title}</h3>
+            <p style={{ margin: 0, color: T.inkSoft, fontSize: 14, lineHeight: 1.65 }}>{card.summary}</p>
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 'auto' }}>
+            {card.badges.map((badge) => (
+              <span
+                key={badge}
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: 6,
+                  background: T.primaryBg,
+                  color: T.accent,
+                  fontSize: 12,
+                  fontWeight: 700,
+                }}
+              >
+                {badge}
+              </span>
+            ))}
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+function ScenarioSection({ cards, mobile }: { cards: ScenarioCard[]; mobile: boolean }) {
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: mobile ? '1fr' : 'repeat(3, minmax(0, 1fr))',
+        gap: 14,
+      }}
+    >
+      {cards.map((card, index) => (
+        <Link
+          key={card.title}
+          href={card.href}
+          style={{
+            minHeight: 188,
+            borderRadius: 12,
+            background: T.panel,
+            border: `1px solid ${T.rule}`,
+            boxShadow: '0 8px 26px rgba(24, 32, 28, .06)',
+            padding: 20,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+          }}
+        >
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              alignSelf: 'flex-start',
+              minHeight: 26,
+              padding: '4px 8px',
+              borderRadius: 6,
+              background: index === 1 ? '#DBE9F4' : index === 2 ? '#FFE1D4' : T.primaryBg,
+              color: index === 1 ? '#245F8F' : index === 2 ? '#B7472A' : T.accent,
+              fontSize: 12,
+              fontWeight: 800,
+            }}
+          >
+            {index === 0 ? '编程开发' : index === 1 ? '办公效率' : '内容运营'}
+          </span>
+          <h3 style={{ margin: 0, fontSize: 19, lineHeight: 1.35 }}>{card.title}</h3>
+          <p style={{ margin: 0, color: T.inkSoft, fontSize: 14, lineHeight: 1.65 }}>{card.summary}</p>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: 12,
+              marginTop: 'auto',
+              color: T.inkMuted,
+              fontSize: 13,
+            }}
+          >
+            <span>{card.meta}</span>
+            <strong style={{ color: T.accent }}>查看场景 →</strong>
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+function FeaturedTools({
+  tools,
+  categories,
+  mobile,
+}: {
+  tools: Tool[];
+  categories: Category[];
+  mobile: boolean;
+}) {
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: mobile ? '1fr' : 'minmax(0, 1fr) 330px',
+        gap: 18,
+      }}
+    >
+      <div style={{ display: 'grid', gap: 10 }}>
+        {tools.map((tool) => {
+          const category = categories.find((item) => item.id === tool.cat);
+          return (
+            <Link
+              key={tool.id}
+              href={`/tools/${tool.id}`}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: mobile ? '48px minmax(0, 1fr)' : '48px minmax(0, 1fr) 160px 92px',
+                gap: 14,
+                alignItems: 'center',
+                padding: 14,
+                borderRadius: 12,
+                background: T.panel,
+                border: `1px solid ${T.rule}`,
+                boxShadow: '0 8px 26px rgba(24, 32, 28, .06)',
+              }}
+            >
+              <ToolLogo tool={tool} size={44} />
+              <div style={{ minWidth: 0 }}>
+                <strong style={{ display: 'block', marginBottom: 4, fontSize: 16 }}>{tool.name}</strong>
+                <span style={{ display: 'block', color: T.inkSoft, fontSize: 13, lineHeight: 1.55 }}>
+                  {tool.zh || tool.en}
+                </span>
+                <span style={{ display: 'block', color: T.inkMuted, fontSize: 12, marginTop: 6 }}>
+                  推荐理由：{getRecommendationReason(tool)}
+                </span>
+              </div>
+              {!mobile ? (
+                <div>
+                  <strong style={{ display: 'block', marginBottom: 3, fontSize: 13 }}>适合</strong>
+                  <span style={{ color: T.inkSoft, fontSize: 12, lineHeight: 1.5 }}>
+                    {tool.features?.slice(0, 2).join('、') || category?.zh || '通用场景'}
+                  </span>
+                </div>
+              ) : null}
+              {!mobile ? (
+                <div
+                  style={{
+                    justifySelf: 'end',
+                    minWidth: 84,
+                    padding: '7px 10px',
+                    borderRadius: 8,
+                    background: T.primaryBg,
+                    color: T.accent,
+                    textAlign: 'center',
+                    fontWeight: 800,
+                    fontSize: 12,
+                  }}
+                >
+                  {getPricingLabel(tool.pricing)}
+                </div>
+              ) : null}
+            </Link>
+          );
+        })}
+      </div>
+
+      <aside
+        style={{
+          borderRadius: 12,
+          background: T.panel,
+          border: `1px solid ${T.rule}`,
+          boxShadow: '0 8px 26px rgba(24, 32, 28, .06)',
+          padding: 18,
+        }}
+      >
+        <h3 style={{ margin: '0 0 12px', fontSize: 18 }}>快速决策维度</h3>
+        <div style={{ display: 'grid', gap: 12 }}>
+          {[
+            ['国内访问', '把“能不能稳定用”单独拿出来，不和功能混在一起。'],
+            ['中文支持', '界面、文档和输出质量分别判断，不用一句“支持中文”带过。'],
+            ['价格透明度', '区分免费、免费增值、订阅和按量计费。'],
+            ['替代方案', '高门槛工具一定要配国产替代和低成本替代。'],
+          ].map(([title, desc], index) => (
+            <div key={title} style={{ paddingTop: index === 0 ? 0 : 12, borderTop: index === 0 ? 'none' : `1px solid ${T.rule}` }}>
+              <strong style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>{title}</strong>
+              <span style={{ color: T.inkSoft, fontSize: 13, lineHeight: 1.6 }}>{desc}</span>
+            </div>
+          ))}
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+function TrendingRail({
+  repos,
+  mobile,
+}: {
+  repos: RepoItem[];
+  mobile: boolean;
+}) {
+  return (
+    <aside
+      style={{
+        borderRadius: 14,
+        background: T.panel,
+        border: `1px solid ${T.rule}`,
+        boxShadow: '0 8px 26px rgba(24, 32, 28, .06)',
+        padding: 18,
+        alignSelf: 'start',
+        position: mobile ? 'static' : 'sticky',
+        top: 90,
+      }}
+    >
+      <h3 style={{ margin: '0 0 6px', fontFamily: 'Georgia, serif', fontSize: 24 }}>开发者趋势</h3>
+      <p style={{ margin: '0 0 16px', color: T.inkSoft, fontSize: 13, lineHeight: 1.6 }}>
+        只保留更贴近 AI 工程工作流的趋势项目，让首页右侧服务开发者决策。
+      </p>
+
+      <div style={{ display: 'grid', gap: 12 }}>
+        {repos.slice(0, 6).map((repo, index) => (
+          <Link
+            key={repo.repo}
+            href={`/trending/${repo.repo}`}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '28px 1fr auto',
+              gap: 12,
+              paddingTop: index === 0 ? 0 : 12,
+              borderTop: index === 0 ? 'none' : `1px solid ${T.rule}`,
+            }}
+          >
+            <span
+              style={{
+                color: index < 3 ? T.primary : T.inkMuted,
+                fontWeight: 900,
+                fontFamily: 'Georgia, serif',
+                fontSize: index < 3 ? 22 : 14,
+                lineHeight: 1,
+              }}
+            >
+              {String(index + 1).padStart(2, '0')}
+            </span>
+            <div style={{ minWidth: 0 }}>
+              <strong style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>{repo.repo}</strong>
+              <span style={{ color: T.inkSoft, fontSize: 12, lineHeight: 1.55 }}>
+                {repo.descZh || repo.desc}
+              </span>
+            </div>
+            <span style={{ color: T.green, fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap' }}>
+              +{repo.gained.toLocaleString()}
+            </span>
+          </Link>
         ))}
       </div>
-    </section>
+
+      <Link
+        href="/trending"
+        style={{
+          display: 'block',
+          marginTop: 16,
+          textAlign: 'center',
+          color: T.accent,
+          fontWeight: 700,
+          fontSize: 13,
+        }}
+      >
+        查看全部开发者趋势 →
+      </Link>
+    </aside>
   );
 }
 
-function CatPill({ active, onClick, href, children }: { active: boolean; onClick: () => void; href?: string; children: React.ReactNode }) {
-  const style: React.CSSProperties = {
-    display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 15px', borderRadius: 999,
-    border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', fontSize: 13,
-    fontWeight: active ? 600 : 500,
-    background: active ? T.ink : T.panel,
-    color: active ? '#fff' : T.inkSoft,
-    outline: `1px solid ${active ? 'transparent' : T.rule}`,
-    boxShadow: active ? 'none' : '0 1px 2px rgba(0,0,0,0.05)',
-    textDecoration: 'none',
-  };
-  const handlers = {
-    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => { if (!active) { e.currentTarget.style.background = T.panel2; e.currentTarget.style.outline = `1px solid ${T.primary}`; } },
-    onMouseLeave: (e: React.MouseEvent<HTMLElement>) => { if (!active) { e.currentTarget.style.background = T.panel; e.currentTarget.style.outline = `1px solid ${T.rule}`; } },
-  };
-  if (href) {
-    return <a href={href} onClick={(e) => { e.preventDefault(); onClick(); }} style={style} {...handlers}>{children}</a>;
-  }
-  return <button onClick={onClick} style={style} {...handlers}>{children}</button>;
-}
-
-/* ─── Featured tool card (Editor's Pick) ─────────────────────────────────── */
-function FeaturedCard({ tool }: { tool: Tool }) {
-  const { categories: CATEGORIES } = useData();
-  const catZh = CATEGORIES.find((c) => c.id === tool.cat)?.zh;
+function Footer({ newsCount }: { newsCount: number }) {
   return (
-    <Link href={`/tools/${tool.id}`} style={{
-      background: T.panel, borderRadius: 16, padding: 24,
-      border: `1px solid ${T.rule}`, cursor: 'pointer',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-      display: 'flex', flexDirection: 'column', gap: 14, position: 'relative', overflow: 'hidden',
-      textDecoration: 'none', transition: 'transform .15s, box-shadow .15s',
-    }}
-    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 16px 36px -12px rgba(31,41,55,0.15)'; }}
-    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)'; }}
+    <footer
+      style={{
+        marginTop: 40,
+        padding: '32px 20px',
+        borderTop: `1px solid ${T.rule}`,
+        background: T.bg,
+      }}
     >
-      <div style={{ position: 'absolute', top: 14, right: 14, padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', background: T.primaryBg, color: T.accent, textTransform: 'uppercase' }}>Editor&rsquo;s Pick</div>
-      <ToolLogo tool={tool} size={60} />
-      <div>
-        <h3 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 22, margin: '0 0 6px', color: T.ink, letterSpacing: '-0.02em' }}>{tool.name}</h3>
-        <p style={{ fontSize: 13, color: T.inkSoft, lineHeight: 1.55, margin: '0 0 12px' }}>{tool.en}</p>
-        <p style={{ fontSize: 12, color: T.inkMuted, lineHeight: 1.5, margin: 0 }}>{tool.zh}</p>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: 14, borderTop: `1px solid ${T.ruleSoft}` }}>
-        <span style={{ padding: '3px 9px', borderRadius: 4, fontSize: 11, fontWeight: 600, background: T.primaryBg, color: T.accent }}>{catZh}</span>
-        <span style={{ fontSize: 12, color: T.inkMuted }}>{tool.date}</span>
-      </div>
-    </Link>
-  );
-}
-
-/* ─── Regular tool card ───────────────────────────────────────────────────── */
-function ToolCard({ tool, fav, toggleFav }: { tool: Tool; fav: boolean; toggleFav: (id: string) => void }) {
-  const { categories: CATEGORIES } = useData();
-  const catZh = CATEGORIES.find((c) => c.id === tool.cat)?.zh;
-  return (
-    <Link href={`/tools/${tool.id}`} style={{
-      background: T.panel, borderRadius: 12, padding: 18,
-      border: `1px solid ${T.rule}`, cursor: 'pointer',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-      display: 'flex', gap: 14, transition: 'border-color .15s, box-shadow .15s',
-      textDecoration: 'none',
-    }}
-    onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = T.primary; el.style.boxShadow = '0 4px 14px -4px rgba(249,115,22,0.2)'; }}
-    onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = T.rule; el.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'; }}
-    >
-      <ToolLogo tool={tool} size={46} />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-          <h4 style={{ fontFamily: 'Georgia, serif', fontWeight: 600, fontSize: 16, margin: 0, color: T.ink }}>{tool.name}</h4>
-          <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFav(tool.id); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: fav ? T.primary : T.inkMuted, padding: 4 }}>{fav ? '★' : '☆'}</button>
-        </div>
-        <p style={{ fontSize: 13, color: T.inkSoft, lineHeight: 1.5, margin: '0 0 4px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' } as React.CSSProperties}>{tool.en}</p>
-        {tool.zh && <p style={{ fontSize: 12, color: T.inkMuted, lineHeight: 1.5, margin: '0 0 10px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' } as React.CSSProperties}>{tool.zh}</p>}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
-          <span style={{ padding: '2px 7px', borderRadius: 4, fontWeight: 600, background: T.primaryBg, color: T.accent }}>{catZh}</span>
-          <span style={{ padding: '2px 6px', borderRadius: 4, border: `1px solid ${T.rule}`, color: T.inkMuted, fontWeight: 500 }}>{tool.pricing}</span>
-          <span style={{ color: T.inkMuted, marginLeft: 'auto' }}>{tool.date}</span>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-/* ─── GitHub trending item ────────────────────────────────────────────────── */
-function GhItem({ item, rank }: { item: RepoItem; rank: number }) {
-  const [owner, name] = item.repo.split('/');
-  return (
-    <Link href={`/trending/${item.repo}`} style={{ padding: '13px 0', borderBottom: `1px solid ${T.ruleSoft}`, cursor: 'pointer', display: 'flex', gap: 12, textDecoration: 'none' }}
-      onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = T.panel2; el.style.padding = '13px 8px'; el.style.margin = '0 -8px'; el.style.borderRadius = '6px'; }}
-      onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.padding = '13px 0'; el.style.margin = '0'; el.style.borderRadius = '0'; }}
-    >
-      <div style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontWeight: 700, fontSize: rank <= 3 ? 22 : 14, color: rank <= 3 ? T.primary : T.inkMuted, width: 26, lineHeight: 1, flexShrink: 0 }}>{String(rank).padStart(2, '0')}</div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ marginBottom: 3, fontSize: 13 }}>
-          <span style={{ color: T.inkMuted }}>{owner}</span>
-          <span style={{ color: T.inkMuted }}>/</span>
-          <span style={{ color: T.ink, fontWeight: 600 }}>{name}</span>
-        </div>
-        <p style={{ fontSize: 12, color: T.inkSoft, lineHeight: 1.5, margin: '0 0 7px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' } as React.CSSProperties}>{item.descZh || item.desc}</p>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 11, color: T.inkMuted }}>
-          {item.lang && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ width: 9, height: 9, borderRadius: 5, background: LANG_COLOR[item.lang] || '#888', display: 'inline-block' }} />
-              {item.lang}
-            </span>
-          )}
-          <span>★ {item.stars.toLocaleString()}</span>
-          <span style={{ color: T.green, fontWeight: 600 }}>+{item.gained.toLocaleString()} today</span>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-/* ─── Command palette ─────────────────────────────────────────────────────── */
-function PaletteSection({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div style={{ padding: '8px 0' }}>
-      <div style={{ padding: '4px 16px', fontSize: 10, color: T.inkMuted, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>{label}</div>
-      {children}
-    </div>
-  );
-}
-
-function PaletteItem({ icon, title, sub, badge, onClick }: { icon: React.ReactNode; title: string; sub?: string; badge?: string; onClick?: () => void }) {
-  return (
-    <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '8px 16px', border: 'none', background: 'transparent', cursor: 'pointer', textAlign: 'left' }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = T.panel2)}
-      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-    >
-      {icon}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, color: T.ink, fontWeight: 500, marginBottom: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</div>
-        {sub && <div style={{ fontSize: 11, color: T.inkMuted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</div>}
-      </div>
-      {badge && <span style={{ fontSize: 10, color: T.inkMuted, padding: '2px 6px', border: `1px solid ${T.rule}`, borderRadius: 4, fontWeight: 500 }}>{badge}</span>}
-    </button>
-  );
-}
-
-type SearchResult = {
-  tools: { id: string; name: string; mono: string; brand: string; en: string; zh: string; pricing: string; catId: string }[];
-  articles: { id: number; title: string; titleZh: string | null; url: string; tag: string | null; publishedAt: Date | null }[];
-};
-
-function CommandPalette({ open, onClose, onOpenTool, fav, recent }: {
-  open: boolean; onClose: () => void; onOpenTool: (t: Tool) => void;
-  fav: Set<string>; recent: string[];
-}) {
-  const [q, setQ] = React.useState('');
-  const [apiResults, setApiResults] = React.useState<SearchResult | null>(null);
-  const [loading, setLoading] = React.useState(false);
-  const inputRef = React.useRef<HTMLInputElement>(null);
-  const { tools: AI_TOOLS, categories: CATEGORIES, trending } = useData();
-
-  React.useEffect(() => {
-    if (!open) return;
-    setTimeout(() => inputRef.current?.focus(), 50);
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
-
-  // Debounced API search
-  React.useEffect(() => {
-    const trimmed = q.trim();
-    if (trimmed.length < 2) return;
-    const timer = setTimeout(async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`);
-        const data: SearchResult = await res.json();
-        setApiResults(data);
-      } catch {
-        setApiResults(null);
-      } finally {
-        setLoading(false);
-      }
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [q]);
-
-  // Clear stale results when query is too short
-  const activeApiResults = q.trim().length >= 2 ? apiResults : null;
-
-  if (!open) return null;
-
-  const ql = q.toLowerCase().trim();
-  const empty = !ql;
-
-  // For categories and repos — still local (fast, no API needed)
-  const matchRepos = trending.today.filter((r) => !ql || r.repo.toLowerCase().includes(ql) || r.desc.toLowerCase().includes(ql)).slice(0, 4);
-  const matchCats = CATEGORIES.filter((c) => !ql || c.en.toLowerCase().includes(ql) || c.zh.includes(q)).slice(0, 4);
-
-  // Tools & articles from API; fall back to local while loading
-  const apiTools = activeApiResults?.tools ?? [];
-  const apiArticles = activeApiResults?.articles ?? [];
-  const localTools = AI_TOOLS.filter((t) => t.name.toLowerCase().includes(ql) || t.en.toLowerCase().includes(ql) || t.zh.includes(q)).slice(0, 5);
-  const matchTools = activeApiResults ? apiTools : (loading ? [] : localTools);
-
-  const favTools = AI_TOOLS.filter((t) => fav.has(t.id)).slice(0, 5);
-  const recentTools = recent.map((id) => AI_TOOLS.find((t) => t.id === id)).filter((t): t is Tool => Boolean(t)).slice(0, 4);
-
-  const hasResults = matchTools.length > 0 || matchRepos.length > 0 || matchCats.length > 0 || apiArticles.length > 0;
-
-  return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(31,41,55,0.4)', backdropFilter: 'blur(6px)', zIndex: 200, display: 'flex', justifyContent: 'center', alignItems: 'flex-start', paddingTop: '12vh' }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: T.panel, width: '100%', maxWidth: 640, borderRadius: 14, boxShadow: '0 30px 80px -20px rgba(0,0,0,0.35)', overflow: 'hidden', border: `1px solid ${T.rule}`, fontFamily: 'inherit' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderBottom: `1px solid ${T.rule}` }}>
-          <span style={{ fontSize: 18, color: loading ? T.primary : T.inkMuted, transition: 'color .2s' }}>⌕</span>
-          <input ref={inputRef} value={q} onChange={(e) => setQ(e.target.value)} placeholder="搜索 AI 工具、资讯、分类…" style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 16, color: T.ink, fontFamily: 'inherit' }} />
-          <kbd style={{ padding: '3px 8px', background: T.bg, border: `1px solid ${T.rule}`, borderRadius: 4, fontSize: 11, color: T.inkMuted, fontFamily: 'ui-monospace, monospace' }}>esc</kbd>
-        </div>
-        <div style={{ maxHeight: 460, overflowY: 'auto' }}>
-          {empty ? (
-            <>
-              {favTools.length > 0 && (
-                <PaletteSection label="★ 我的收藏 · Favorites">
-                  {favTools.map((t) => <PaletteItem key={t.id} icon={<ToolLogo tool={t} size={28} />} title={t.name} sub={t.zh} badge={CATEGORIES.find((c) => c.id === t.cat)?.zh} onClick={() => { onOpenTool(t); onClose(); }} />)}
-                </PaletteSection>
-              )}
-              {recentTools.length > 0 && (
-                <PaletteSection label="↻ 最近浏览 · Recent">
-                  {recentTools.map((t) => <PaletteItem key={t.id} icon={<ToolLogo tool={t} size={28} />} title={t.name} sub={t.zh} badge={CATEGORIES.find((c) => c.id === t.cat)?.zh} onClick={() => { onOpenTool(t); onClose(); }} />)}
-                </PaletteSection>
-              )}
-              <PaletteSection label="热门标签 · Popular tags">
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '4px 16px 8px' }}>
-                  {['AI Agent', '代码生成', '图像生成', '视频创作', '语音克隆'].map((s) => (
-                    <button key={s} onClick={() => setQ(s)} style={{ padding: '4px 10px', borderRadius: 999, border: 'none', background: T.primaryBg, color: T.accent, fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>{s}</button>
-                  ))}
-                </div>
-              </PaletteSection>
-            </>
-          ) : (
-            <>
-              {matchTools.length > 0 && (
-                <PaletteSection label={`AI 工具 · Tools — ${matchTools.length}`}>
-                  {matchTools.map((t) => {
-                    const tool = AI_TOOLS.find((at) => at.id === t.id) ?? { ...t, cat: (t as {catId?: string}).catId ?? '', date: '', featured: false };
-                    return <PaletteItem key={t.id} icon={<ToolLogo tool={tool as Tool} size={28} />} title={t.name} sub={t.zh} badge={CATEGORIES.find((c) => c.id === ((t as {catId?: string}).catId ?? (tool as Tool).cat))?.zh} onClick={() => { if (AI_TOOLS.find(at => at.id === t.id)) { onOpenTool(tool as Tool); onClose(); } else { window.location.href = `/tools/${t.id}`; onClose(); } }} />;
-                  })}
-                </PaletteSection>
-              )}
-              {apiArticles.length > 0 && (
-                <PaletteSection label={`AI 资讯 · News — ${apiArticles.length}`}>
-                  {apiArticles.map((a) => (
-                    <PaletteItem key={a.id}
-                      icon={<span style={{ width: 28, height: 28, display: 'grid', placeItems: 'center', borderRadius: 6, background: T.primaryBg, fontSize: 14 }}>📰</span>}
-                      title={a.titleZh || a.title}
-                      sub={a.titleZh ? a.title : ''}
-                      badge={a.tag ?? undefined}
-                      onClick={() => { window.open(a.url, '_blank'); onClose(); }}
-                    />
-                  ))}
-                </PaletteSection>
-              )}
-              {matchRepos.length > 0 && (
-                <PaletteSection label={`GitHub 仓库 · Repos — ${matchRepos.length}`}>
-                  {matchRepos.map((r) => <PaletteItem key={r.repo} icon={<span style={{ width: 28, height: 28, display: 'grid', placeItems: 'center', borderRadius: 6, background: T.ink, color: '#fff', fontFamily: 'ui-monospace, monospace', fontWeight: 700, fontSize: 12 }}>Gh</span>} title={r.repo} sub={r.descZh || r.desc} badge={`★ ${r.stars >= 1000 ? `${(r.stars / 1000).toFixed(1)}k` : r.stars}`} onClick={() => { window.open(`https://github.com/${r.repo}`, '_blank'); onClose(); }} />)}
-                </PaletteSection>
-              )}
-              {matchCats.length > 0 && (
-                <PaletteSection label={`分类 · Categories — ${matchCats.length}`}>
-                  {matchCats.map((c) => <PaletteItem key={c.id} icon={<span style={{ width: 28, height: 28, display: 'grid', placeItems: 'center', borderRadius: 6, background: T.primaryBg, fontSize: 14 }}>{c.icon}</span>} title={`${c.en} · ${c.zh}`} sub={`${c.count} tools`} badge="↗" onClick={() => { window.location.href = `/categories/${c.id}`; onClose(); }} />)}
-                </PaletteSection>
-              )}
-              {!loading && !hasResults && (
-                <div style={{ padding: '40px 20px', textAlign: 'center', color: T.inkMuted, fontSize: 13 }}>
-                  没有找到 &ldquo;{q}&rdquo; 的结果<br /><span style={{ fontSize: 12 }}>No results for &ldquo;{q}&rdquo;</span>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '10px 16px', borderTop: `1px solid ${T.rule}`, background: T.bg, fontSize: 11, color: T.inkMuted }}>
-          {[['↑↓', 'navigate'], ['↵', 'open'], ['esc', 'close']].map(([key, label]) => (
-            <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <kbd style={{ padding: '1px 5px', background: T.panel, border: `1px solid ${T.rule}`, borderRadius: 3, fontFamily: 'ui-monospace, monospace' }}>{key}</kbd> {label}
-            </span>
-          ))}
-          <span style={{ marginLeft: 'auto' }}>工具 + 资讯 + 分类全库搜索</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─── AI Pulse news card ─────────────────────────────────────────────────── */
-function NewsPulseCard() {
-  const { news } = useData();
-  if (news.length === 0) return null;
-
-  const fmt = (iso?: string) => {
-    if (!iso) return '';
-    const d = new Date(iso);
-    return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
-  };
-
-  return (
-    <div style={{ background: T.ink, borderRadius: 16, padding: 24, marginTop: 20, color: '#fff' }}>
-      <h3 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 22, margin: '0 0 4px', letterSpacing: '-0.02em' }}>AI Pulse</h3>
-      <p style={{ fontSize: 13, color: '#FFB48B', margin: '0 0 18px' }}>每日 AI 资讯 · daily news</p>
-      {news.slice(0, 5).map((n, i) => (
-        <a key={n.id} href={n.url} target="_blank" rel="noopener noreferrer" style={{
-          display: 'block', paddingBottom: 14, marginBottom: 14,
-          borderBottom: i === Math.min(news.length, 5) - 2 ? 'none' : '1px solid rgba(255,255,255,0.08)',
-          textDecoration: 'none',
-        }}>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 5 }}>
-            {n.tag && (
-              <span style={{ padding: '2px 7px', borderRadius: 3, background: T.primary, fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#fff' }}>{n.tag}</span>
-            )}
-            <span style={{ fontSize: 11, color: '#A89890' }}>{fmt(n.publishedAt)}</span>
+      <div
+        style={{
+          maxWidth: 1180,
+          margin: '0 auto',
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: 20,
+          flexWrap: 'wrap',
+        }}
+      >
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <div
+              style={{
+                width: 30,
+                height: 30,
+                borderRadius: 8,
+                background: `linear-gradient(135deg, ${T.primary} 0%, #FBBF24 100%)`,
+                display: 'grid',
+                placeItems: 'center',
+                color: '#fff',
+                fontFamily: 'Georgia, serif',
+                fontWeight: 900,
+              }}
+            >
+              A
+            </div>
+            <strong style={{ fontFamily: 'Georgia, serif', fontSize: 18 }}>AIBoxPro</strong>
           </div>
-          <p style={{ fontSize: 13, lineHeight: 1.5, margin: '0 0 3px', color: '#fff' }}>{n.titleZh || n.title}</p>
-          {n.titleZh && <p style={{ fontSize: 11, lineHeight: 1.5, margin: 0, color: '#C8B5A8' }}>{n.title}</p>}
-        </a>
-      ))}
-      <Link href="/news" style={{ display: 'block', textAlign: 'center', marginTop: 8, padding: '8px', fontSize: 13, fontWeight: 600, color: T.primary, cursor: 'pointer', textDecoration: 'none' }}>查看全部资讯 →</Link>
-    </div>
-  );
-}
-
-/* ─── Footer ──────────────────────────────────────────────────────────────── */
-function Footer({ mobile }: { mobile: boolean }) {
-  return (
-    <footer style={{ padding: mobile ? '32px 20px 24px' : '48px 56px 36px', background: T.bg, borderTop: `1px solid ${T.rule}`, display: 'flex', flexDirection: mobile ? 'column' : 'row', gap: mobile ? 16 : 0, justifyContent: 'space-between', alignItems: mobile ? 'flex-start' : 'flex-end' }}>
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 8, background: `linear-gradient(135deg, ${T.primary} 0%, #FBBF24 100%)`, display: 'grid', placeItems: 'center', color: '#fff', fontFamily: 'Georgia, serif', fontWeight: 900, fontSize: 16, fontStyle: 'italic' }}>A</div>
-          <span style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 18, color: T.ink }}>AiToolsBox</span>
+          <p style={{ margin: 0, color: T.inkSoft, fontSize: 13, lineHeight: 1.7 }}>
+            面向中文用户的 AI 工具决策平台，核心不是收录多少工具，而是帮用户更快做出靠谱选择。
+          </p>
         </div>
-        <p style={{ fontSize: 13, color: T.inkMuted, margin: 0, maxWidth: 380, lineHeight: 1.6 }}>
-          A thoughtful directory of AI tools and a live pulse of GitHub. Curated daily.<br />
-          精选 AI 工具与 GitHub 趋势 · 每日更新
-        </p>
-      </div>
-      <div style={{ fontSize: 12, color: T.inkMuted, textAlign: 'right' }}>
-        © 2026 AiToolsBox · 工具集<br />Made with care
+        <div style={{ color: T.inkMuted, fontSize: 12, lineHeight: 1.7 }}>
+          <div>已整理工具：{newsCount}</div>
+          <div>下一步：对比页、场景页、替代方案页</div>
+        </div>
       </div>
     </footer>
   );
 }
 
-/* ─── Root export ─────────────────────────────────────────────────────────── */
-export default function V2ProHomepage(props: DataCtx) {
-  return (
-    <DataContext.Provider value={props}>
-      <V2ProInner />
-    </DataContext.Provider>
-  );
-}
-
-function V2ProInner() {
-  const { tools: AI_TOOLS, trending: GITHUB_TRENDING, stats } = useData();
+export default function V2ProHomepage({ tools, categories, trending, stats, news }: HomeData) {
   const mobile = useIsMobile();
-  // news is consumed by NewsPulseCard via context
-  const [cat, setCat] = React.useState('all');
   const [query, setQuery] = React.useState('');
-  const [period, setPeriod] = React.useState<TrendingPeriod>('today');
-  const [sort, setSort] = React.useState<'popular' | 'newest'>('newest');
-  const [paletteOpen, setPaletteOpen] = React.useState(false);
-  const [fav, setFav] = React.useState<Set<string>>(new Set(['claude', 'cursor', 'midjourney']));
-  const [recent, setRecent] = React.useState<string[]>(['chatgpt', 'cursor', 'suno', 'v0']);
+  const [category, setCategory] = React.useState('all');
 
-  const toggleFav = (id: string) => setFav((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
-  const handleOpenTool = (t: Tool) => setRecent((r) => [t.id, ...r.filter((x) => x !== t.id)].slice(0, 6));
+  const featuredTools = tools.filter((tool) => tool.featured).slice(0, 4);
+  const visibleCategories = categories.filter((item) => item.count > 0).slice(0, 10);
 
-  React.useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setPaletteOpen(true); } };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  const filteredTools = tools.filter((tool) => {
+    const matchesCategory = category === 'all' || tool.cat === category;
+    const needle = query.trim().toLowerCase();
+    const matchesQuery =
+      needle.length === 0 ||
+      tool.name.toLowerCase().includes(needle) ||
+      tool.en.toLowerCase().includes(needle) ||
+      tool.zh.toLowerCase().includes(query.trim());
 
-  // Filter + sort
-  let tools = AI_TOOLS.filter((t) =>
-    (cat === 'all' || t.cat === cat) &&
-    (!query || t.name.toLowerCase().includes(query.toLowerCase()) || t.en.toLowerCase().includes(query.toLowerCase()) || t.zh.includes(query))
-  );
-  if (sort === 'newest') tools = [...tools].sort((a, b) => b.date.localeCompare(a.date));
+    return matchesCategory && matchesQuery;
+  });
 
-  const featured = tools.filter((t) => t.featured).slice(0, 3);
-  const rest = tools.filter((t) => !t.featured || featured.length < 3);
-  const trending = GITHUB_TRENDING[period].slice(0, 10);
+  const recommendedTools = (filteredTools.length > 0 ? filteredTools : tools).slice(0, 4);
 
   return (
-    <div style={{ minHeight: '100vh', background: T.bg, color: T.ink, fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif' }}>
-      <SiteHeader onOpenPalette={() => setPaletteOpen(true)} />
-      <Hero query={query} setQuery={setQuery} stats={stats} mobile={mobile} onPopularTag={(tag) => { setQuery(tag); setCat('all'); }} />
-      <CategoryStrip cat={cat} setCat={setCat} mobile={mobile} />
+    <div
+      style={{
+        minHeight: '100vh',
+        background: T.bg,
+        color: T.ink,
+        fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif',
+      }}
+    >
+      <SiteHeader />
 
-      {/* Main: V1 two-column layout */}
-      <section style={{ padding: mobile ? '24px 16px' : '48px 56px', display: 'grid', gridTemplateColumns: mobile ? '1fr' : '1fr 360px', gap: mobile ? 28 : 48 }}>
+      <Hero stats={stats} query={query} setQuery={setQuery} mobile={mobile} />
 
-        {/* Left: tools */}
-        <div>
-          {/* Editor's Picks */}
-          {featured.length > 0 && (
-            <>
-              <div style={{ marginBottom: 28 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 4 }}>
-                  <h2 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 34, margin: 0, color: T.ink, letterSpacing: '-0.02em' }}>Editor&rsquo;s Picks</h2>
-                  <span style={{ fontSize: 14, color: T.inkMuted }}>· 编辑精选</span>
-                </div>
-                <p style={{ fontSize: 14, color: T.inkSoft, margin: 0 }}>本周值得一试的 AI 工具，由编辑团队精选。</p>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(3, 1fr)', gap: mobile ? 14 : 20, marginBottom: 52 }}>
-                {featured.map((t) => <FeaturedCard key={t.id} tool={t} />)}
-              </div>
-            </>
-          )}
-
-          {/* Latest additions */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-            <div>
-              <h2 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 30, margin: 0, color: T.ink, letterSpacing: '-0.02em' }}>Latest additions</h2>
-              <p style={{ fontSize: 13, color: T.inkSoft, margin: '4px 0 0' }}>最新收录 · {rest.length} tools</p>
-            </div>
-            <div style={{ display: 'flex', gap: 4, padding: 4, background: T.panel, borderRadius: 8, border: `1px solid ${T.rule}`, fontSize: 12 }}>
-              {(['newest', 'popular'] as const).map((k) => (
-                <button key={k} onClick={() => setSort(k)} style={{ padding: '5px 12px', borderRadius: 5, border: 'none', cursor: 'pointer', background: sort === k ? T.ink : 'transparent', color: sort === k ? '#fff' : T.inkSoft, fontWeight: 500 }}>
-                  {k === 'newest' ? 'Newest' : 'Popular'}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(2, 1fr)', gap: 14 }}>
-            {rest.map((t) => <ToolCard key={t.id} tool={t} fav={fav.has(t.id)} toggleFav={toggleFav} />)}
-          </div>
-          {rest.length === 0 && (
-            <div style={{ padding: '40px 0', textAlign: 'center', color: T.inkMuted, fontSize: 14 }}>没有找到匹配的工具</div>
-          )}
+      <section style={{ padding: mobile ? '14px 16px 0' : '0 56px' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: 8,
+            overflowX: 'auto',
+            paddingBottom: 8,
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setCategory('all')}
+            style={{
+              padding: '8px 14px',
+              borderRadius: 999,
+              border: 'none',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              background: category === 'all' ? T.ink : T.panel,
+              color: category === 'all' ? '#fff' : T.inkSoft,
+              fontWeight: category === 'all' ? 700 : 500,
+              outline: category === 'all' ? 'none' : `1px solid ${T.rule}`,
+            }}
+          >
+            全部 · {tools.length}
+          </button>
+          {visibleCategories.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setCategory(item.id)}
+              style={{
+                padding: '8px 14px',
+                borderRadius: 999,
+                border: 'none',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                background: category === item.id ? T.primaryBg : T.panel,
+                color: category === item.id ? T.accent : T.inkSoft,
+                fontWeight: category === item.id ? 700 : 500,
+                outline: `1px solid ${category === item.id ? T.primaryBg : T.rule}`,
+              }}
+            >
+              {item.zh} · {item.count}
+            </button>
+          ))}
         </div>
-
-        {/* Right: GitHub trending rail */}
-        <aside style={{ position: mobile ? 'static' : 'sticky', top: 90, alignSelf: 'start' }}>
-          <div style={{ background: T.panel, borderRadius: 16, padding: 24, border: `1px solid ${T.rule}`, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-            <div style={{ marginBottom: 4 }}>
-              <h3 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 22, margin: 0, color: T.ink, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ display: 'inline-grid', placeItems: 'center', width: 26, height: 26, borderRadius: 6, background: T.ink, color: '#fff', fontSize: 12, fontStyle: 'normal', fontWeight: 700 }}>Gh</span>
-                Trending
-              </h3>
-            </div>
-            <p style={{ fontSize: 13, color: T.inkSoft, margin: '0 0 14px' }}>GitHub 趋势项目 · live pulse</p>
-            {/* Period tabs */}
-            <div style={{ display: 'flex', gap: 3, padding: 3, background: T.primaryBg, borderRadius: 8, marginBottom: 4 }}>
-              {([['today', '今日'], ['week', '本周'], ['month', '本月']] as const).map(([k, label]) => (
-                <button key={k} onClick={() => setPeriod(k)} style={{ flex: 1, padding: '6px 8px', borderRadius: 5, border: 'none', cursor: 'pointer', background: period === k ? T.panel : 'transparent', color: period === k ? T.ink : T.inkSoft, fontWeight: 600, fontSize: 12, boxShadow: period === k ? '0 1px 2px rgba(0,0,0,0.06)' : 'none' }}>{label}</button>
-              ))}
-            </div>
-            <div>
-              {trending.map((it, i) => <GhItem key={it.repo} item={it} rank={i + 1} />)}
-            </div>
-            <a style={{ display: 'block', textAlign: 'center', marginTop: 14, padding: '10px', fontSize: 13, fontWeight: 600, color: T.primary, cursor: 'pointer' }}>查看全部 View all trending →</a>
-          </div>
-
-          {/* AI Pulse */}
-          <NewsPulseCard />
-        </aside>
       </section>
 
-      <Footer mobile={mobile} />
+      <main style={{ padding: mobile ? '24px 16px 32px' : '36px 56px 42px' }}>
+        <section style={{ marginBottom: 34 }}>
+          <SectionTitle
+            title="热门对比"
+            description="先把高意图搜索的入口摆到首页，逐步从工具目录过渡到决策页体系。"
+            actionLabel="查看工具库"
+            actionHref="/tools"
+          />
+          <DecisionSection cards={compareCards} mobile={mobile} />
+        </section>
 
-      {paletteOpen && (
-        <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} onOpenTool={handleOpenTool} fav={fav} recent={recent} />
-      )}
+        <section style={{ marginBottom: 34 }}>
+          <SectionTitle
+            title="按场景找工具"
+            description="用户不一定先知道工具名，但一定先知道自己想解决什么问题。"
+            actionLabel="浏览更多候选"
+            actionHref="/tools"
+          />
+          <ScenarioSection cards={scenarioCards} mobile={mobile} />
+        </section>
+
+        <section style={{ marginBottom: 34 }}>
+          <SectionTitle
+            title="编辑推荐"
+            description="先给推荐理由、适合场景和价格类型，不再只放简介和链接。"
+            actionLabel="查看全部工具"
+            actionHref="/tools"
+          />
+          <FeaturedTools tools={featuredTools.length > 0 ? featuredTools : recommendedTools} categories={categories} mobile={mobile} />
+        </section>
+
+        <section
+          style={{
+            display: 'grid',
+            gridTemplateColumns: mobile ? '1fr' : 'minmax(0, 1fr) 320px',
+            gap: 20,
+            alignItems: 'start',
+          }}
+        >
+          <div
+            style={{
+              borderRadius: 14,
+              background: T.panel,
+              border: `1px solid ${T.rule}`,
+              boxShadow: '0 8px 26px rgba(24, 32, 28, .06)',
+              padding: 20,
+            }}
+          >
+            <SectionTitle
+              title="当前推荐候选"
+              description="先用现有数据库做出第一层筛选，后续再接入更完整的对比页和场景页。"
+            />
+            <div style={{ display: 'grid', gap: 10 }}>
+              {recommendedTools.map((tool) => (
+                <Link
+                  key={tool.id}
+                  href={`/tools/${tool.id}`}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '44px minmax(0, 1fr)',
+                    gap: 12,
+                    alignItems: 'center',
+                    padding: 12,
+                    borderRadius: 10,
+                    background: '#FFF8EA',
+                    border: `1px solid ${T.rule}`,
+                  }}
+                >
+                  <ToolLogo tool={tool} size={40} />
+                  <div style={{ minWidth: 0 }}>
+                    <strong style={{ display: 'block', marginBottom: 3 }}>{tool.name}</strong>
+                    <span style={{ display: 'block', color: T.inkSoft, fontSize: 13, lineHeight: 1.55 }}>
+                      {tool.zh || tool.en}
+                    </span>
+                    <span style={{ display: 'block', color: T.inkMuted, fontSize: 12, marginTop: 6 }}>
+                      {getPricingLabel(tool.pricing)} · {getChinaAccessLabel(tool.chinaAccess)}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <TrendingRail repos={trending.today} mobile={mobile} />
+        </section>
+      </main>
+
+      <Footer newsCount={tools.length} />
     </div>
   );
 }

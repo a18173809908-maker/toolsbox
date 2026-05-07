@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { refreshAllTrending } from '@/lib/jobs/refresh-trending';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,6 +11,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
+  const { refreshAllTrending } = await import('@/lib/jobs/refresh-trending');
   const result = await refreshAllTrending();
   const ok = result.every((r) => !r.error);
   return NextResponse.json({ ok, result }, { status: ok ? 200 : 500 });

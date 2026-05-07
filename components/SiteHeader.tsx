@@ -9,60 +9,88 @@ type SiteHeaderProps = {
   onOpenPalette?: () => void;
 };
 
-const navItems: [string, string][] = [
-  ['首页', '/'],
-  ['工具库', '/tools'],
-  ['GitHub 趋势', '/trending'],
-  ['AI 资讯', '/news'],
+const navItems: Array<{ label: string; href: string }> = [
+  { label: '首页', href: '/' },
+  { label: '工具库', href: '/tools' },
+  { label: '开发者趋势', href: '/trending' },
+  { label: '工具动态', href: '/news' },
 ];
 
 export function SiteHeader({ onOpenPalette }: SiteHeaderProps) {
   const pathname = usePathname();
   const isMobile = useIsMobile();
-  const isActive = (href: string) =>
-    href === '/' ? pathname === '/' : pathname.startsWith(href);
+  const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
 
   return (
-    <header style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: isMobile ? 10 : 24,
-      padding: isMobile ? '12px 16px' : '16px clamp(20px, 4vw, 56px)',
-      borderBottom: `1px solid ${T.rule}`,
-      background: T.panel,
-      position: 'sticky',
-      top: 0,
-      zIndex: 10,
-    }}>
-      <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0 }}>
-        <div style={{
-          width: 30,
-          height: 30,
-          borderRadius: 8,
-          background: `linear-gradient(135deg, ${T.primary} 0%, #FBBF24 100%)`,
-          display: 'grid',
-          placeItems: 'center',
-          color: '#fff',
-          fontFamily: 'Georgia, serif',
-          fontWeight: 900,
-          fontSize: 17,
-          fontStyle: 'italic',
-        }}>
+    <header
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: isMobile ? 10 : 24,
+        padding: isMobile ? '12px 16px' : '16px clamp(20px, 4vw, 56px)',
+        borderBottom: `1px solid ${T.rule}`,
+        background: T.panel,
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+      }}
+    >
+      <Link
+        href="/"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          textDecoration: 'none',
+          flexShrink: 0,
+        }}
+      >
+        <div
+          style={{
+            width: 30,
+            height: 30,
+            borderRadius: 8,
+            background: `linear-gradient(135deg, ${T.primary} 0%, #FBBF24 100%)`,
+            display: 'grid',
+            placeItems: 'center',
+            color: '#fff',
+            fontFamily: 'Georgia, serif',
+            fontWeight: 900,
+            fontSize: 17,
+            fontStyle: 'italic',
+          }}
+        >
           A
         </div>
-        <span style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: isMobile ? 16 : 18, color: T.ink }}>
-          AiToolsBox
+        <span
+          style={{
+            fontFamily: 'Georgia, serif',
+            fontWeight: 700,
+            fontSize: isMobile ? 16 : 18,
+            color: T.ink,
+          }}
+        >
+          AIBoxPro
         </span>
       </Link>
 
-      <nav style={{ display: isMobile ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 14, flex: 1 }}>
-        {navItems.map(([label, href]) => {
-          const active = isActive(href);
+      <nav
+        style={{
+          display: isMobile ? 'none' : 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 4,
+          fontSize: 14,
+          flex: 1,
+        }}
+      >
+        {navItems.map((item) => {
+          const active = isActive(item.href);
           return (
             <Link
-              key={href}
-              href={href}
+              key={item.href}
+              href={item.href}
               style={{
                 padding: '7px 14px',
                 borderRadius: 6,
@@ -73,7 +101,7 @@ export function SiteHeader({ onOpenPalette }: SiteHeaderProps) {
                 whiteSpace: 'nowrap',
               }}
             >
-              {label}
+              {item.label}
             </Link>
           );
         })}
@@ -103,7 +131,7 @@ export function SiteHeader({ onOpenPalette }: SiteHeaderProps) {
         </button>
       ) : (
         <Link
-          href="/"
+          href="/tools"
           style={{
             display: 'flex',
             alignItems: 'center',

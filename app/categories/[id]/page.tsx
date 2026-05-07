@@ -6,12 +6,16 @@ import { loadCategoryById, loadToolsByCategory, loadAllCategoryIds } from '@/lib
 import { ToolCard } from './ToolCard';
 
 export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 const BASE = 'https://aiboxpro.cn';
 
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateStaticParams() {
+  if (!process.env.DATABASE_URL) {
+    return [];
+  }
   const ids = await loadAllCategoryIds();
   return ids.map((id) => ({ id }));
 }

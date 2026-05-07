@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter, Fraunces } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/react';
 import './globals.css';
 
 const inter = Inter({
@@ -15,42 +16,55 @@ const fraunces = Fraunces({
   style: ['normal', 'italic'],
 });
 
-const BASE = 'https://aiboxpro.cn';
+const BASE = 'https://www.aiboxpro.cn';
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE),
   title: {
-    default: 'AiToolsBox — AI 工具精选 + GitHub 趋势',
-    template: '%s | AiToolsBox',
+    default: 'AIBoxPro | 中文 AI 工具决策平台',
+    template: '%s | AIBoxPro',
   },
   description:
-    'AiToolsBox 精选 1,400+ AI 工具，实时追踪 GitHub 热门开源项目，每日更新 AI 资讯。The thoughtful directory of AI tools and a live pulse of what\'s trending on GitHub.',
-  keywords: ['AI tools', 'AI 工具', 'GitHub trending', '开源', 'ChatGPT', 'Midjourney', 'Cursor'],
-  authors: [{ name: 'AiToolsBox' }],
+    'AIBoxPro 帮中文用户比较 AI 工具的价格、中文支持、国内使用情况、适合场景和替代方案，快速判断哪个工具更适合自己。',
+  keywords: [
+    'AI 工具',
+    'AI 工具推荐',
+    'AI 工具对比',
+    '中文 AI 工具',
+    'AI 编程工具',
+    'Claude Code',
+    'Codex',
+    'Cursor',
+  ],
+  authors: [{ name: 'AIBoxPro' }],
   openGraph: {
     type: 'website',
     locale: 'zh_CN',
     alternateLocale: 'en_US',
     url: BASE,
-    siteName: 'AiToolsBox',
-    title: 'AiToolsBox — AI 工具精选 + GitHub 趋势',
-    description: '精选 1,400+ AI 工具，实时追踪 GitHub 热门开源项目，每日更新 AI 资讯。',
-    images: [{ url: `${BASE}/og?type=default`, width: 1200, height: 630, alt: 'AiToolsBox' }],
+    siteName: 'AIBoxPro',
+    title: 'AIBoxPro | 中文 AI 工具决策平台',
+    description:
+      '比较价格、中文支持、国内使用情况、适合场景和替代方案，让中文用户更快完成 AI 工具选型。',
+    images: [{ url: `${BASE}/og?type=default`, width: 1200, height: 630, alt: 'AIBoxPro' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AiToolsBox — AI 工具精选',
-    description: '精选 AI 工具 + GitHub 趋势 · 每日更新',
+    title: 'AIBoxPro | 中文 AI 工具决策平台',
+    description: '帮中文用户更快完成 AI 工具选型。',
     images: [`${BASE}/og?type=default`],
   },
-  alternates: { canonical: '/' },
+  alternates: { canonical: BASE },
   robots: { index: true, follow: true },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="zh-CN" className={`${inter.variable} ${fraunces.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }

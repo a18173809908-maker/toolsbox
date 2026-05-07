@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchAllArticles } from '@/lib/jobs/fetch-articles';
-import { processArticles } from '@/lib/jobs/process-articles';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,6 +11,10 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    const [{ fetchAllArticles }, { processArticles }] = await Promise.all([
+      import('@/lib/jobs/fetch-articles'),
+      import('@/lib/jobs/process-articles'),
+    ]);
     const fetchResults = await fetchAllArticles();
     const processResult = await processArticles();
     return NextResponse.json({ ok: true, fetch: fetchResults, process: processResult });

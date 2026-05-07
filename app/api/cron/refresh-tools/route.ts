@@ -1,7 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { discoverToolSignals } from '@/lib/jobs/discover-tool-signals';
-import { fetchToolCandidates } from '@/lib/jobs/fetch-tool-candidates';
-import { processToolCandidates } from '@/lib/jobs/process-tool-candidates';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -14,6 +11,11 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    const [{ discoverToolSignals }, { fetchToolCandidates }, { processToolCandidates }] = await Promise.all([
+      import('@/lib/jobs/discover-tool-signals'),
+      import('@/lib/jobs/fetch-tool-candidates'),
+      import('@/lib/jobs/process-tool-candidates'),
+    ]);
     const [fetchResult, signalResult] = await Promise.all([
       fetchToolCandidates(),
       discoverToolSignals(),

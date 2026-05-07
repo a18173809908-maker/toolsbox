@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchAibotSitemapCandidates } from '@/lib/jobs/fetch-aibot-sitemap';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -14,6 +13,7 @@ export async function GET(req: NextRequest) {
   try {
     const limitParam = req.nextUrl.searchParams.get('limit');
     const limit = limitParam ? Number.parseInt(limitParam, 10) : 20;
+    const { fetchAibotSitemapCandidates } = await import('@/lib/jobs/fetch-aibot-sitemap');
     const result = await fetchAibotSitemapCandidates(Number.isFinite(limit) ? limit : 20);
     return NextResponse.json({ ok: true, result });
   } catch (err) {

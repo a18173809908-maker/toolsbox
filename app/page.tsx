@@ -3,7 +3,7 @@ import { loadHomepageData } from '@/lib/db/queries';
 
 export const dynamic = 'force-dynamic';
 
-const BASE = 'https://aiboxpro.cn';
+const BASE = 'https://www.aiboxpro.cn';
 
 export default async function Home() {
   const data = await loadHomepageData();
@@ -11,12 +11,13 @@ export default async function Home() {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'AiToolsBox',
+    name: 'AIBoxPro',
     url: BASE,
-    description: '精选 AI 工具目录与 GitHub 开源趋势追踪平台',
+    description:
+      'AIBoxPro 帮中文用户比较 AI 工具的价格、中文支持、国内使用情况、适合场景和替代方案。',
     potentialAction: {
       '@type': 'SearchAction',
-      target: `${BASE}/?q={search_term_string}`,
+      target: `${BASE}/tools?q={search_term_string}`,
       'query-input': 'required name=search_term_string',
     },
   };

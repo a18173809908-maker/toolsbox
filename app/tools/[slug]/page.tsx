@@ -6,12 +6,16 @@ import { AccessBadge, ToolIcon } from '@/components/ToolBadges';
 import { loadToolById, loadAllToolIds, loadToolsByCategory, loadRelatedArticles, loadToolsByIds } from '@/lib/db/queries';
 
 export const revalidate = 3600; // ISR — regenerate hourly
+export const dynamic = 'force-dynamic';
 
 const BASE = 'https://aiboxpro.cn';
 
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateStaticParams() {
+  if (!process.env.DATABASE_URL) {
+    return [];
+  }
   const ids = await loadAllToolIds();
   return ids.map((id) => ({ slug: id }));
 }
