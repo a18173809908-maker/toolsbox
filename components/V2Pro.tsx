@@ -17,6 +17,7 @@ type DecisionLink = {
   title: string;
   description: string;
   href: string;
+  icon: string;
   accent: string;
   tone: string;
 };
@@ -41,6 +42,7 @@ const decisionLinks: DecisionLink[] = [
     title: '对比两个 AI 工具',
     description: 'Cursor 还是 Trae？Claude Code 还是 Codex？纠结时来这里看横评。',
     href: '/compare',
+    icon: '⚖️',
     accent: T.accent,
     tone: T.primaryBg,
   },
@@ -48,6 +50,7 @@ const decisionLinks: DecisionLink[] = [
     title: '寻找替代方案',
     description: '海外工具贵、不稳定、被墙？看看哪些国产工具能直接用。',
     href: '/tools?china=accessible',
+    icon: '🔄',
     accent: '#B7472A',
     tone: '#FFE1D4',
   },
@@ -55,6 +58,7 @@ const decisionLinks: DecisionLink[] = [
     title: '查看编辑榜单',
     description: '编辑实测后的工具排名，按新手、团队、中文场景分别给出推荐。',
     href: '/tools?sort=score',
+    icon: '📊',
     accent: '#8A5A00',
     tone: '#F4E5BD',
   },
@@ -501,7 +505,7 @@ function Hero({
                     fontWeight: 900,
                   }}
                 >
-                  {link.title.slice(0, 1)}
+                  {link.icon}
                 </div>
                 <div>
                   <strong style={{ display: 'block', marginBottom: 3, fontSize: 15 }}>{link.title}</strong>
