@@ -25,10 +25,19 @@
 | I5 首页三大决策入口（emoji 图标） | ✅ 已完成 | 230c7c0 |
 | I6 Canonical 链接 + 重定向规范 | 🟡 待做 | — |
 | I7 合规页面（关于/隐私/工具提交说明/免责声明） | 🟡 待做 | — |
+| I8 Admin 后台 + 审核流程 | 🟡 待做（白皮书 §4 内容审核流程） | — |
+| I9 审核提醒邮件（Vercel Cron + Resend） | 🟡 待做 | — |
 
-**Sprint 1 剩余任务**：J4（Footer prop 命名）、J6（Hero 视觉收尾）、I6（Canonical/重定向）、I7（4 个合规页）
+**Sprint 1 剩余任务**：J4 / J6 / I6 / I7 / I8 / I9
 
-执行顺序建议：**J4 → I6 → I7 → J6**（J4 最快收尾首页；I6/I7 是 Sprint 1 收口前的基础设施补完；J6 是视觉细节）
+执行顺序建议：**J4 → I6 → I8 → I9 → I7 → J6**
+
+排序逻辑：
+- J4 最快收尾首页修复（5 行改动）
+- I6（Canonical）属于全站 SEO 基础设施
+- **I8 + I9（审核流程）必须先于 Sprint 2 内容生产，否则对比页和 Lab 报告无安全的发布路径**
+- I7（合规页）独立任务，可挪到任何位置
+- J6 视觉收尾（依赖 I5，已完成）
 
 ### Sprint 1 编号说明
 
@@ -285,6 +294,195 @@ grep -ri "aitoolsbox" --include="*.ts" --include="*.tsx" .
 
 ---
 
+### I8（P0）：Admin 后台 + 内容审核流程
+
+**对应白皮书**：§4「内容审核流程与推送机制」
+
+**说明**：白皮书要求工具候选 / 对比页 / Lab 报告必须经人工审核才能上线，资讯需事后抽审。当前所有自动处理脚本直接 publish，必须改为"AI 起草 → 草稿状态 → 人工审核 → 发布"。
+
+**Schema 改动**：
+
+```typescript
+// lib/db/schema.ts
+
+// tool_candidates 新增 status 'ai_drafted' 用于已 AI 处理但待人工审核
+// 不需要改 column，复用现有 status 字段，新增 'ai_drafted' 取值
+
+// tool_candidates 新增 audit 字段
+reviewedBy:  text('reviewed_by'),
+reviewedAt:  timestamp('reviewed_at'),
+rejectReason: text('reject_reason'),
+
+// comparisons 同上（新增 reviewedBy / reviewedAt / rejectReason）
+// articles 同上（用于事后抽审记录）
+```
+
+运行 `npm run db:push`。
+
+**自动处理脚本调整**：
+
+`lib/jobs/process-tool-candidates.ts`：
+- AI 处理完后**不再直接** `INSERT INTO tools`
+- 改为更新 `tool_candidates` 的 `zh / catId / pricing / chinaAccess / features` 等字段（作为草稿数据），并设 `status='ai_drafted'`
+- `publishToolCandidate` 函数改为只在审核通过时调用
+
+**身份认证**：
+
+第一阶段使用环境变量 `ADMIN_PASSWORD`，简单 cookie 鉴权。
+
+新建 `middleware.ts`（项目根目录）：
+
+```typescript
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+export function middleware(req: NextRequest) {
+  if (!req.nextUrl.pathname.startsWith('/admin')) return NextResponse.next();
+  const cookie = req.cookies.get('admin-auth')?.value;
+  if (cookie === process.env.ADMIN_PASSWORD) return NextResponse.next();
+  return NextResponse.redirect(new URL('/admin/login', req.url));
+}
+
+export const config = { matcher: '/admin/:path*' };
+```
+
+新建 `app/admin/login/page.tsx` + `app/api/admin/login/route.ts`：登录表单，POST 校验密码并设 cookie（HttpOnly + Secure + SameSite=Lax，过期 7 天）。
+
+**Admin 页面结构**：
+
+```
+app/admin/
+├── login/
+│   └── page.tsx              # 登录表单
+├── page.tsx                  # 列表总览：3 类待审核数量徽章
+├── tools/
+│   ├── page.tsx              # 工具候选列表（status='ai_drafted'）
+│   └── [id]/
+│       └── page.tsx          # 单条审核：渲染将上线后的样子 + 通过/拒绝按钮
+├── comparisons/
+│   ├── page.tsx              # 对比页草稿列表（status='draft'）
+│   └── [id]/
+│       └── page.tsx          # 单条审核
+└── articles/
+    └── page.tsx              # 资讯抽审（最近 30 天 + 已 published）
+```
+
+**API routes**：
+
+```
+app/api/admin/
+├── login/route.ts                          # POST: 校验密码、设 cookie
+├── logout/route.ts                         # POST: 清除 cookie
+├── tools/[id]/approve/route.ts             # POST: 写入 tools 表，更新候选 status='approved' + reviewedAt + reviewedBy
+├── tools/[id]/reject/route.ts              # POST: 候选 status='rejected' + rejectReason
+├── comparisons/[id]/approve/route.ts       # POST: comparisons.status='published' + publishedAt + reviewedAt
+└── comparisons/[id]/reject/route.ts
+```
+
+**详情页设计要点**（参考白皮书"审核者数据要求"）：
+
+工具候选审核详情页必须呈现：
+- AI 起草的所有字段（zh / 分类 / 定价 / 中国访问 / 功能 / howToUse / faqs）
+- 工具官网链接（直接可点击访问）
+- 该工具在其他源的描述（如 ai-bot.cn 抓取的简介，作为横向参考）
+- 通过 / 拒绝 / 编辑后通过 三个按钮
+
+对比页草稿审核详情页直接渲染 `/compare/[slug]` 的预览版本（仅审核者可见）。
+
+**审核者操作日志**：
+
+每次 approve/reject 写入数据库：
+
+```typescript
+{
+  reviewedBy: 'admin',  // 第一阶段固定为 'admin'，未来多人时改为登录用户
+  reviewedAt: new Date(),
+  rejectReason: '...' // 仅拒绝时
+}
+```
+
+**环境变量**：
+
+`.env.local` 新增：
+```
+ADMIN_PASSWORD=<高强度密码>
+```
+
+**验证**：
+- 访问 `/admin` 未登录 → 重定向到 `/admin/login`
+- 登录后能看到三类待审核内容数量
+- 工具候选审核：通过后 `tools` 表多一行；拒绝后候选 status='rejected' 且有 rejectReason
+- 对比页审核：通过后 `comparisons.status='published'` 且 publishedAt 有值
+- 已自动处理的资讯能在 `/admin/articles` 列出，可以单独 hide 异常条目
+- `npm run lint && npm run build` 通过
+
+**风险与回滚**：
+
+- 改动 `process-tool-candidates.ts` 后，**新候选不再自动 publish 到 tools**——这是预期行为
+- 但 Vercel 已有部署的旧代码仍在运行，可能在 cron 时再次自动 publish 已被 AI 处理过的候选
+- 部署本任务后立即触发 redeploy，避免旧代码继续跑
+- 如果发现审核流程不工作，临时回滚方案：env 变量 `ADMIN_AUTO_PUBLISH=true` 时跳过审核（不在本期实现，只作为应急口子，CODEX 可以预留代码注释）
+
+---
+
+### I9（P1）：审核提醒邮件
+
+**对应白皮书**：§4「内容审核流程与推送机制」之"通知机制"
+
+**说明**：审核者不会主动每天打开 `/admin` 检查，需要邮件提醒。
+
+**实施步骤**：
+
+1. **接入 Resend**（推荐）或 Postmark：
+   - 注册 Resend 账号（免费额度 3000 封/月，足够单审核者使用）
+   - 获取 API Key 并写入 `.env.local`：
+     ```
+     RESEND_API_KEY=re_xxx
+     ADMIN_NOTIFY_EMAIL=editor@aiboxpro.cn  # 接收提醒的邮箱
+     ```
+   - 验证发件域名 `aiboxpro.cn`（添加 SPF/DKIM 记录到 DNS）
+
+2. **新建 `lib/jobs/notify-pending-review.ts`**：
+   ```typescript
+   // 查询三类待审核数量
+   // pendingTools = SELECT count(*) FROM tool_candidates WHERE status='ai_drafted'
+   // pendingComparisons = SELECT count(*) FROM comparisons WHERE status='draft'
+   // recentArticles = SELECT count(*) FROM articles WHERE status='published' AND publishedAt > now() - interval '24 hours'
+   //
+   // 如果三个全为 0，跳过发送
+   //
+   // 否则调用 Resend API 发邮件，主题：「AIBoxPro 审核提醒：X 条工具 / Y 条对比页待审」
+   // 正文 HTML：数量统计 + 直达 https://www.aiboxpro.cn/admin 的链接
+   ```
+
+3. **新建 cron 路由 `app/api/cron/notify-review/route.ts`**：
+   - 调用 `notifyPendingReview()`
+   - 鉴权：检查 header `Authorization: Bearer <CRON_SECRET>`
+
+4. **`vercel.json` 加 cron 配置**：
+   ```json
+   {
+     "path": "/api/cron/notify-review",
+     "schedule": "0 1 * * *"  // 每日 UTC 01:00 = 北京 09:00
+   }
+   ```
+
+5. **去重逻辑**：单日最多 1 次，由 cron 频率（每天一次）天然保证
+
+**验证**：
+- 测试环境手动触发 `/api/cron/notify-review` 能收到邮件
+- 邮件主题、数量、链接正确
+- 三类数量全为 0 时不发送邮件（验证 short-circuit）
+- Vercel Production cron 设置正确
+
+**Resend 备选方案**：
+
+如果 Resend 域名验证麻烦，可临时用 SMTP：
+- `nodemailer` + 编辑者自有邮箱（如 Gmail）的应用专用密码
+- 但 Gmail SMTP 在 Vercel 上可能慢或被限速，长期建议 Resend
+
+---
+
 ## Sprint 1 完成标准
 
 - [x] J1：决策入口和对比卡 href 指向正确路径（3 个 decisionLinks，4 个 compareCards）
@@ -300,4 +498,6 @@ grep -ri "aitoolsbox" --include="*.ts" --include="*.tsx" .
 - [x] I5：首页 3 个决策入口显示 emoji 图标，可正确跳转
 - [ ] I6：裸域 → www 永久重定向（301），所有页面有 canonical 标签
 - [ ] I7：4 个合规页面（/about、/privacy、/submit-guide、/disclaimer）可访问，sitemap 已收录
+- [ ] I8：`/admin` 受密码保护，三类内容（工具候选 / 对比页草稿 / 资讯）可审核；`process-tool-candidates` 不再直接 publish
+- [ ] I9：每日 09:00 邮件通知有待审核内容（数量为 0 时不发邮件）
 - [ ] 全部：`npm run lint && npm run build` 通过，无新增 warning

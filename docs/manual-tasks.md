@@ -21,6 +21,22 @@
 
 ---
 
+## Sprint 1 配置（待人工）
+
+### M11：配置 Admin 后台密码与邮件服务
+
+依赖 sprint-1 I8 + I9 工程上线。
+
+| 维度 | 内容 |
+|---|---|
+| 依赖工程 | 🟡 待 sprint-1 I8 + I9 |
+| 工作量 | 30-60 分钟（含 Resend 注册和域名验证） |
+| 步骤 | 1. 生成强密码（建议 1Password 等密码管理器）<br>2. Vercel 项目 Settings → Environment Variables 加 `ADMIN_PASSWORD`<br>3. 注册 Resend（[resend.com](https://resend.com)）→ 验证域名 `aiboxpro.cn`（DNS 加 SPF/DKIM）→ 获取 API Key<br>4. Vercel env 加 `RESEND_API_KEY`、`ADMIN_NOTIFY_EMAIL`（接收提醒的邮箱）<br>5. 触发 redeploy<br>6. 测试：访问 `/admin/login` 用密码登录，手动调用 `/api/cron/notify-review` 验证收件 |
+| 输出 | Vercel 已配置三个 env 变量；Resend 域名状态 verified；测试邮件已收到 |
+| 验证 | `/admin` 必须密码访问；09:00 cron 触发能收到邮件（前提：DB 中有待审核内容） |
+
+---
+
 ## Sprint 2 待人工执行
 
 ### M2：编辑产出 10 篇对比页内容
@@ -29,11 +45,10 @@
 
 | 维度 | 内容 |
 |---|---|
-| 依赖工程 | ✅ `draft:comparison` 脚本（2a47561）+ `comparisons` 表（3440f47） |
+| 依赖工程 | ✅ `draft:comparison` 脚本（2a47561）+ `comparisons` 表（3440f47）<br>🟡 sprint-1 I8 Admin 后台（替代之前提到的 publish:comparison 脚本） |
 | 工作量 | 8-15 小时（10 篇 × 60-90 分钟人工修订） |
 | 输入 | sprint-2 I6 任务清单的 10 个 slug 和目标对比词 |
-| 流程 | 1. `npm run draft:comparison -- <a> <b>` 生成草稿<br>2. 人工核对工具版本号、定价数字（与 tools 表对齐）<br>3. 删 AI 套话，加编辑判断<br>4. 填 Methodology Box（至少 testedAt / testedBy / testedEnv 三项必填）<br>5. 写入 `comparisons` 表 status='published' |
-| 阻塞 | **缺一个 `publish:comparison` 入库脚本**——目前要么手工 SQL `INSERT`，要么后续补脚本 |
+| 流程 | 1. `npm run draft:comparison -- <a> <b>` 生成草稿<br>2. 人工核对工具版本号、定价数字（与 tools 表对齐）<br>3. 删 AI 套话，加编辑判断<br>4. 填 Methodology Box（至少 testedAt / testedBy / testedEnv 三项必填）<br>5. 用 SQL 插入 `comparisons` 表 status='draft'（或后续提供专用入库 CLI）<br>6. **进 `/admin/comparisons/[id]` 审核详情页 → 通过 → 自动置为 published** |
 | 验证 | `/compare/[slug]` 全部可访问；`/compare` 列表页 ≥ 10 条 |
 
 ### M3：完成首份 AIBoxPro Lab 实测报告
@@ -141,15 +156,18 @@
 ## 阻塞依赖图
 
 ```
-M1 (清理资讯) → 独立可执行
-M5 (小红书账号) → 独立可执行
-M6 / M7 → 依赖 CODEX 写 I11/I12 文档框架
-M2 (10 对比页) → 依赖工具数据完整性 + 缺 publish:comparison 脚本
-M3 (Lab 报告) → 依赖测试者真实操作时间
-M4 (连通性) → 依赖 sprint-2 I9 工程
-M8 → 依赖 M2 上线 + M6 完成
-M9 → 依赖 M7 完成
-M10 → 依赖 sprint-2 I10 工程 + M5 + M2
+M1  (清理资讯)   → 独立可执行
+M5  (小红书账号) → 独立可执行
+M11 (Admin 配置) → 依赖 sprint-1 I8/I9 工程
+M6 / M7         → 依赖 CODEX 写 I11/I12 文档框架
+M2  (10 对比页)  → 依赖工具数据完整性 + M11（Admin 用于审核入库）
+M3  (Lab 报告)   → 依赖测试者真实操作时间 + M11
+M4  (连通性)     → 依赖 sprint-2 I9 工程
+M8              → 依赖 M2 上线 + M6 完成
+M9              → 依赖 M7 完成
+M10             → 依赖 sprint-2 I10 工程 + M5 + M2
 ```
 
-最容易先做的入口：**M1（5 分钟）→ M5（30 分钟）→ M6/M7（等 CODEX 出框架）**。
+最容易先做的入口：**M1（5 分钟）→ M5（30 分钟）→ M6/M7（等 CODEX 出框架）→ M11（等 I8/I9 工程）**。
+
+M2 / M3 内容生产任务在 M11 配置完成前都没有正式入库通道，建议先把 M11 跑通再批量生产内容。
