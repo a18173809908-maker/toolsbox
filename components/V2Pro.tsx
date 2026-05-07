@@ -39,21 +39,21 @@ const heroShadow = '0 18px 44px rgba(24, 32, 28, .10)';
 const decisionLinks: DecisionLink[] = [
   {
     title: '对比两个 AI 工具',
-    description: '适合承接 Claude Code vs Codex、Cursor vs Trae 这类高意图需求。',
+    description: 'Cursor 还是 Trae？Claude Code 还是 Codex？纠结时来这里看横评。',
     href: '/compare',
     accent: T.accent,
     tone: T.primaryBg,
   },
   {
     title: '寻找替代方案',
-    description: '为价格高、接入难或不稳定的工具提供更合适的替代路径。',
+    description: '海外工具贵、不稳定、被墙？看看哪些国产工具能直接用。',
     href: '/tools?china=accessible',
     accent: '#B7472A',
     tone: '#FFE1D4',
   },
   {
     title: '查看编辑榜单',
-    description: '按新手、团队、中文环境和低成本尝试等维度排序。',
+    description: '编辑实测后的工具排名，按新手、团队、中文场景分别给出推荐。',
     href: '/tools?sort=score',
     accent: '#8A5A00',
     tone: '#F4E5BD',
@@ -157,24 +157,8 @@ function HomeHeader({ mobile }: { mobile: boolean }) {
         ) : null}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {!mobile ? (
-            <Link
-              href="/tools"
-              style={{
-                minHeight: 38,
-                borderRadius: 8,
-                border: `1px solid ${T.rule}`,
-                padding: '8px 14px',
-                background: '#fff',
-                color: T.ink,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              提交工具
-            </Link>
-          ) : null}
           <Link
-            href="/tools"
+            href="/submit"
             style={{
               minHeight: 38,
               borderRadius: 8,
@@ -186,7 +170,7 @@ function HomeHeader({ mobile }: { mobile: boolean }) {
               whiteSpace: 'nowrap',
             }}
           >
-            商务合作
+            推荐工具
           </Link>
         </div>
       </div>
@@ -291,7 +275,7 @@ function getRecommendationReason(tool: Tool) {
   if (tool.pricing === 'Free') reasons.push('适合低成本尝试');
   if (tool.pricing === 'Freemium') reasons.push('有免费试用空间');
 
-  return reasons[0] ?? '适合放入第一批结构化评测候选';
+  return reasons[0] ?? '值得先试一试';
 }
 
 function getPricingLabel(pricing: Tool['pricing']) {
@@ -398,7 +382,7 @@ function Hero({
               lineHeight: 1.75,
             }}
           >
-            比较价格、中文支持、国内使用情况、适合场景和替代方案。把“有哪些工具”升级成“我该用哪个”。
+            比较价格、中文支持、国内能不能直接用、适合什么场景、有没有替代方案。一次看完，再决定用哪个。
           </p>
 
           <div
@@ -439,7 +423,7 @@ function Hero({
                   submitSearch();
                 }
               }}
-              placeholder="搜索工具、对比或场景，例如 Claude Code vs Codex"
+              placeholder="输入工具名或对比，例如 Claude Code vs Codex"
               style={{
                 flex: 1,
                 minWidth: 0,
@@ -765,14 +749,14 @@ function FooterCta() {
       >
         <div>
           <h2 style={{ margin: '0 0 8px', color: '#fff', fontFamily: 'Georgia, serif', fontSize: 30 }}>
-            让厂商提交信息，让编辑确认结论
+            没找到你常用的工具？
           </h2>
           <p style={{ margin: 0, color: 'rgba(255, 255, 255, .72)', lineHeight: 1.65 }}>
-            工具提交、测评合作、榜单赞助和企业选型咨询可以从这里进入。
+            告诉我们工具名和官网链接，我们会评估后收录进对比库。
           </p>
         </div>
         <Link
-          href="/tools"
+          href="/submit"
           style={{
             minHeight: 42,
             borderRadius: 8,
@@ -784,7 +768,7 @@ function FooterCta() {
             whiteSpace: 'nowrap',
           }}
         >
-          提交工具 / 商务合作
+          推荐一个工具
         </Link>
       </div>
     </div>
@@ -830,7 +814,7 @@ export default function V2ProHomepage({ tools, categories, trending, stats }: Ho
           <div style={shellStyle}>
             <SectionTitle
               title="热门对比"
-              description="对比页承接高意图搜索，结论按人群和场景给出。"
+              description="这些工具经常被拿来比较，点进去看清楚区别再选。"
               actionLabel="查看全部对比"
               actionHref="/compare"
             />
@@ -842,7 +826,7 @@ export default function V2ProHomepage({ tools, categories, trending, stats }: Ho
           <div style={shellStyle}>
             <SectionTitle
               title="编辑推荐"
-              description="卡片不只展示简介，还给出推荐理由和适合人群。"
+              description="编辑挑出来的工具，标注适合谁用、为什么推荐。"
               actionLabel="进入工具库"
               actionHref="/tools"
             />
@@ -880,7 +864,7 @@ export default function V2ProHomepage({ tools, categories, trending, stats }: Ho
                 padding: 20,
               }}
             >
-              <SectionTitle title="搜索候选" description="先用现有数据库做轻量筛选，完整决策页会在后续上线。" />
+              <SectionTitle title="搜索结果" description="根据你输入的关键词匹配到的工具。" />
               <FeaturedTools tools={recommendedTools} categories={categories} mobile={mobile} />
             </div>
           </section>
