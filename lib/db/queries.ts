@@ -1,7 +1,7 @@
 import { db } from './index';
 import { categories, tools, githubTrending, articles, sources, toolCandidates } from './schema';
 import { desc, asc, eq, ilike, or, isNull, count, max, and, inArray } from 'drizzle-orm';
-import type { TrendingPeriod, Tool, Category, RepoItem, HomepageStats, NewsItem } from '@/lib/data';
+import type { TrendingPeriod, Tool, Category, RepoItem, HomepageStats } from '@/lib/data';
 
 // ── Homepage ─────────────────────────────────────────────────────────────────
 
@@ -10,17 +10,11 @@ export async function loadHomepageData(): Promise<{
   tools: Tool[];
   trending: Record<TrendingPeriod, RepoItem[]>;
   stats: HomepageStats;
-  news: NewsItem[];
 }> {
-  const [cats, ts, gh, arts] = await Promise.all([
+  const [cats, ts, gh] = await Promise.all([
     db.select().from(categories),
     db.select().from(tools).orderBy(desc(tools.publishedAt)),
     db.select().from(githubTrending).orderBy(asc(githubTrending.period), desc(githubTrending.gained)),
-    db.select({ id: articles.id, title: articles.title, titleZh: articles.titleZh, url: articles.url, tag: articles.tag, publishedAt: articles.publishedAt })
-      .from(articles)
-      .where(eq(articles.status, 'published'))
-      .orderBy(desc(articles.publishedAt))
-      .limit(6),
   ]);
 
   const tools2: Tool[] = ts.map((t) => ({
@@ -86,16 +80,7 @@ export async function loadHomepageData(): Promise<{
     lastUpdatedAt: latestSnapshot?.toISOString(),
   };
 
-  const news: NewsItem[] = arts.map((a) => ({
-    id: a.id,
-    title: a.title,
-    titleZh: a.titleZh ?? undefined,
-    url: a.url,
-    tag: a.tag ?? undefined,
-    publishedAt: a.publishedAt?.toISOString() ?? undefined,
-  }));
-
-  return { categories: cs, tools: tools2, trending, stats, news };
+  return { categories: cs, tools: tools2, trending, stats };
 }
 
 // ── Tool detail ───────────────────────────────────────────────────────────────

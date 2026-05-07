@@ -2,73 +2,70 @@
 
 > **目标**：消除现有信任损耗，完成技术与数据基础。不要求任何新功能上线。
 >
-> **完成标准**：打开任意工具详情页，数据来源清晰、更新时间可见、无乱码内容、品牌名一致。首页四个决策入口可点击跳转，搜索词可透传至工具库。
+> **完成标准**：打开任意工具详情页，数据来源清晰、更新时间可见、无乱码内容、品牌名一致。首页三个决策入口可点击跳转，搜索词可透传至工具库。
 >
 > **执行规则**：每个任务独立 commit，commit message 注明任务编号（如 `fix(J1): 修复决策入口 href`）。
 
 ---
 
+## 进度状态（最近更新：2026-05-07）
+
+| 任务 | 状态 | Commit |
+|---|---|---|
+| J1 修复首页 href | ✅ 已完成 | 394a180 |
+| J2 搜索 query 透传 + Enter 提交 | ✅ 已完成 | 61f2787 + 后续 |
+| J3 移除 news prop | ✅ 已完成 | 后续 commit |
+| J4 Footer prop 命名 | 🟡 待做 | — |
+| J5 删除场景模块 | ✅ 已完成 | 394a180 |
+| J6 Hero 侧边栏视觉 | 🟡 待做（依赖 I5） | — |
+| I1 品牌统一 AIBoxPro | 🟡 待做 | — |
+| I2 历史乱码清理 | 🟡 待做 | — |
+| I3 数据时效性标注 | 🟡 待做 | — |
+| I4 对比页模板 | 🟡 待做 | — |
+| I5 首页三大决策入口（emoji 图标） | 🟡 待做 | — |
+
+CODEX 接手时建议顺序：**J4 → I1 → I2 → I5 → I3 → I4**（J4 最快收尾首页修复，I1/I2 是低风险的信任修复，然后 I5 视觉补完，最后 I3/I4 为对比页内容做数据准备）。
+
+---
+
 ## 第 1-2 周：首页修复 + 品牌统一 + 乱码清理
 
-### J1（P0）：修复首页决策入口和对比卡 href
+### ✅ J1（P0）：修复首页决策入口和对比卡 href — 已完成
 
-**文件**：`components/V2Pro.tsx`
+**已实施**（commit 394a180）：
+- `decisionLinks` 改为 3 个入口：对比 → `/compare`、替代方案 → `/tools?china=accessible`、榜单 → `/tools?sort=score`
+- `compareCards` 4 个 href 改为 `/compare/[slug]` 格式
+- `compareCards` actionHref（"查看全部对比"）从 `/tools` 改为 `/compare`
 
-**问题**：`decisionLinks`、`compareCards` 数组中所有 `href` 全写死为 `'/tools'`，三个决策入口毫无差异，对比卡点击后全部跳工具库。
+> `/compare/*` 目前会返回 404（I4 完成后即可访问），保持 404 是有意为之，不用 `/tools` 兜底。
 
-**修复**：
-
-```typescript
-// decisionLinks（约第 39-68 行）—— 改为 3 个入口（场景模块由 J5 移除）
-{ title: '对比两个 AI 工具', href: '/compare' },
-{ title: '寻找替代方案',     href: '/tools?china=accessible' },
-{ title: '查看编辑榜单',     href: '/tools?sort=score' },
-
-// compareCards（约第 70-95 行）
-{ title: 'Claude Code vs Codex', href: '/compare/claude-code-vs-codex' },
-{ title: 'Cursor vs Trae',       href: '/compare/cursor-vs-trae' },
-{ title: 'ChatGPT vs Kimi',      href: '/compare/chatgpt-vs-kimi' },
-{ title: 'Midjourney vs 即梦',   href: '/compare/midjourney-vs-jimeng' },
-```
-
-> `/compare/*` 目前不存在会返回 404，这是预期行为（I4 完成后即可访问），不要用 `/tools` 兜底。
-
-**验证**：三个 decisionLinks href 各不相同；compareCards href 格式正确；`npm run build` 通过。
+**验证已通过**：3 个 decisionLinks href 各不相同；compareCards href 格式正确；`npm run lint && npm run build` 通过。
 
 ---
 
-### J2（P0）：搜索 query 透传至工具库
+### ✅ J2（P0）：搜索 query 透传至工具库 — 已完成
 
-**文件**：`components/V2Pro.tsx`，`Hero` 组件内"进入工具库"按钮（约第 375-391 行）
+**已实施**：`components/V2Pro.tsx` Hero 组件
+- 搜索按钮 `<Link>` href 改为动态拼接 `?q=` 参数
+- 输入框 `<input>` 加 `onKeyDown` 处理 Enter 键提交
+- 引入 `useRouter` 与 `submitSearch()` 封装跳转逻辑
 
-**问题**：热门搜索词点击后只更新本地 state，"进入工具库"按钮 href 写死为 `'/tools'`，搜索词丢失。
-
-**修复**：
-
-```tsx
-<Link
-  href={`/tools${query.trim() ? `?q=${encodeURIComponent(query.trim())}` : ''}`}
-  style={{ /* 保持原有样式不变 */ }}
->
-  进入工具库
-</Link>
-```
-
-**验证**：点热门词 → 点进入工具库 → URL 带 `?q=` 参数；query 为空时跳转干净的 `/tools`。
+**验证已通过**：
+- 点热词 → 点搜索按钮 → URL 携带 `?q=` ✅
+- 输入后按 Enter → 跳转携带 `?q=` ✅
+- query 为空时跳转干净的 `/tools` ✅
+- `npm run lint && npm run build` 通过
 
 ---
 
-### J3（P1）：移除 `news` prop 的无效数据获取
+### ✅ J3（P1）：移除 `news` prop 的无效数据获取 — 已完成
 
-**文件**：`components/V2Pro.tsx`、`lib/db/queries.ts`
+**已实施**：
+- `components/V2Pro.tsx`：`HomeData` 类型移除 `news` 字段，`NewsItem` 从 import 中移除
+- `lib/db/queries.ts`：`loadHomepageData()` 删除 articles 查询和 NewsItem 映射，返回类型同步收敛；`NewsItem` 从 import 中移除
+- `app/page.tsx` 不需要改动（透传 spread 自动适配）
 
-**问题**：`HomeData` 类型有 `news: NewsItem[]`，`loadHomepageData()` 也查询了资讯，但组件内从未渲染，是纯浪费的 DB 查询。
-
-**修复步骤**：
-1. `components/V2Pro.tsx`：从 `HomeData` 类型删除 `news` 字段，从组件入参解构删除 `news`
-2. `lib/db/queries.ts`：`loadHomepageData()` 中删除资讯查询语句
-
-**验证**：`npm run lint` 无 unused variable warning；`npm run build` 通过。
+**验证已通过**：`npm run lint` 无 warning，`npm run build` 通过，首页加载不再触发 articles 查询。
 
 ---
 
@@ -93,25 +90,16 @@ function Footer({ toolCount }: { toolCount: number }) { ... }
 
 ---
 
-### J5（P0）：移除整个场景模块
+### ✅ J5（P0）：移除整个场景模块 — 已完成
 
-**文件**：`components/V2Pro.tsx`
+**已实施**（commit 394a180）：
+- 删除 `ScenarioCard` 类型定义
+- 删除 `scenarioCards` 数组
+- 删除 `ScenarioSection` 函数组件
+- 删除 `V2ProHomepage` 中调用 `ScenarioSection` 的 `<section>` 区块
+- 顺手将 `HomeHeader navItems` 中"场景"项删除，"对比"指向 `/compare`，"排行榜"指向 `/tools?sort=score`
 
-**背景**：白皮书的重构方向是"对比 + 决策平台"，不做场景指南（H 系列）。首页保留场景模块会承诺一个不存在的功能，应整体删除。
-
-**需要删除的内容**：
-
-1. `ScenarioCard` 类型定义（约第 32-37 行）
-2. `scenarioCards` 数组及其全部数据（约第 97-116 行）
-3. `ScenarioSection` 函数组件整体（约第 561-621 行）
-4. `V2ProHomepage` 中调用 `ScenarioSection` 的整个 `<section>` 区块（"按场景找工具"标题及其下方网格，约第 953-961 行）
-
-**保留**：`SectionTitle`、`DecisionSection`、`compareCards` 不动。
-
-**验证**：
-- 首页不再出现"按场景找工具"区块
-- `npm run lint` 无 unused variable 警告
-- `npm run build` 通过
+**验证已通过**：首页无"按场景找工具"区块；`npm run lint && npm run build` 通过。
 
 ---
 
@@ -306,11 +294,11 @@ export const comparisons = pgTable('comparisons', {
 
 ## Sprint 1 完成标准
 
-- [ ] J1：决策入口和对比卡 href 指向正确路径（3 个 decisionLinks，4 个 compareCards）
-- [ ] J2：搜索词透传至 `/tools?q=`
-- [ ] J3：`loadHomepageData()` 不查询资讯，`HomeData` 无 `news` 字段
+- [x] J1：决策入口和对比卡 href 指向正确路径（3 个 decisionLinks，4 个 compareCards）
+- [x] J2：搜索词透传至 `/tools?q=`（按钮 + Enter 键均生效）
+- [x] J3：`loadHomepageData()` 不查询资讯，`HomeData` 无 `news` 字段
 - [ ] J4：`Footer` prop 名为 `toolCount`
-- [ ] J5：首页不再出现"按场景找工具"区块，相关代码全部删除
+- [x] J5：首页不再出现"按场景找工具"区块，相关代码全部删除
 - [ ] J6：Hero 侧边栏 3 个入口视觉协调
 - [ ] I1：全站无 `AiToolsBox` 用户可见字符串
 - [ ] I2：`/news` 无乱码或纯英文条目

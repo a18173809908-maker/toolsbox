@@ -2,15 +2,15 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { v2Tokens as T } from '@/lib/tokens';
-import type { Category, HomepageStats, RepoItem, Tool, TrendingPeriod, NewsItem } from '@/lib/data';
+import type { Category, HomepageStats, RepoItem, Tool, TrendingPeriod } from '@/lib/data';
 
 type HomeData = {
   tools: Tool[];
   categories: Category[];
   trending: Record<TrendingPeriod, RepoItem[]>;
   stats: HomepageStats;
-  news: NewsItem[];
 };
 
 type DecisionLink = {
@@ -318,6 +318,7 @@ function Hero({
   setQuery: (value: string) => void;
   mobile: boolean;
 }) {
+  const router = useRouter();
   const hotQueries = [
     'Claude Code vs Codex',
     'Cursor 替代品',
@@ -325,6 +326,11 @@ function Hero({
     '免费 AI 绘图工具',
     'AI PPT 工具推荐',
   ];
+
+  const submitSearch = () => {
+    const q = query.trim();
+    router.push(`/tools${q ? `?q=${encodeURIComponent(q)}` : ''}`);
+  };
 
   return (
     <section
@@ -427,6 +433,12 @@ function Hero({
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  submitSearch();
+                }
+              }}
               placeholder="搜索工具、对比或场景，例如 Claude Code vs Codex"
               style={{
                 flex: 1,
