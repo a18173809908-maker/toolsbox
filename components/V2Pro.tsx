@@ -28,13 +28,6 @@ type CompareCard = {
   badges: string[];
 };
 
-type ScenarioCard = {
-  title: string;
-  summary: string;
-  href: string;
-  meta: string;
-};
-
 const shellStyle: React.CSSProperties = {
   width: 'min(1180px, calc(100% - 40px))',
   margin: '0 auto',
@@ -47,28 +40,21 @@ const decisionLinks: DecisionLink[] = [
   {
     title: '对比两个 AI 工具',
     description: '适合承接 Claude Code vs Codex、Cursor vs Trae 这类高意图需求。',
-    href: '/tools',
+    href: '/compare',
     accent: T.accent,
     tone: T.primaryBg,
   },
   {
-    title: '按工作场景找工具',
-    description: '把“写代码、做 PPT、做内容”直接映射成推荐结果。',
-    href: '/tools',
-    accent: '#245F8F',
-    tone: '#DBE9F4',
-  },
-  {
     title: '寻找替代方案',
     description: '为价格高、接入难或不稳定的工具提供更合适的替代路径。',
-    href: '/tools',
+    href: '/tools?china=accessible',
     accent: '#B7472A',
     tone: '#FFE1D4',
   },
   {
     title: '查看编辑榜单',
     description: '按新手、团队、中文环境和低成本尝试等维度排序。',
-    href: '/tools',
+    href: '/tools?sort=score',
     accent: '#8A5A00',
     tone: '#F4E5BD',
   },
@@ -78,47 +64,26 @@ const compareCards: CompareCard[] = [
   {
     title: 'Claude Code vs Codex',
     summary: '看终端开发、本地代码代理、任务委派和 OpenAI 生态协作的差异。',
-    href: '/tools',
+    href: '/compare/claude-code-vs-codex',
     badges: ['AI 编程', '开发者'],
   },
   {
     title: 'Cursor vs Trae',
     summary: '比较 AI IDE、中文体验、上手门槛和团队落地难度。',
-    href: '/tools',
+    href: '/compare/cursor-vs-trae',
     badges: ['代码助手', '中文体验'],
   },
   {
     title: 'ChatGPT vs Kimi',
     summary: '从长文档、联网搜索、中文写作和日常办公角度看谁更顺手。',
-    href: '/tools',
+    href: '/compare/chatgpt-vs-kimi',
     badges: ['智能对话', '办公'],
   },
   {
     title: 'Midjourney vs 即梦',
     summary: '比较画质、商用可行性、中文提示词和国内使用门槛。',
-    href: '/tools',
+    href: '/compare/midjourney-vs-jimeng',
     badges: ['AI 绘图', '创作者'],
-  },
-];
-
-const scenarioCards: ScenarioCard[] = [
-  {
-    title: '适合国内程序员的 AI 编程工具',
-    summary: '围绕代码生成、代码审查、终端代理、IDE 助手和团队协作做选择。',
-    href: '/tools',
-    meta: '12 个工具候选',
-  },
-  {
-    title: '适合做 PPT 的 AI 工具',
-    summary: '从一句话生成、模板质量、文档转 PPT 和可编辑性来筛选。',
-    href: '/tools',
-    meta: '8 个工具候选',
-  },
-  {
-    title: '适合小红书运营的 AI 工具',
-    summary: '选题、文案、封面、图像和批量改写放到一个场景里统一决策。',
-    href: '/tools',
-    meta: '15 个工具候选',
   },
 ];
 
@@ -126,9 +91,8 @@ function HomeHeader({ mobile }: { mobile: boolean }) {
   const navItems = [
     ['首页', '/'],
     ['工具库', '/tools'],
-    ['对比', '/tools'],
-    ['场景', '/tools'],
-    ['排行榜', '/tools'],
+    ['对比', '/compare'],
+    ['排行榜', '/tools?sort=score'],
     ['开发者趋势', '/trending'],
   ];
 
@@ -661,68 +625,6 @@ function DecisionSection({ cards, mobile }: { cards: CompareCard[]; mobile: bool
   );
 }
 
-function ScenarioSection({ cards, mobile }: { cards: ScenarioCard[]; mobile: boolean }) {
-  return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: mobile ? '1fr' : 'repeat(3, minmax(0, 1fr))',
-        gap: 14,
-      }}
-    >
-      {cards.map((card, index) => (
-        <Link
-          key={card.title}
-          href={card.href}
-          style={{
-            minHeight: 188,
-            borderRadius: 8,
-            background: T.panel,
-            border: `1px solid ${T.rule}`,
-            boxShadow: cardShadow,
-            padding: 20,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 12,
-          }}
-        >
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              alignSelf: 'flex-start',
-              minHeight: 26,
-              padding: '4px 8px',
-              borderRadius: 6,
-              background: index === 1 ? '#DBE9F4' : index === 2 ? '#FFE1D4' : T.primaryBg,
-              color: index === 1 ? '#245F8F' : index === 2 ? '#B7472A' : T.accent,
-              fontSize: 12,
-              fontWeight: 800,
-            }}
-          >
-            {index === 0 ? '编程开发' : index === 1 ? '办公效率' : '内容运营'}
-          </span>
-          <h3 style={{ margin: 0, fontSize: 19, lineHeight: 1.35 }}>{card.title}</h3>
-          <p style={{ margin: 0, color: T.inkSoft, fontSize: 14, lineHeight: 1.65 }}>{card.summary}</p>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              gap: 12,
-              marginTop: 'auto',
-              color: T.inkMuted,
-              fontSize: 13,
-            }}
-          >
-            <span>{card.meta}</span>
-            <strong style={{ color: T.accent }}>查看场景 →</strong>
-          </div>
-        </Link>
-      ))}
-    </div>
-  );
-}
-
 function FeaturedTools({
   tools,
   categories,
@@ -918,21 +820,9 @@ export default function V2ProHomepage({ tools, categories, trending, stats }: Ho
               title="热门对比"
               description="对比页承接高意图搜索，结论按人群和场景给出。"
               actionLabel="查看全部对比"
-              actionHref="/tools"
+              actionHref="/compare"
             />
             <DecisionSection cards={compareCards} mobile={mobile} />
-          </div>
-        </section>
-
-        <section style={{ marginBottom: 34 }}>
-          <div style={shellStyle}>
-            <SectionTitle
-              title="按场景找工具"
-              description="场景页比泛新闻更接近转化，适合做 SEO 和商业合作。"
-              actionLabel="查看全部场景"
-              actionHref="/tools"
-            />
-            <ScenarioSection cards={scenarioCards} mobile={mobile} />
           </div>
         </section>
 
