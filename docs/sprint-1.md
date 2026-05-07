@@ -15,7 +15,7 @@
 | J1 修复首页 href | ✅ 已完成 | 394a180 |
 | J2 搜索 query 透传 + Enter 提交 | ✅ 已完成 | 61f2787 + 62aac8c |
 | J3 移除 news prop | ✅ 已完成 | 62aac8c |
-| J4 Footer prop 命名 | 🟡 待做 | — |
+| J4 Footer prop 命名 | ✅ 已自然消化（Footer 组件被 J5 删除） | — |
 | J5 删除场景模块 | ✅ 已完成 | 394a180 |
 | J6 Hero 侧边栏视觉 | 🟡 待做（依赖 I5） | — |
 | I1 品牌统一 AIBoxPro | ✅ 已完成 | 3483602 + e426a5e |
@@ -28,12 +28,11 @@
 | I8 Admin 后台 + 审核流程 | 🟡 待做（白皮书 §4 内容审核流程） | — |
 | I9 审核提醒邮件（Vercel Cron + Resend） | 🟡 待做 | — |
 
-**Sprint 1 剩余任务**：J4 / J6 / I6 / I7 / I8 / I9
+**Sprint 1 剩余任务**：J6 / I6 / I7 / I8 / I9
 
-执行顺序建议：**J4 → I6 → I8 → I9 → I7 → J6**
+执行顺序建议：**I6 → I8 → I9 → I7 → J6**
 
 排序逻辑：
-- J4 最快收尾首页修复（5 行改动）
 - I6（Canonical）属于全站 SEO 基础设施
 - **I8 + I9（审核流程）必须先于 Sprint 2 内容生产，否则对比页和 Lab 报告无安全的发布路径**
 - I7（合规页）独立任务，可挪到任何位置
@@ -93,24 +92,13 @@
 
 ---
 
-### J4（P1）：修复 Footer prop 命名错误
+### ✅ J4（P1）：修复 Footer prop 命名错误 — 已自然消化
 
-**文件**：`components/V2Pro.tsx`，`Footer` 组件及调用处
+**实际处理**：当前代码中 `components/V2Pro.tsx` 不再有 `Footer` 组件（也没有 `FooterCta`）——这两个组件在前期 J5（删场景模块）和后续 revert（撤回 /submit 入口）的 commit 里被一起删除。
 
-**问题**：prop 叫 `newsCount` 但存的是工具数量，内部显示"已整理工具：{newsCount}"。
+`grep -n "footer\|newsCount\|toolCount" components/V2Pro.tsx` 无任何匹配，意味着原来要修的 prop 命名错误已不存在。
 
-**修复**：
-
-```tsx
-// Footer 类型
-function Footer({ toolCount }: { toolCount: number }) { ... }
-// 内部
-<div>已整理工具：{toolCount}</div>
-// 调用处
-<Footer toolCount={tools.length} />
-```
-
-**验证**：`npm run lint` 无 warning；页面底部数字显示正常。
+**原任务规格保留作为历史记录**（参见 `git log` 中 e528ab2、394a180）。如未来重新引入页脚组件，必须直接使用语义清晰的命名（`toolCount`），不要回退到 `newsCount`。
 
 ---
 
@@ -488,7 +476,7 @@ ADMIN_PASSWORD=<高强度密码>
 - [x] J1：决策入口和对比卡 href 指向正确路径（3 个 decisionLinks，4 个 compareCards）
 - [x] J2：搜索词透传至 `/tools?q=`（按钮 + Enter 键均生效）
 - [x] J3：`loadHomepageData()` 不查询资讯，`HomeData` 无 `news` 字段
-- [ ] J4：`Footer` prop 名为 `toolCount`
+- [x] J4：Footer 组件已在前期清理中删除，prop 命名错误自然消失
 - [x] J5：首页不再出现"按场景找工具"区块，相关代码全部删除
 - [ ] J6：Hero 侧边栏 3 个入口视觉协调
 - [x] I1：全站无 `AiToolsBox` 用户可见字符串
