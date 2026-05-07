@@ -17,7 +17,7 @@ export default function SubmitGuidePage() {
     >
       <div style={S.callout}>
         本页是<strong style={{ ...S.strong, color: 'inherit' }}>说明文档</strong>，
-        不是表单页。当前阶段我们通过 GitHub Issue 接收工具推荐，下面会说明具体格式。
+        不是表单页。当前阶段我们通过邮件和微信公众号接收工具推荐，下面会说明具体格式。
       </div>
 
       <h2 style={S.h2}>收录标准</h2>
@@ -25,7 +25,7 @@ export default function SubmitGuidePage() {
       <ul style={S.ul}>
         <li style={S.li}>面向中文用户的国产 AI 工具（豆包、Kimi、DeepSeek、Trae 等同类）</li>
         <li style={S.li}>海外 AI 工具，但在国内有可用性优势或合理使用场景</li>
-        <li style={S.li}>开源 AI 工具或 GitHub 趋势项目，有真实用户与活跃 issue</li>
+        <li style={S.li}>开源 AI 工具或开发者社区热门项目，有真实用户与活跃维护</li>
       </ul>
 
       <p style={S.p}>以下情况通常不收录：</p>
@@ -37,20 +37,21 @@ export default function SubmitGuidePage() {
       </ul>
 
       <h2 style={S.h2}>怎么提交</h2>
-      <p style={S.p}>
-        前往项目 GitHub 仓库提交 issue：
-      </p>
-      <p style={S.p}>
-        <a
-          href="https://github.com/a18173809908-maker/toolsbox/issues/new"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: S.strong.color, textDecoration: 'underline' }}
-        >
-          github.com/a18173809908-maker/toolsbox/issues/new
-        </a>
-      </p>
-      <p style={S.p}>issue 标题用「工具推荐：[工具名称]」，正文包含以下信息：</p>
+      <p style={S.p}>通过以下任一渠道发送提交：</p>
+      <ul style={S.ul}>
+        <li style={S.li}>
+          <strong style={S.strong}>邮箱</strong>：
+          <a href="mailto:4514407@qq.com?subject=工具推荐" style={{ color: S.strong.color, textDecoration: 'underline' }}>
+            4514407@qq.com
+          </a>
+          ，标题用「工具推荐：[工具名称]」
+        </li>
+        <li style={S.li}>
+          <strong style={S.strong}>微信公众号</strong>：关注「aiboxprocn」，在公众号后台直接发送消息
+        </li>
+      </ul>
+
+      <p style={S.p}>无论哪个渠道，请在内容里包含以下信息：</p>
       <ul style={S.ul}>
         <li style={S.li}>工具名称（中英文都给）</li>
         <li style={S.li}>官方网址</li>
@@ -99,7 +100,7 @@ export default function SubmitGuidePage() {
         <strong style={S.strong}>Q：我的工具描述里有错误怎么办？</strong>
       </p>
       <p style={S.p}>
-        在同一个 GitHub Issue 渠道提交修正即可。修正请提供具体字段和正确值，
+        通过同一渠道（邮件或公众号）发送修正即可。请提供具体字段和正确值，
         以及可证实的来源链接。
       </p>
     </LegalPage>

@@ -71,7 +71,7 @@ export default function AboutPage() {
         </li>
       </ul>
 
-      <h2 style={S.h2}>联系我们</h2>
+      <h2 id="contact" style={S.h2}>联系我们</h2>
       <p style={S.p}>
         想推荐工具收录？请看
         <a href="/submit-guide" style={{ color: S.strong.color, textDecoration: 'underline' }}>
@@ -80,17 +80,32 @@ export default function AboutPage() {
         。
       </p>
       <p style={S.p}>
-        发现内容有误、数据过期，或想反馈建议，欢迎通过 GitHub Issue 联系：
-        <a
-          href="https://github.com/a18173809908-maker/toolsbox/issues"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: S.strong.color, textDecoration: 'underline' }}
-        >
-          github.com/a18173809908-maker/toolsbox
-        </a>
-        。
+        发现内容有误、数据过期、合作或反馈，欢迎通过以下任一渠道联系：
       </p>
+      <ul style={S.ul}>
+        <li style={S.li}>
+          <strong style={S.strong}>邮箱</strong>：
+          <a href="mailto:4514407@qq.com" style={{ color: S.strong.color, textDecoration: 'underline' }}>
+            4514407@qq.com
+          </a>
+        </li>
+        <li style={S.li}>
+          <strong style={S.strong}>微信公众号</strong>：搜索关注「aiboxprocn」，或扫描下方二维码
+        </li>
+      </ul>
+      <div style={{ marginTop: 16, textAlign: 'center' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/wechat-qr.png"
+          alt="AIBoxPro 微信公众号二维码"
+          width={200}
+          height={200}
+          style={{ borderRadius: 8, border: '1px solid #E8D5B7' }}
+        />
+        <div style={{ marginTop: 8, color: '#6B7280', fontSize: 13 }}>
+          微信公众号：aiboxprocn
+        </div>
+      </div>
     </LegalPage>
   );
 }

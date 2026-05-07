@@ -89,16 +89,14 @@ export default function DisclaimerPage() {
       </ul>
 
       <p style={S.p}>
-        如果你认为平台某条信息存在严重误导，请通过{' '}
+        如果你认为平台某条信息存在严重误导，请通过邮箱{' '}
         <a
-          href="https://github.com/a18173809908-maker/toolsbox/issues"
-          target="_blank"
-          rel="noopener noreferrer"
+          href="mailto:4514407@qq.com"
           style={{ color: S.strong.color, textDecoration: 'underline' }}
         >
-          GitHub Issue
+          4514407@qq.com
         </a>
-        {' '}联系我们，会尽快核实并修正。
+        {' '}或微信公众号「aiboxprocn」联系我们，会尽快核实并修正。
       </p>
     </LegalPage>
   );

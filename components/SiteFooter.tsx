@@ -27,8 +27,8 @@ const legalLinks: FooterLink[] = [
 ];
 
 const contactLinks: FooterLink[] = [
-  { label: 'GitHub 仓库', href: 'https://github.com/a18173809908-maker/toolsbox', external: true },
-  { label: '提交 Issue', href: 'https://github.com/a18173809908-maker/toolsbox/issues/new', external: true },
+  { label: '邮箱 4514407@qq.com', href: 'mailto:4514407@qq.com' },
+  { label: '微信公众号 aiboxprocn', href: '/about#contact' },
 ];
 
 function FooterColumn({ title, links }: { title: string; links: FooterLink[] }) {
