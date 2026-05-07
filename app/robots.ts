@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       { userAgent: '*',           allow: '/', disallow: '/api/' },
       { userAgent: 'Baiduspider', allow: '/'                    },
     ],
-    sitemap: 'https://aiboxpro.cn/sitemap.xml',
+    sitemap: 'https://www.aiboxpro.cn/sitemap.xml',
   };
 }

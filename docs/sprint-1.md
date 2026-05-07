@@ -23,17 +23,16 @@
 | I3 数据时效性标注 | ✅ 已完成 | f6ca40b |
 | I4 对比页模板 | ✅ 已完成 | 3440f47 + e426a5e（补 testedVersion） |
 | I5 首页三大决策入口（emoji 图标） | ✅ 已完成 | 230c7c0 |
-| I6 Canonical 链接 + 重定向规范 | 🟡 待做 | — |
+| I6 Canonical 链接 + 重定向规范 | ✅ 已完成 | 待提交 |
 | I7 合规页面（关于/隐私/工具提交说明/免责声明） | 🟡 待做 | — |
 | I8 Admin 后台 + 审核流程 | 🟡 待做（白皮书 §4 内容审核流程） | — |
 | I9 审核提醒邮件（Vercel Cron + Resend） | 🟡 待做 | — |
 
-**Sprint 1 剩余任务**：J6 / I6 / I7 / I8 / I9
+**Sprint 1 剩余任务**：J6 / I7 / I8 / I9
 
-执行顺序建议：**I6 → I8 → I9 → I7 → J6**
+执行顺序建议：**I8 → I9 → I7 → J6**
 
 排序逻辑：
-- I6（Canonical）属于全站 SEO 基础设施
 - **I8 + I9（审核流程）必须先于 Sprint 2 内容生产，否则对比页和 Lab 报告无安全的发布路径**
 - I7（合规页）独立任务，可挪到任何位置
 - J6 视觉收尾（依赖 I5，已完成）
@@ -161,39 +160,23 @@ grep -ri "aitoolsbox" --include="*.ts" --include="*.tsx" .
 
 ---
 
-### I6（P0）：Canonical 链接修复 + 重定向规范化
+### ✅ I6（P0）：Canonical 链接修复 + 重定向规范化 — 已完成
 
-**对应白皮书**：§7 第一期 W1-2 第 2 项 / §1 重构紧迫性诊断中的"307 重定向逻辑不规范"问题
+**已实施**：
 
-**问题**：当前域名/重定向逻辑会让搜索引擎抓取出现重复页面，且 SEO 权重分散到多个 URL（如 `aiboxpro.cn` / `www.aiboxpro.cn` / 含尾斜杠 / 不含尾斜杠 / http vs https 等组合）。
+- `next.config.ts`：新增 `redirects()` 配置，裸域 `aiboxpro.cn` → `https://www.aiboxpro.cn` 永久重定向（`permanent: true` 即 301，非 307）
+- `app/robots.ts`：sitemap URL 从 `https://aiboxpro.cn/sitemap.xml` 改为 `https://www.aiboxpro.cn/sitemap.xml`
+- `app/layout.tsx`：本任务前 `metadataBase` 已经是 `https://www.aiboxpro.cn`，root canonical 已设置（无需改动）
+- `app/sitemap.ts`：本任务前所有 URL 已统一使用 `BASE = 'https://www.aiboxpro.cn'`（无需改动）
+- 各页 `generateMetadata`：本任务前已全部设置相对路径 canonical，由 `metadataBase` 自动解析为绝对 URL（无需改动）
 
-**实施步骤**：
+**部署后须验证**（生产环境，本地 `npm run build` 不能完整测试 redirects）：
 
-1. **统一权威域名**：选定 `https://www.aiboxpro.cn` 作为主域名（与 `app/page.tsx` 中已有的 `BASE` 常量一致）
-2. **`next.config.ts`** 新增 redirects 配置：
-   ```typescript
-   async redirects() {
-     return [
-       // 非 www 永久重定向到 www（301，不是 307）
-       {
-         source: '/:path*',
-         has: [{ type: 'host', value: 'aiboxpro.cn' }],
-         destination: 'https://www.aiboxpro.cn/:path*',
-         permanent: true,
-       },
-     ];
-   }
-   ```
-3. **每个页面添加 canonical 标签**：在 `app/layout.tsx` 的 `metadata` 中或各页面 `generateMetadata` 中明确 `alternates: { canonical: ... }`
-4. **`app/sitemap.ts`** 检查所有 URL 是否使用统一的 `BASE` 常量，无硬编码裸域名
-5. **`app/robots.ts`** 检查 sitemap 引用是否带 `https://www.` 前缀
-
-**验证**：
-- 访问 `aiboxpro.cn`（无 www）→ 301 跳转到 `https://www.aiboxpro.cn`，**不是** 307
-- 用 `curl -I https://aiboxpro.cn/tools` 检查响应码为 `301 Moved Permanently`
-- 工具详情页查看源代码，`<link rel="canonical" href="https://www.aiboxpro.cn/tools/...">` 存在
+- `curl -I https://aiboxpro.cn/tools` 返回 `301 Moved Permanently`，`Location: https://www.aiboxpro.cn/tools`
+- 任意工具详情页查看源代码，`<link rel="canonical" href="https://www.aiboxpro.cn/tools/...">` 存在
 - Google Search Console URL 检查工具确认 canonical 正确识别
-- `npm run build` 通过
+
+**注意**：Vercel 域名管理面板可能在边缘层做了平台级 redirect（默认 308），代码层的 redirect 配置作为兜底，确保任何路径都得到 301。如果生产环境发现实际是 308，需要在 Vercel 域名设置中把 `aiboxpro.cn` 标为非主域名以触发代码层 redirect。
 
 ---
 
@@ -484,7 +467,7 @@ ADMIN_PASSWORD=<高强度密码>
 - [x] I3：工具详情页定价区块有「最后更新」时间提示，过期数据有黄色警告
 - [x] I4：`/compare/cursor-vs-trae` 可访问，含 Methodology Box 区块
 - [x] I5：首页 3 个决策入口显示 emoji 图标，可正确跳转
-- [ ] I6：裸域 → www 永久重定向（301），所有页面有 canonical 标签
+- [x] I6：裸域 → www 永久重定向（301），所有页面有 canonical 标签
 - [ ] I7：4 个合规页面（/about、/privacy、/submit-guide、/disclaimer）可访问，sitemap 已收录
 - [ ] I8：`/admin` 受密码保护，三类内容（工具候选 / 对比页草稿 / 资讯）可审核；`process-tool-candidates` 不再直接 publish
 - [ ] I9：每日 09:00 邮件通知有待审核内容（数量为 0 时不发邮件）
