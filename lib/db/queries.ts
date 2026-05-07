@@ -407,6 +407,22 @@ export async function loadComparisonById(id: string): Promise<ComparisonWithTool
   return withTools[0] ?? null;
 }
 
+export async function loadLabReportsByToolId(toolId: string): Promise<ComparisonWithTools[]> {
+  const rows = await db
+    .select()
+    .from(comparisons)
+    .where(
+      and(
+        eq(comparisons.status, 'published'),
+        eq(comparisons.isLabReport, true),
+        or(eq(comparisons.toolAId, toolId), eq(comparisons.toolBId, toolId)),
+      ),
+    )
+    .orderBy(desc(comparisons.publishedAt), desc(comparisons.updatedAt))
+    .limit(5);
+  return attachComparisonTools(rows);
+}
+
 export async function loadPendingArticles(limit = 20) {
   return db.select().from(articles)
     .where(eq(articles.status, 'published'))

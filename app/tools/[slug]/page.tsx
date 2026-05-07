@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import type React from 'react';
 import { SiteHeader } from '@/components/SiteHeader';
 import { AccessBadge, ToolIcon } from '@/components/ToolBadges';
-import { loadToolById, loadAllToolIds, loadToolsByCategory, loadRelatedArticles, loadToolsByIds } from '@/lib/db/queries';
+import { loadToolById, loadAllToolIds, loadToolsByCategory, loadRelatedArticles, loadToolsByIds, loadLabReportsByToolId } from '@/lib/db/queries';
 
 export const revalidate = 3600; // ISR — regenerate hourly
 export const dynamic = 'force-dynamic';
@@ -101,10 +101,11 @@ export default async function ToolDetailPage({ params }: Props) {
   const tool = await loadToolById(slug);
   if (!tool) notFound();
 
-  const [related, relatedArticles, alternativeTools] = await Promise.all([
+  const [related, relatedArticles, alternativeTools, labReports] = await Promise.all([
     loadToolsByCategory(tool.cat).then((ts) => ts.filter((t) => t.id !== tool.id).slice(0, 4)),
     loadRelatedArticles(tool.name, 5),
     loadToolsByIds(tool.cnAlternatives ?? []),
+    loadLabReportsByToolId(tool.id),
   ]);
 
   const jsonLd = {
@@ -351,6 +352,25 @@ export default async function ToolDetailPage({ params }: Props) {
                     <div style={{ fontWeight: 700, fontSize: 15, color: '#1F2937', marginBottom: 6 }}>Q：{faq.q}</div>
                     <div style={{ fontSize: 14, color: '#4B5563', lineHeight: 1.7 }}>A：{faq.a}</div>
                   </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {labReports.length > 0 && (
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #C7D2FE', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(22px, 4vw, 32px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 18px', letterSpacing: '-0.01em' }}>
+                AIBoxPro Lab
+              </h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {labReports.map((report) => (
+                  <Link key={report.id} href={`/compare/${report.id}`} style={{ display: 'block', padding: '14px 16px', borderRadius: 12, background: '#EEF2FF', border: '1px solid #C7D2FE', color: '#1F2937', textDecoration: 'none' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
+                      <span style={{ padding: '2px 8px', borderRadius: 999, background: '#3730A3', color: '#fff', fontSize: 11, fontWeight: 900 }}>Lab</span>
+                      <span style={{ fontSize: 15, fontWeight: 800 }}>{report.title}</span>
+                    </div>
+                    <div style={{ color: '#4B5563', fontSize: 13, lineHeight: 1.6 }}>{report.summary ?? report.verdict ?? '实测报告已发布。'}</div>
+                  </Link>
                 ))}
               </div>
             </div>

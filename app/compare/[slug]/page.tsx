@@ -24,6 +24,8 @@ const C = {
   accent: '#C2410C',
   greenBg: '#DCFCE7',
   green: '#166534',
+  labBg: '#EEF2FF',
+  lab: '#3730A3',
 };
 
 type Props = { params: Promise<{ slug: string }> };
@@ -100,6 +102,12 @@ function AccessValue({ chinaAccess, chineseUi }: { chinaAccess?: string | null; 
   return <AccessBadge chinaAccess={chinaAccess} chineseUi={chineseUi} compact />;
 }
 
+function ReproducibleValue({ value }: { value?: boolean | null }) {
+  if (value === true) return <span>可复现</span>;
+  if (value === false) return <span>未提供</span>;
+  return <span>待补充</span>;
+}
+
 export default async function CompareDetailPage({ params }: Props) {
   const { slug } = await params;
   const comparison = process.env.DATABASE_URL ? await loadComparisonById(slug) : null;
@@ -156,6 +164,11 @@ export default async function CompareDetailPage({ params }: Props) {
             </div>
 
             <h1 style={{ color: C.ink, fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(32px, 7vw, 52px)', lineHeight: 1.08, margin: '0 0 14px' }}>
+              {comparison.isLabReport && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', marginRight: 12, padding: '5px 10px', borderRadius: 999, background: C.labBg, color: C.lab, fontFamily: 'Inter, ui-sans-serif, system-ui', fontStyle: 'normal', fontSize: 13, fontWeight: 900 }}>
+                  AIBoxPro Lab
+                </span>
+              )}
               {comparison.title}
             </h1>
             <p style={{ color: C.inkSoft, fontSize: 16, lineHeight: 1.75, maxWidth: 820, margin: 0 }}>
@@ -170,6 +183,17 @@ export default async function CompareDetailPage({ params }: Props) {
             <MethodologyItem label="测试环境" value={comparison.testedEnv} />
             <MethodologyItem label="评测集说明" value={comparison.evalSet} />
             <MethodologyItem label="测试人" value={comparison.testedBy} />
+            {comparison.isLabReport && (
+              <>
+                <MethodologyItem label="Lab ID" value={comparison.labReportId} />
+                <MethodologyItem label="样本规模" value={comparison.sampleSize} />
+                <div style={{ borderTop: `1px solid ${C.ruleSoft}`, paddingTop: 12 }}>
+                  <div style={{ color: C.inkMuted, fontSize: 12, fontWeight: 700, marginBottom: 4 }}>可复现性</div>
+                  <div style={{ color: C.ink, fontSize: 14, lineHeight: 1.55 }}><ReproducibleValue value={comparison.reproducible} /></div>
+                </div>
+                <MethodologyItem label="测试仓库" value={comparison.repoUrl} />
+              </>
+            )}
           </section>
 
           <section style={{ background: C.panel, border: `1px solid ${C.rule}`, borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
