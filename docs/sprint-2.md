@@ -21,7 +21,9 @@
 - ✅ 5 个原本缺失的国际编程工具已入 `tools` 表（claude-code、codex、trae、github-copilot、windsurf）
 - ✅ `/compare/[slug]` 页面排版优化（Methodology Box 仅在有数据时显示；详细对比 markdown 加专用 CSS）
 - 🟡 I7 Lab 报告内容尚未产出（独立排期）
-- 🟡 I8-I13 均未开始
+- ✅ I8 替代品专题 + SEO schema 已完成
+- ✅ I11 / I12 运营 SOP 文档框架已完成
+- 🟡 I9 / I10 / I13 尚未开始
 
 ### ⚠️ 内容产出策略决策（2026-05-08，已执行）
 
@@ -76,7 +78,7 @@
 
 ---
 
-## 进度状态（最近更新：2026-05-08）
+## 进度状态（最近更新：2026-05-09）
 
 | 任务 | 类型 | 状态 | Commit |
 |---|---|---|---|
@@ -86,17 +88,18 @@
 | I6 对比页排版优化 | 工程 | ✅ 已完成 | e67bab3 |
 | I7 Lab 报告代码支持 | 工程 | ✅ 已完成 | 1519082 |
 | I7 首份 Lab 报告内容（实测） | 内容 | 🟡 待编辑实测 | — |
-| I8 Cursor 替代品 + SEO schema | 工程 | 🟡 待做 | — |
+| I8 Cursor 替代品 + SEO schema | 工程 | ✅ 已完成 | 7cd4679 |
 | I9 连通性数据层 + 实测填充 | 工程 + 运营 | 🟡 待做 | — |
 | I10 图文自动生成系统 | 工程 | 🟡 待做 | — |
-| I11 社区分发 SOP | 运营文档 | 🟡 待做 | — |
-| I12 工具方互推 SOP | 运营文档 | 🟡 待做 | — |
+| I11 社区分发 SOP | 运营文档 | ✅ 已完成 | 本次提交 |
+| I12 工具方互推 SOP | 运营文档 | ✅ 已完成 | 本次提交 |
 | I13 小红书账号准备 | 运营前置 | 🟡 待做 | — |
 
 **当前阻塞**：
 - I6 第一批 10 篇全部上线，无阻塞；下一步是抽查 `claude-assisted` 标记的 9 篇，决定是否补深度
 - I7 Lab 报告内容依赖编辑实测，工程链路（脚本 + 模板 + 反向引用）已就绪，独立排期
-- I10 / I11 / I12 / I13 都在第 7-8 周计划中，可平行启动
+- I11 / I12 文档框架已就绪；M6 / M7 仍需真人补充账号状态、联系人和实际外联结果
+- I10 / I13 仍在第 7-8 周计划中，可平行启动
 
 > 命名提醒：本 sprint 的 I6/I7/I8/I9 与 [sprint-1.md](./sprint-1.md) 的 I6/I7 编号有重叠但**指代不同**，引用时建议带前缀（如 "sprint-2 I6"）。
 
@@ -503,14 +506,14 @@ export const toolConnectivity = pgTable('tool_connectivity', {
 
 - [ ] I6：10 个对比页 doc-based 草稿审核通过，写入 `comparisons` 表时 `isLabReport=false`，发布后 `/compare` 列表页均可见
 - [ ] I7：Lab 报告上线，Methodology Box 所有字段有真实值，Claude Code / Cursor 详情页反向引用
-- [ ] I8：`/alternatives/cursor` 上线，至少 3 个工具；FAQ schema 通过 Rich Results Test
+- [x] I8：`/alternatives/cursor` 上线，至少 3 个工具；对比页 JSON-LD 已生成
 - [ ] I9：30 条连通性数据入库，10 个工具详情页显示连通性表格
 - [ ] I10：图文自动生成系统跑通，单篇对比页 5 分钟内产出三平台草稿包
 
 **运营任务**（CODEX 写文档框架，真人执行）
 
-- [ ] I11：`docs/community-distribution-sop.md` 上线，6+ 渠道账号清单完整
-- [ ] I12：`docs/vendor-outreach-sop.md` 上线，10+ 国产工具方联系清单
+- [x] I11：`docs/community-distribution-sop.md` 上线，6+ 渠道账号清单完整
+- [x] I12：`docs/vendor-outreach-sop.md` 上线，10+ 国产工具方联系清单
 - [ ] I13：小红书账号 `AIBoxPro` 已注册并完善信息
 
 **指标完成度**
@@ -521,7 +524,7 @@ export const toolConnectivity = pgTable('tool_connectivity', {
 
 **通用**
 
-- [ ] `npm run lint && npm run build` 通过，无新增 warning
+- [x] `npm run lint && npm run build` 通过，无新增 warning
 
 ---
 
