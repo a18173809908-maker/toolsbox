@@ -94,6 +94,8 @@ Codex 方面，OpenAI 文档说明 Codex 包含在 ChatGPT Plus、Pro、Business
 - 是否用高阶模型
 - 团队是否需要统一管理、审计和权限
 
+本次编辑确认：订阅额度消耗与 API 计费是分离的。就这次小样本体验而言，Claude Code 的订阅额度消耗感高于 Codex；这只是单次任务观察，正式发布前建议继续记录更多任务的额度消耗。
+
 ## 6. 国内用户可用性
 
 本次不做“国内直连可用性”差异判断。编辑实测前提是：中国大陆网络下，两者通常都需要 VPN / 代理；账号、地区、支付方式和企业合规要求也可能影响实际可用性。
@@ -154,7 +156,7 @@ Codex 方面，OpenAI 文档说明 Codex 包含在 ChatGPT Plus、Pro、Business
 | testedVersion | Claude Code：VS Code 中使用 Claude Sonnet 4.6；Codex：GPT-5.5 |
 | testedEnv | 中国大陆网络，默认需要 VPN / 代理；本次不比较直连可用性 |
 | testedBy | 编辑实测 |
-| evalSet | 同一 Next.js 项目中，让两个工具分析 `/compare/[slug]` 对比页渲染流程，不改代码 |
+| evalSet | 同一 Next.js 项目中，让两个工具分析 `/compare/[slug]` 对比页渲染流程，不改代码；确认订阅额度消耗与 API 计费是否分离 |
 | sampleSize | 1 个理解类任务，每个工具各 1 次 |
 | reproducible | true |
 | repoUrl | 待补充 |
@@ -170,6 +172,8 @@ Codex 方面，OpenAI 文档说明 Codex 包含在 ChatGPT Plus、Pro、Business
 
 这次样本只覆盖“代码理解/流程解释”任务，不足以代表 bugfix、PR 草稿、测试补全和代码审查等场景。正式发布前，建议至少再补 1 个改代码任务和 1 个 code review 任务。
 
+额度观察：订阅额度消耗与 API 计费已确认分离；本次任务中，Claude Code 的订阅额度消耗感高于 Codex。
+
 ## 待实测清单
 
 - [x] Claude Code / Codex：同一代码理解任务，对比输出质量。
@@ -178,7 +182,7 @@ Codex 方面，OpenAI 文档说明 Codex 包含在 ChatGPT Plus、Pro、Business
 - [ ] 两者都跑同一组 bugfix 任务，记录一次成功率。
 - [ ] 两者都跑同一组 code review 任务，记录有效问题数量和误报。
 - [ ] 国内网络可用性不做直连对比，统一记录为需要 VPN / 代理前提。
-- [ ] 核对订阅额度消耗与 API 计费是否分离。
+- [x] 核对订阅额度消耗与 API 计费是否分离：已确认分离；本次任务中 Claude Code 订阅额度消耗感高于 Codex。
 
 ## 参考资料
 
