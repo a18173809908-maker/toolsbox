@@ -156,30 +156,38 @@ Codex 方面，OpenAI 文档说明 Codex 包含在 ChatGPT Plus、Pro、Business
 | testedVersion | Claude Code：桌面端使用 Claude Opus 4.7；Codex：GPT-5.5 |
 | testedEnv | 中国大陆网络，默认需要 VPN / 代理；本次不比较直连可用性 |
 | testedBy | 编辑实测 |
-| evalSet | 同一 Next.js 项目中，让两个工具分析 `/compare/[slug]` 对比页渲染流程，不改代码；确认订阅额度消耗与 API 计费是否分离 |
-| sampleSize | 1 个理解类任务，每个工具各 1 次 |
+| evalSet | 同一 Next.js 项目中，完成代码理解任务与 `/compare/[slug]` 入口风险扫描；确认订阅额度消耗与 API 计费是否分离 |
+| sampleSize | 2 个任务，每个工具各 1 次 |
 | reproducible | true |
 | repoUrl | 待补充 |
 
 ## 小样本实测结果
 
-任务：请分析这个项目的 `/compare/[slug]` 对比页渲染流程，说明数据从数据库到页面展示经过了哪些函数和组件，不要改代码。
+任务 1：请分析这个项目的 `/compare/[slug]` 对比页渲染流程，说明数据从数据库到页面展示经过了哪些函数和组件，不要改代码。
 
 | 工具 | 观察结果 |
 |---|---|
 | Claude Code | 桌面端使用 Claude Opus 4.7；解释更细，响应更快；适合边看代码边追具体实现路径 |
 | Codex | 使用 GPT-5.5；解释更完整，速度稍慢；更会结合项目整体结构和上下文做总结 |
 
-这次样本只覆盖“代码理解/流程解释”任务，不足以代表 bugfix、PR 草稿、测试补全和代码审查等场景。正式发布前，建议至少再补 1 个改代码任务和 1 个 code review 任务。
+任务 2：找出 `/compare/[slug]` 相关入口是否有未上线链接风险，不直接发布，只给修改建议。
+
+| 工具 | 观察结果 |
+|---|---|
+| Claude Code | 找出 4 个 bug 和 5 个低风险链接，给出修改建议；速度更快 |
+| Codex | 同样找出 4 个 bug 和 5 个低风险链接，给出修改建议；速度较慢 |
+
+这次样本覆盖“代码理解/流程解释”和“入口风险扫描/建议”两类任务，不足以代表真实改代码、PR 草稿、测试补全和 code review 等场景。正式发布前，建议至少再补 1 个实际改代码任务或 PR 草稿任务。
 
 额度观察：订阅额度消耗与 API 计费已确认分离；本次任务中，Claude Code 的订阅额度消耗感高于 Codex。
 
 ## 待实测清单
 
 - [x] Claude Code / Codex：同一代码理解任务，对比输出质量。
+- [x] Claude Code / Codex：同一入口风险扫描任务，对比问题发现和建议质量。
 - [ ] Claude Code：补充桌面端版本信息，读取项目、运行 lint/build、提交 diff。
 - [ ] Codex：连接 GitHub 仓库、云端环境配置、运行 lint/build、生成 PR 草稿。
-- [ ] 两者都跑同一组 bugfix 任务，记录一次成功率。
+- [ ] 两者都跑同一组实际改代码任务，记录一次成功率。
 - [ ] 两者都跑同一组 code review 任务，记录有效问题数量和误报。
 - [ ] 国内网络可用性不做直连对比，统一记录为需要 VPN / 代理前提。
 - [x] 核对订阅额度消耗与 API 计费是否分离：已确认分离；本次任务中 Claude Code 订阅额度消耗感高于 Codex。
