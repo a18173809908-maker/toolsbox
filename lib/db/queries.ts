@@ -796,3 +796,38 @@ export async function loadAdminRecentArticles(limit = 20, offset = 0) {
   ]);
   return { items, total: totalRows[0]?.value ?? 0 };
 }
+
+export async function loadAdminToolCandidateById(id: number) {
+  const rows = await db.select().from(toolCandidates).where(eq(toolCandidates.id, id));
+  return rows[0] ?? null;
+}
+
+export async function loadAdminComparisonById(id: string) {
+  const rows = await db.select().from(comparisons).where(eq(comparisons.id, id));
+  return rows[0] ?? null;
+}
+
+export async function loadAdminArticleById(id: number) {
+  const rows = await db
+    .select({
+      id: articles.id,
+      title: articles.title,
+      titleZh: articles.titleZh,
+      url: articles.url,
+      summary: articles.summary,
+      summaryZh: articles.summaryZh,
+      tag: articles.tag,
+      status: articles.status,
+      publishedAt: articles.publishedAt,
+      fetchedAt: articles.fetchedAt,
+      reviewedBy: articles.reviewedBy,
+      reviewedAt: articles.reviewedAt,
+      rejectReason: articles.rejectReason,
+      sourceName: sources.name,
+      sourceUrl: sources.url,
+    })
+    .from(articles)
+    .leftJoin(sources, eq(articles.sourceId, sources.id))
+    .where(eq(articles.id, id));
+  return rows[0] ?? null;
+}
