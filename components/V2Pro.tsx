@@ -69,25 +69,25 @@ const compareCards: CompareCard[] = [
   {
     title: 'Claude Code vs Codex',
     summary: '看终端开发、本地代码代理、任务委派和 OpenAI 生态协作的差异。',
-    href: '/compare/claude-code-vs-codex',
+    href: '/compare',
     badges: ['AI 编程', '开发者'],
   },
   {
     title: 'Cursor vs Trae',
     summary: '比较 AI IDE、中文体验、上手门槛和团队落地难度。',
-    href: '/compare/cursor-vs-trae',
+    href: '/compare',
     badges: ['代码助手', '中文体验'],
   },
   {
     title: 'ChatGPT vs Kimi',
     summary: '从长文档、联网搜索、中文写作和日常办公角度看谁更顺手。',
-    href: '/compare/chatgpt-vs-kimi',
+    href: '/compare',
     badges: ['智能对话', '办公'],
   },
   {
     title: 'Midjourney vs 即梦',
     summary: '比较画质、商用可行性、中文提示词和国内使用门槛。',
-    href: '/compare/midjourney-vs-jimeng',
+    href: '/compare',
     badges: ['AI 绘图', '创作者'],
   },
 ];
