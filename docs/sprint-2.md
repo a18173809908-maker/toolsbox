@@ -522,3 +522,134 @@ export const toolConnectivity = pgTable('tool_connectivity', {
 **通用**
 
 - [ ] `npm run lint && npm run build` 通过，无新增 warning
+
+---
+
+## 第 9 周补充任务（2026-05-09 起）：首页打磨 + I8 实施细化
+
+> **背景**：第 8 周末完成首页布局重构（编辑推荐 3 列网格、开发者趋势移到下方、热搜/决策入口死链修复、admin featured toggle），commit 范围 `5e4b997..54d181a`。本节补充 I8 实施细节 + 两个顺手发现的小修。
+>
+> **执行顺序**：I8 → I14 → I15。每个独立 commit。
+
+### I8 实施细节（替代品专题 + SEO schema）
+
+> 上文 I8 段落只给了大方向，本节给 Codex 落地用的具体清单。
+
+#### I8-A 替代品专题页
+
+**新建文件**：
+- `app/alternatives/page.tsx` — 列表页
+- `app/alternatives/[slug]/page.tsx` — 详情页
+
+**首批 5 个专题**（slug = 被替代的工具 id）：
+
+| slug | 标题 | 替代列表 |
+|---|---|---|
+| `cursor` | Cursor 的国产替代方案 | trae, claude-code, github-copilot, windsurf |
+| `chatgpt` | ChatGPT 的国产替代方案 | doubao, kimi, deepseek, wenxin-yiyan |
+| `midjourney` | Midjourney 的国产替代方案 | jimeng-ai, wenshuyige, kling-ai |
+| `notion-ai` | Notion AI 的国产替代方案 | doubao, kimi, wenxin-yiyan |
+| `runway` | Runway 的国产替代方案 | kling-ai, hailuo-ai, jimeng-ai |
+
+**数据来源策略**：
+1. 优先从被替代工具的 `cnAlternatives` 字段读取（已有数据）
+2. 若该字段为空，从 `data/alternatives.ts` 静态映射兜底（新建该文件存上表）
+3. 详情页每个替代工具展示：图标 / 名称 / 定价 / 国内访问 / 一句话替代理由 / 跳到 `/tools/[id]`
+
+**详情页结构**：
+```
+Hero
+  └ 标题：「<原工具> 的国产替代方案」
+  └ 副标题：海外工具被墙 / 价格贵 / 中文支持差？这些工具能让国内用户直接上手
+被替代工具卡（顶部小卡，链到 /tools/<id>）
+为什么需要替代（300-500 字段落，可手写或 DeepSeek 起草）
+替代工具列表（每张大卡：logo / 名 / 定价 / 国内访问 / 一句话理由 / 详情按钮）
+  └ 至少 3 个，按推荐度排序
+相关对比（如 /compare/cursor-vs-trae 存在则挂在替代列表下方）
+JSON-LD ItemList schema
+```
+
+**SEO metadata 模板**（每个专题独立）：
+- title: `<原工具> 的国产替代方案 — N 个国内可用的 AI 工具 | AIBoxPro`
+- description: `<原工具>在国内访问不稳定？盘点 N 个国产替代工具：<list>，覆盖<场景>。`
+- canonical: `/alternatives/<slug>`
+
+#### I8-B 对比页 JSON-LD schema
+
+**修改 `app/compare/[slug]/page.tsx`**：
+
+1. **FAQPage schema**：从 `comparisons.body` markdown 提取 `## 标题` 后的段落作为 Q&A，或用 `comparisons.faqs` 字段（如有）
+   ```typescript
+   const faqJsonLd = {
+     '@context': 'https://schema.org',
+     '@type': 'FAQPage',
+     mainEntity: faqs.map(f => ({
+       '@type': 'Question',
+       name: f.q,
+       acceptedAnswer: { '@type': 'Answer', text: f.a }
+     }))
+   };
+   ```
+2. **BreadcrumbList schema**：首页 → 工具对比 → 当前对比页
+3. **Article schema**（若还没有）：包含 datePublished / dateModified / author / publisher
+
+#### I8-C sitemap 收录
+
+修改 `app/sitemap.ts`：
+- 加入 `/alternatives` 列表页
+- 加入所有已发布的 `/alternatives/[slug]`（按 I8-A 的 5 个 slug 静态列出，或从 DB 派生）
+
+#### I8 验证标准
+
+- `/alternatives/cursor` 渲染正常，列出 4 个替代工具卡片
+- `/alternatives` 列表页可点击进入 5 个专题
+- 用 [Google Rich Results Test](https://search.google.com/test/rich-results) 验证 `/compare/cursor-vs-trae` 的 FAQ schema 有效
+- `npm run build` 通过，sitemap 包含新增路径
+- 首页热搜「Cursor 替代品」如果存在该标签，跳到 `/alternatives/cursor`
+
+---
+
+### I14（P1）：搜索框 placeholder 引导优化
+
+**问题**：首页搜索框 placeholder 是 `输入工具名或对比，例如 Claude Code vs Codex`，用户容易输入「AI 写论文」「免费 AI 工具」等自然语言短语，但 `/tools?q=xxx` 是按 name/zh/en 做 ILIKE，搜不到任何工具，体验断裂。
+
+**修复**：`components/V2Pro.tsx` 第 340 行 placeholder 改为：
+```
+输入工具名（如 Cursor / Claude / 豆包）
+```
+
+搜索框下方的 5 个热搜标签保留现状（已是有效跳转，作为「自然语言查询」的兜底入口）。
+
+**长期方案**（不在本任务范围）：接 NLU 把短语映射到路由（「AI 写论文」→ `/scenes/ai-write-thesis`），需要场景页先上线。
+
+---
+
+### I15（P2）：admin 工具详情页加 featured toggle
+
+**问题**：`/admin/featured` 列表页可批量切换 featured，但审核工作流是「在 `/admin/tools/[id]` 看完候选 → approve → 跳回列表」。如果想给一个新 approve 的工具立刻设 featured，得多一步导航。
+
+**修复**：在 `app/admin/tools/[id]/page.tsx` 中（仅 `candidate.status === 'approved'` 且对应 tools 行存在时）加一个 FeaturedToggle 入口。
+
+**实现要点**：
+1. 复用 `app/admin/featured/FeaturedToggle.tsx` 组件
+2. 详情页底部加一个 section「编辑推荐设置」
+3. 加载时读 `tools.featured`（用 `candidate.slug` 作为 tool.id 查询）
+4. 如果该候选还未 approve（slug 在 tools 表不存在），显示「批准后才能设置」灰态
+
+**验证**：
+- `/admin/tools/[id]` 已 approve 的候选页面底部有 FeaturedToggle
+- 切换后首页 `/` 立即生效（API 内已有 revalidatePath）
+
+---
+
+### Codex 推进顺序建议
+
+```
+1. I8（替代品 + SEO schema）       ← 价值最大、纯工程
+2. I14（placeholder 优化）          ← 5 分钟修
+3. I15（admin featured toggle）     ← 30 分钟
+然后接 I11/I12（运营 SOP 文档，30 分钟 ×2）
+最后做 I10（图文自动生成，3-5 天复杂工程）
+I7/I9/I13 等用户参与后再继续
+```
+
