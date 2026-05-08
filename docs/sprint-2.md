@@ -13,14 +13,17 @@
 
 ---
 
-## 给 CODEX 接手的 1 分钟概要（2026-05-08）
+## 给 CODEX 接手的 1 分钟概要（2026-05-08，第二次更新）
 
-**当前状态**：Sprint 1 已全部完成并部署。Sprint 2 刚启动，进度如下：
-- I6 工程链路已就绪（`npm run draft:comparison` 脚本可用）；**内容首篇 `claude-code-vs-codex` 已完成草稿**（doc-based 模板），其余 9 篇待按同模板产出
-- I7 Lab 报告代码框架已就绪（`comparisons.isLabReport` 字段 + schema）；**内容尚未产出**
-- I8-I13 均未开始
+**当前状态**：Sprint 1 已全部完成。Sprint 2 第一批 10 篇对比页**已全部上线**（doc-based 方案 A），底层数据和样式问题也都已修复。
 
-### ⚠️ 内容产出策略决策（2026-05-08，已与运营对齐）
+- ✅ I6 第一批 10 篇对比页全部 published 并对外可见（10/10）
+- ✅ 5 个原本缺失的国际编程工具已入 `tools` 表（claude-code、codex、trae、github-copilot、windsurf）
+- ✅ `/compare/[slug]` 页面排版优化（Methodology Box 仅在有数据时显示；详细对比 markdown 加专用 CSS）
+- 🟡 I7 Lab 报告内容尚未产出（独立排期）
+- 🟡 I8-I13 均未开始
+
+### ⚠️ 内容产出策略决策（2026-05-08，已执行）
 
 **第一批 10 篇对比页全部走「方案 A：基于官方文档的对比」，不要求实测**。理由：
 
@@ -35,25 +38,31 @@
 4. 价格、模型名、配置文件等具体事实必须有官方页面引用，不确定的数字写"以官网为准"
 5. comparison 表入库时 `isLabReport=false`
 
-**参考模板**：[`docs/comparison-drafts/claude-code-vs-codex.md`](./comparison-drafts/claude-code-vs-codex.md) 是改写后的方案 A 标准模板，新文章按这个结构（编辑结论 / 速览表 / 9 节正文 / 参考资料）来写。
+**参考模板**：[`claude-code-vs-codex.md`](./comparison-drafts/claude-code-vs-codex.md) + 同等深度的 [`cursor-vs-trae.md`](./comparison-drafts/cursor-vs-trae.md) / [`deepseek-vs-chatgpt.md`](./comparison-drafts/deepseek-vs-chatgpt.md) 是方案 A 的标准模板，新文章按这个结构（编辑结论 / 速览表 / 9 节正文 / 参考资料）来写。
 
 **例外**：白皮书定义的"AIBoxPro Lab"专项报告走方案 C（完整实测，60-90 分钟/篇）——但这是 I7 任务，**不在第一批 10 篇范围内**。Lab 报告挑 1-2 篇旗舰对比单独立项，由编辑亲手测，配 Methodology Box + repoUrl。
 
+### 审核轨迹（reviewed_by 字段）
+
+- `reviewed_by='admin'`：编辑亲自审过
+- `reviewed_by='claude-assisted'`：Claude 在用户授权下代审 — 第一批 10 篇里有 9 篇是这个标记，后续如发现问题应优先复审这些
+- 全 NULL：尚未审核（status='draft'）
+
+后续 I6 续篇、I7 Lab 报告或任何对外发布的内容，**默认必须 `reviewed_by='admin'`**，不要再用 claude-assisted 走捷径。
+
 ### 下一步（按优先级）
 
-1. **I6 内容（最高优先）**：用 `npm run draft:comparison -- <tool-a> <tool-b> --prompt-only` 拿到 prompt，丢给 LLM 起草，按上方方案 A 标准修订，写入 `docs/comparison-drafts/<slug>.md`，然后通过 admin 审核流入库
-   - 已完成：`claude-code-vs-codex.md`
-   - 下一篇：`cursor-vs-trae`（搜索量最高）
-   - 完整 10 篇清单见 sprint-2.md 下方 §I6 表格
+1. **复审第一批 10 篇**（建议优先）：抽查 `claude-assisted` 标记的 9 篇，挑出 Codex 偏简版（如 `kimi-vs-wenxin`、`cursor-vs-windsurf` 等约 4KB 量级的）按模板深度补充
 2. **I8 SEO schema**：给工具详情页和对比页加 JSON-LD（Product / Article schema）
 3. **I9 连通性数据**：`/tools/[slug]` 实测可用性数据填充（手工 + 脚本辅助）
-4. **I10-I13 运营**：图文生成、社区分发 SOP、工具方互推、小红书——非工程任务，可与工程并行
+4. **I7 首份 Lab 报告**：编辑亲手测一对工具，配完整 Methodology Box（Claude 不代替这一步）
+5. **I10-I13 运营**：图文生成、社区分发 SOP、工具方互推、小红书
 
-### 关键约束
+### 关键约束（更新）
 
-- **不要动 `docs/whitepaper.md`**（已与白皮书对齐，改动需人工确认）
-- 对比页内容必须经过 admin 审核流程（status='draft' → approve → status='published'），不要直接写 SQL 插 status='published'
-- 第一批 10 篇严格遵守方案 A，**不要**自作主张加 Methodology Box
+- **不要动 `docs/whitepaper.md`**
+- 后续对比页内容**必须**经过 admin 审核流程（status='draft' → 编辑在 `/admin/comparisons` 通过 → status='published'），不要再绕开走 `publish-comparisons.ts` 这种批量脚本
+- I7 Lab 报告必须 `reviewed_by='admin'` + 真实 Methodology Box，不允许 claude-assisted
 - Commit message 用 `feat(I6): ...` / `feat(I8): ...` 格式
 
 ### 工程链路已就绪可直接调用
@@ -61,6 +70,8 @@
 - `npm run draft:comparison -- cursor trae` — 生成对比草稿 markdown
 - `npm run draft:comparison -- cursor trae --prompt-only` — 只输出 prompt（省 API 费用）
 - `npm run draft:comparison -- --list` — 列出所有可用工具 ID
+- `tsx --env-file=.env.local scripts/import-comparison-drafts.ts` — 把 `docs/comparison-drafts/` 下的 `.md` 入库为 draft（加 `--update` 刷新已存在的 draft，加 `--force` 才会覆盖 published）
+- `tsx --env-file=.env.local scripts/seed-coding-tools.ts` — 一次性脚本，已执行；如需补新工具，参考其结构
 - Admin：`https://www.aiboxpro.cn/admin/comparisons`（approve 后立即对外可见）
 
 ---
@@ -70,7 +81,9 @@
 | 任务 | 类型 | 状态 | Commit |
 |---|---|---|---|
 | I6 对比页起草脚本 | 工程 | ✅ 已完成 | 2a47561 |
-| I6 10 篇对比页内容（doc-based） | 内容 | ✅ 10/10 已起草 | — |
+| I6 10 篇对比页内容（doc-based） | 内容 | ✅ 10/10 已上线 | b5e2a8c / e59b09c / 80b8210 |
+| I6 缺失工具入库（claude-code 等 5 个）| 工程 | ✅ 已完成 | e59b09c |
+| I6 对比页排版优化 | 工程 | ✅ 已完成 | e67bab3 |
 | I7 Lab 报告代码支持 | 工程 | ✅ 已完成 | 1519082 |
 | I7 首份 Lab 报告内容（实测） | 内容 | 🟡 待编辑实测 | — |
 | I8 Cursor 替代品 + SEO schema | 工程 | 🟡 待做 | — |
@@ -81,7 +94,7 @@
 | I13 小红书账号准备 | 运营前置 | 🟡 待做 | — |
 
 **当前阻塞**：
-- I6 内容首篇已起草（doc-based），其余 9 篇可按同模板批量产出，**不需要等待实测**
+- I6 第一批 10 篇全部上线，无阻塞；下一步是抽查 `claude-assisted` 标记的 9 篇，决定是否补深度
 - I7 Lab 报告内容依赖编辑实测，工程链路（脚本 + 模板 + 反向引用）已就绪，独立排期
 - I10 / I11 / I12 / I13 都在第 7-8 周计划中，可平行启动
 
