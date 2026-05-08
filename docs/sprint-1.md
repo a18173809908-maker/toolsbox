@@ -14,8 +14,8 @@
 
 **接下来的事**：
 
-1. **I8.1（30 分钟）**：schema 加审核字段（9 个字段，三表）→ `npm run db:push`
-2. **I8.2（1-2 小时）**：admin 鉴权（middleware + login + cookie）
+1. ✅ ~~I8.1（30 分钟）~~ — 已完成 (commit adf807a)，9 字段 db:push 已生效
+2. **I8.2（1-2 小时）**：admin 鉴权（middleware + login + cookie）← **下一步**
 3. **I8.3（3-4 小时）**：admin 列表页（总览 + 3 类）
 4. **I8.4（3-4 小时）**：审核详情页 + approve/reject/hide API
 5. **I8.5（30 分钟）**：改 process-tool-candidates 行为，**最后做**
@@ -66,7 +66,12 @@
 | **附加 3**：news 页文案与中文化资讯源对齐 | ✅ 已完成 | 99f7f7e |
 | **附加 4**：联系方式从 GitHub 切换为邮箱 + 公众号 | ✅ 已完成 | 838e865 + 2b61b80（QR 图） |
 | **附加 5**：废弃旧英文 seed 脚本（保留代码考古） | ✅ 已完成 | 838e865 |
-| **I8 Admin 后台 + 审核流程**（已拆为 I8.1-I8.5） | 🟡 待 CODEX 接手 | — |
+| **I8 Admin 后台 + 审核流程**（已拆为 I8.1-I8.5） | 🟡 进行中 | — |
+| ├ I8.1 schema 加审核字段 + db:push | ✅ 已完成 | adf807a |
+| ├ I8.2 admin 鉴权（middleware + login） | 🟡 待 CODEX | — |
+| ├ I8.3 admin 列表页 | 🟡 待 CODEX | — |
+| ├ I8.4 详情页 + approve/reject API | 🟡 待 CODEX | — |
+| └ I8.5 改 process-tool-candidates 行为 | 🟡 待 CODEX（必须最后做） | — |
 | I9 审核提醒邮件 | 🟡 待 CODEX 接手 | — |
 
 **Sprint 1 剩余任务**：I8.1-I8.5 + I9
@@ -688,7 +693,7 @@ for each pending candidate:
 - [x] I5：首页 3 个决策入口显示 emoji 图标，可正确跳转
 - [x] I6：裸域 → www 永久重定向（301），所有页面有 canonical 标签
 - [x] I7：4 个合规页面（/about、/privacy、/submit-guide、/disclaimer）可访问，sitemap 已收录
-- [ ] I8.1：tool_candidates / comparisons / articles 三表新增 reviewedBy/reviewedAt/rejectReason 字段，已 db:push
+- [x] I8.1：tool_candidates / comparisons / articles 三表新增 reviewedBy/reviewedAt/rejectReason 字段，已 db:push（commit adf807a）
 - [ ] I8.2：`middleware.ts` 鉴权 + `/admin/login` 登录页 + cookie 设置可用
 - [ ] I8.3：`/admin` 总览页 + 三类列表页可访问，数字徽章正确
 - [ ] I8.4：审核详情页 + approve/reject/hide API 路由可用，操作后状态正确流转
