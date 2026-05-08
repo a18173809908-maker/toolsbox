@@ -1522,6 +1522,8 @@ export const labReports = pgTable('lab_reports', {
 
 ### I8（第二期，第 46-60 天）：Cursor 替代品专题 + SEO 基础设施
 
+**状态（2026-05-09）**：✅ 工程已完成，commit `7cd4679`。已上线 `/alternatives`、首批 5 个专题页、对比页 Article/Breadcrumb/FAQ JSON-LD、sitemap 收录。
+
 **I8-1：替代品专题页**
 
 新建 `/alternatives/[slug]` 路径，如 `/alternatives/cursor`：
@@ -1545,6 +1547,8 @@ export const labReports = pgTable('lab_reports', {
 ---
 
 ### I9（第二期，第 46-60 天）：连通性地图冷启动
+
+**状态（2026-05-09）**：🟡 已拆分。I9-A 工程链路已完成，commit `ede3dd7`，包含 `tool_connectivity` 表、`loadConnectivityByToolId`、工具详情页表格、`seed:connectivity` 导入脚本，并已 `db:push` 到 Neon。I9-B 仍需真人实测 10 个工具 × 3 运营商并导入 30 条数据。
 
 **说明**：白皮书 3.2 节，第一期不做（依赖用户量），第二期编辑实测填充初始数据。
 
@@ -1602,8 +1606,8 @@ export const toolConnectivity = pgTable('tool_connectivity', {
 **第二期完成标准（第 60 天）**：
 - [ ] I6：10 个对比页 published，Search Console 有收录
 - [ ] I7：1 份 Lab 报告上线，所有 Methodology Box 字段有值
-- [ ] I8：`/alternatives/cursor` 上线，新页面 Sitemap 已提交
-- [ ] I9：30 条连通性数据入库，工具详情页连通性表格可见
+- [x] I8：`/alternatives/cursor` 上线，新页面 Sitemap 已提交
+- [ ] I9：30 条连通性数据入库，工具详情页连通性表格可见（I9-A 工程已完成；I9-B 真人实测待做）
 - [ ] SEO：核心对比词在 Search Console 有展示量，至少 3 个页面进入目标词前 50
 
 ---

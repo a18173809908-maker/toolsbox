@@ -1,6 +1,6 @@
 # Project Handoff
 
-Last updated: 2026-05-01
+Last updated: 2026-05-09
 
 ## Current Status
 
@@ -9,7 +9,7 @@ This project is an AI tools aggregation site built as a Next.js single app.
 - Repository: https://github.com/a18173809908-maker/toolsbox
 - Production URL: https://toolsbox-six.vercel.app
 - Main branch: `main`
-- Latest local/remote commit at handoff: `e353fd7 Add lint and build CI`
+- Latest local/remote commit at handoff: `ede3dd7 feat(I9): add connectivity data layer`
 - Build status locally: `npm run build` passes
 - Lint status locally: `npm run lint` passes
 
@@ -30,6 +30,8 @@ This project is an AI tools aggregation site built as a Next.js single app.
 - `components/V2Pro.tsx`: main current UI implementation.
 - `lib/db/schema.ts`: current DB schema.
 - `lib/db/queries.ts`: homepage DB query + live homepage stats aggregation.
+- `lib/alternatives.ts`: static topic config for `/alternatives` pages.
+- `scripts/seed-connectivity.ts`: imports real connectivity measurements from JSON into `tool_connectivity`.
 - `lib/jobs/github-trending.ts`: GitHub Trending scraper.
 - `lib/jobs/refresh-trending.ts`: refreshes today/week/month trending rows.
 - `lib/jobs/translate-trending.ts`: translates missing GitHub repo descriptions.
@@ -92,6 +94,19 @@ Do not commit `.env.local`; it is ignored.
 7. Added CI workflow:
    - `.github/workflows/ci.yml`
    - Runs lint and build on push to `main` and pull requests.
+8. Completed Sprint 2 I8/I14/I15:
+   - `/alternatives` and 5 `/alternatives/[slug]` pages are live.
+   - `/compare/[slug]` emits Article, BreadcrumbList, and FAQPage JSON-LD.
+   - Sitemap includes alternatives pages.
+   - Homepage search placeholder and admin featured toggle were updated.
+9. Completed Sprint 2 I11/I12 documentation:
+   - `docs/community-distribution-sop.md`
+   - `docs/vendor-outreach-sop.md`
+10. Completed Sprint 2 I9-A engineering:
+   - Added `tool_connectivity` table and indexes, pushed to Neon.
+   - Added `loadConnectivityByToolId`.
+   - Tool detail pages render a connectivity table when data exists.
+   - `npm run seed:connectivity -- <measurements.json>` imports real measurements only; no fake seed data is bundled.
 
 ## Known Notes / Caveats
 
@@ -100,11 +115,16 @@ Do not commit `.env.local`; it is ignored.
 - `lib/data.ts` still contains static seed/mock data used by `lib/db/seed.ts`.
 - The active homepage is DB-backed, not static-data-backed.
 - GitHub Actions CI may fail if repository secrets are incomplete. If red, first verify `DATABASE_URL` exists in GitHub Actions secrets.
-- The existing schema is intentionally MVP-sized:
+- The schema now includes content and workflow tables beyond the original MVP, including:
   - `categories`
   - `tools`
   - `github_trending`
-- The larger product plan mentions articles/RSS/users/search/SEO, but these are not implemented yet.
+  - `sources`
+  - `articles`
+  - `tool_candidates`
+  - `comparisons`
+  - `tool_connectivity`
+- I9-B is still a manual data task: 30 real connectivity measurements are not filled yet.
 
 ## Useful Commands
 
@@ -116,6 +136,7 @@ npm run db:push
 npm run db:seed
 npm run fetch:trending
 npm run translate:trending
+npm run seed:connectivity -- <measurements.json>
 ```
 
 Be careful with:
@@ -128,20 +149,14 @@ It clears and re-inserts seed rows.
 
 ## Recommended Next Steps
 
-1. Confirm all GitHub Actions secrets are present, especially `DATABASE_URL`, so CI stays green.
-2. Add a small health/status endpoint or admin script to inspect:
-   - latest trending snapshot time
-   - number of rows missing `descriptionZh`
-   - last cron result
-3. Add SEO baseline:
-   - `sitemap.xml`
-   - `robots.txt`
-   - basic JSON-LD for homepage
-   - Open Graph metadata
-4. Start content module work:
-   - add `sources` and `articles` schema
-   - RSS fetcher
-   - AI summary/tag/SEO-title pipeline
+1. Fill I9-B real connectivity data using `npm run seed:connectivity -- <measurements.json>`.
+2. Produce the first I7 Lab report with real Methodology Box values.
+3. Decide whether to keep I10 in scope; the previous social/trending draft generator experiment was intentionally reverted.
+4. Keep docs synchronized:
+   - `docs/sprint-2.md`
+   - `docs/manual-tasks.md`
+   - `docs/sprint-3-draft.md`
+   - `CODEX_TASKS.md`
 5. Consider adding a `jobs` table before expanding automation, so cron history is visible in the app.
 
 ## Coordination Notes For Claude Code
@@ -156,4 +171,3 @@ It clears and re-inserts seed rows.
 npm run lint
 npm run build
 ```
-

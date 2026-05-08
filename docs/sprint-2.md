@@ -56,10 +56,10 @@
 ### 下一步（按优先级）
 
 1. **复审第一批 10 篇**（建议优先）：抽查 `claude-assisted` 标记的 9 篇，挑出 Codex 偏简版（如 `kimi-vs-wenxin`、`cursor-vs-windsurf` 等约 4KB 量级的）按模板深度补充
-2. **I8 SEO schema**：给工具详情页和对比页加 JSON-LD（Product / Article schema）
-3. **I9 连通性数据**：`/tools/[slug]` 实测可用性数据填充（手工 + 脚本辅助）
-4. **I7 首份 Lab 报告**：编辑亲手测一对工具，配完整 Methodology Box（Claude 不代替这一步）
-5. **I10-I13 运营**：图文生成、社区分发 SOP、工具方互推、小红书
+2. **I9-B 连通性实测数据**：用 `npm run seed:connectivity -- <measurements.json>` 导入 10 个工具 × 3 运营商真实测量
+3. **I7 首份 Lab 报告**：编辑亲手测一对工具，配完整 Methodology Box（Claude 不代替这一步）
+4. **I10 / I13 运营前置**：图文生成系统、小红书账号准备
+5. **复用 I11 / I12 SOP**：社区分发和工具方互推文档框架已完成，后续填真实执行数据
 
 ### 关键约束（更新）
 

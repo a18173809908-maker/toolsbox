@@ -163,12 +163,14 @@
 
 ### 3. 替代品专题模板
 
-`/alternatives/[slug]` 页面到 Sprint 3 必须上线（Sprint 2 的 I8 任务，目前 ❌ 未做）。第一批至少 5 个：
-- `cursor` → 列出 Trae / Windsurf / GitHub Copilot
-- `chatgpt` → 列出 Kimi / 豆包 / DeepSeek
-- `midjourney` → 列出即梦 / 文心一格 / 可灵
-- `notion-ai` → 列出飞书智能伙伴 / WPS AI
-- `runway` → 列出可灵 / 海螺
+Sprint 2 的 I8 已上线 `/alternatives` 列表页和首批 5 个 `/alternatives/[slug]` 页面，可在 Sprint 3 直接复用并扩展：
+- `cursor` → Trae / Claude Code / GitHub Copilot / Windsurf
+- `chatgpt` → 豆包 / Kimi / DeepSeek / 文心一言
+- `midjourney` → 即梦 / 文心一格 / 可灵
+- `notion-ai` → 豆包 / Kimi / 文心一言
+- `runway` → 可灵 / 海螺 / 即梦
+
+Sprint 3 新品类只需要补新的 topic 配置与工具池，不需要重做页面模板。
 
 ---
 
@@ -197,7 +199,7 @@
 ## 九、不在 Sprint 3 范围（避免范围蔓延）
 
 - ❌ 决策引擎 / 选型助手（白皮书 §3.1，需要更多数据）
-- ❌ 众包连通性地图（Sprint 2 I9 已经在做基础，扩展不在 Sprint 3）
+- ❌ 众包连通性地图（Sprint 2 I9-A 数据层已完成；I9-B 真实实测填充仍由 Sprint 2 人工任务承接）
 - ❌ 商业化（广告 / CPS / 工具方付费推荐）— 需 ICP 备案
 - ❌ 用户登录 / 评论系统 — 不是当前阶段优先级
 
