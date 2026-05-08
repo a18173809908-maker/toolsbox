@@ -217,6 +217,9 @@ function Hero({
   mobile: boolean;
 }) {
   const router = useRouter();
+  // TODO: 接入真实搜索词数据（Vercel Analytics 或 GA4 埋点）
+  // 当前为编辑写死的「应该热」，不是按真实搜索/点击量统计的。
+  // 数据回流后改为 DB 查询：select label, href from hot_queries order by clicks desc limit 5
   const hotQueries: { label: string; href: string }[] = [
     { label: 'Claude Code vs Codex', href: '/compare/claude-code-vs-codex' },
     { label: 'Cursor vs Trae',       href: '/compare/cursor-vs-trae' },
@@ -545,7 +548,7 @@ function FeaturedTools({
 }) {
   return (
     <div style={{ display: 'grid', gap: 10 }}>
-      {tools.map((tool, index) => {
+      {tools.map((tool) => {
         const category = categories.find((item) => item.id === tool.cat);
         return (
           <Link
@@ -563,7 +566,7 @@ function FeaturedTools({
               boxShadow: cardShadow,
             }}
           >
-            <ToolLogo tool={{ ...tool, brand: ['#245F8F', '#0F6B57', '#B7472A', '#A06B08'][index % 4] }} size={44} />
+            <ToolLogo tool={tool} size={44} />
             <div style={{ minWidth: 0 }}>
               <strong style={{ display: 'block', marginBottom: 4, fontSize: 16 }}>{tool.name}</strong>
               <span style={{ display: 'block', color: T.inkSoft, fontSize: 13, lineHeight: 1.5 }}>
