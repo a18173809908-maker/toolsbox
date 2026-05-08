@@ -56,7 +56,7 @@
 
 ### 下一步（按优先级）
 
-1. **复审第一批 10 篇**（建议优先）：抽查 `claude-assisted` 标记的 9 篇，挑出 Codex 偏简版（如 `kimi-vs-wenxin`、`cursor-vs-windsurf` 等约 4KB 量级的）按模板深度补充
+1. **复审第一批 10 篇**（建议优先）：先看 [`comparison-quality-audit.md`](./comparison-quality-audit.md) 和 [`comparison-review-prep.md`](./comparison-review-prep.md)，优先补 `kimi-vs-wenxin`、`doubao-vs-kimi`、`cursor-vs-windsurf` 等偏短且缺引用的页面
 2. **I9-B 连通性实测数据**：用 `npm run seed:connectivity -- <measurements.json>` 导入 10 个工具 × 3 运营商真实测量
 3. **I7 首份 Lab 报告**：编辑亲手测一对工具，配完整 Methodology Box（Claude 不代替这一步）
 4. **I13 运营前置**：小红书账号准备
