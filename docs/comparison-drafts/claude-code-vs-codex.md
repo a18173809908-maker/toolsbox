@@ -12,6 +12,8 @@
 
 一句话：**Claude Code 更像一个贴着本地开发环境走的终端搭档；Codex 更像一个可以被派发任务的云端工程代理。**
 
+本次小样本实测中，使用同一任务“分析这个项目的 `/compare/[slug]` 对比页渲染流程”：**Claude Code 解释更细、更快；Codex 解释更完整、速度慢一些，但更会结合项目整体上下文。**
+
 ## 核心差异速览
 
 | 维度 | Claude Code | OpenAI Codex |
@@ -94,20 +96,9 @@ Codex 方面，OpenAI 文档说明 Codex 包含在 ChatGPT Plus、Pro、Business
 
 ## 6. 国内用户可用性
 
-这一点必须实测，不能只靠官方页面下结论。
+本次不做“国内直连可用性”差异判断。编辑实测前提是：中国大陆网络下，两者通常都需要 VPN / 代理；账号、地区、支付方式和企业合规要求也可能影响实际可用性。
 
-初步判断：
-
-- Claude Code 和 Codex 都属于海外 AI 编程工具，对中国大陆网络、账号地区、支付方式、企业合规要求都可能比较敏感。
-- Claude Code 对本地终端链路依赖较强，如果登录、模型调用或 API 访问不稳定，体验会明显受影响。
-- Codex 的云端任务依赖 ChatGPT / OpenAI 账号与 GitHub 仓库连接，如果 ChatGPT 访问或组织权限不可用，会影响入口。
-
-建议 Methodology Box 中补充三网实测：
-
-- 中国电信 / 联通 / 移动
-- macOS / Windows / Linux 至少一种
-- 终端登录、代码读取、命令执行、PR 创建
-- 失败时记录错误类型，而不是只写“不可用”
+因此本文只比较在可访问前提下的能力和工作流差异，不把“谁更容易直连”作为推荐依据。
 
 ## 7. 谁应该选 Claude Code
 
@@ -159,22 +150,34 @@ Codex 方面，OpenAI 文档说明 Codex 包含在 ChatGPT Plus、Pro、Business
 
 | 字段 | 当前值 |
 |---|---|
-| testedAt | 待编辑实测补充 |
-| testedVersion | 待补充：Claude Code CLI 版本、Codex CLI / Web 版本 |
-| testedEnv | 待补充：操作系统、Node.js 版本、网络环境、是否代理 |
-| testedBy | 待编辑署名 |
-| evalSet | 建议：同一 Next.js 仓库内完成 bugfix、补测试、代码审查、陌生模块解释、PR 草稿 5 类任务 |
-| sampleSize | 建议：每类任务每个工具各跑 3 次，记录成功率、人工修改量和耗时 |
-| reproducible | 待补充 |
+| testedAt | 2026-05-08 |
+| testedVersion | 待补充：Claude Code CLI 版本、Codex 使用入口版本 |
+| testedEnv | 中国大陆网络，默认需要 VPN / 代理；本次不比较直连可用性 |
+| testedBy | 编辑实测 |
+| evalSet | 同一 Next.js 项目中，让两个工具分析 `/compare/[slug]` 对比页渲染流程，不改代码 |
+| sampleSize | 1 个理解类任务，每个工具各 1 次 |
+| reproducible | true |
 | repoUrl | 待补充 |
+
+## 小样本实测结果
+
+任务：请分析这个项目的 `/compare/[slug]` 对比页渲染流程，说明数据从数据库到页面展示经过了哪些函数和组件，不要改代码。
+
+| 工具 | 观察结果 |
+|---|---|
+| Claude Code | 解释更细，响应更快；适合边看代码边追具体实现路径 |
+| Codex | 解释更完整，速度稍慢；更会结合项目整体结构和上下文做总结 |
+
+这次样本只覆盖“代码理解/流程解释”任务，不足以代表 bugfix、PR 草稿、测试补全和代码审查等场景。正式发布前，建议至少再补 1 个改代码任务和 1 个 code review 任务。
 
 ## 待实测清单
 
-- [ ] Claude Code：安装、登录、读取项目、运行 lint/build、提交 diff。
+- [x] Claude Code / Codex：同一代码理解任务，对比输出质量。
+- [ ] Claude Code：读取项目、运行 lint/build、提交 diff。
 - [ ] Codex：连接 GitHub 仓库、云端环境配置、运行 lint/build、生成 PR 草稿。
 - [ ] 两者都跑同一组 bugfix 任务，记录一次成功率。
 - [ ] 两者都跑同一组 code review 任务，记录有效问题数量和误报。
-- [ ] 国内网络下记录登录、响应速度、失败率。
+- [ ] 国内网络可用性不做直连对比，统一记录为需要 VPN / 代理前提。
 - [ ] 核对订阅额度消耗与 API 计费是否分离。
 
 ## 参考资料
