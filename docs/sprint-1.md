@@ -69,10 +69,10 @@
 | **I8 Admin 后台 + 审核流程**（已拆为 I8.1-I8.5） | 🟡 进行中 | — |
 | ├ I8.1 schema 加审核字段 + db:push | ✅ 已完成 | adf807a |
 | ├ I8.2 admin 鉴权（middleware + login） | ✅ 已完成 | 1230fad |
-| ├ I8.3 admin 列表页 | 🟡 待 CODEX | — |
-| ├ I8.4 详情页 + approve/reject API | 🟡 待 CODEX | — |
-| └ I8.5 改 process-tool-candidates 行为 | 🟡 待 CODEX（必须最后做） | — |
-| I9 审核提醒邮件 | 🟡 待 CODEX 接手 | — |
+| ├ I8.3 admin 列表页 | ✅ 已完成 | — |
+| ├ I8.4 详情页 + approve/reject API | ✅ 已完成 | — |
+| └ I8.5 改 process-tool-candidates 行为 | ✅ 已完成 | 328f58a |
+| I9 审核提醒邮件 | ✅ 已完成 | — |
 
 **Sprint 1 剩余任务**：I8.1-I8.5 + I9
 
