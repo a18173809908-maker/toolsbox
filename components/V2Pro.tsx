@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
+import { ToolIcon } from '@/components/ToolBadges';
 import { v2Tokens as T } from '@/lib/tokens';
 import type { Category, HomepageStats, RepoItem, Tool, TrendingPeriod } from '@/lib/data';
 import { LANG_COLOR } from '@/lib/data';
@@ -113,27 +114,6 @@ function formatDateLabel(iso?: string) {
   return date.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' });
 }
 
-function ToolLogo({ tool, size = 48 }: { tool: Tool; size?: number }) {
-  return (
-    <div
-      style={{
-        width: size,
-        height: size,
-        borderRadius: 8,
-        display: 'grid',
-        placeItems: 'center',
-        background: tool.brand,
-        color: '#fff',
-        fontFamily: 'Georgia, serif',
-        fontWeight: 900,
-        fontSize: tool.mono.length === 1 ? size * 0.48 : size * 0.3,
-        flexShrink: 0,
-      }}
-    >
-      {tool.mono}
-    </div>
-  );
-}
 
 function SectionTitle({
   title,
@@ -567,7 +547,7 @@ function FeaturedTools({
               boxShadow: cardShadow,
             }}
           >
-            <ToolLogo tool={tool} size={44} />
+            <ToolIcon name={tool.name} mono={tool.mono} brand={tool.brand} url={tool.url} size={44} />
             <div style={{ minWidth: 0 }}>
               <strong style={{ display: 'block', marginBottom: 4, fontSize: 16 }}>{tool.name}</strong>
               <span style={{ display: 'block', color: T.inkSoft, fontSize: 13, lineHeight: 1.5 }}>
