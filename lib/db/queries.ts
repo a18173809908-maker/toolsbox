@@ -235,6 +235,27 @@ export async function markToolCandidateRejected(id: number) {
   await db.update(toolCandidates).set({ status: 'rejected' }).where(eq(toolCandidates.id, id));
 }
 
+export async function draftToolCandidate(id: number, data: {
+  slug: string;
+  zh: string;
+  catId: string;
+  pricing: string;
+  chinaAccess: string;
+  features?: string[];
+  aiDraft?: typeof toolCandidates.$inferInsert['aiDraft'];
+}) {
+  await db.update(toolCandidates).set({
+    slug: data.slug,
+    zh: data.zh,
+    catId: data.catId,
+    pricing: data.pricing,
+    chinaAccess: data.chinaAccess,
+    features: data.features,
+    aiDraft: data.aiDraft ?? null,
+    status: 'ai_drafted',
+  }).where(eq(toolCandidates.id, id));
+}
+
 export async function publishToolCandidate(id: number, data: {
   slug: string;
   name: string;

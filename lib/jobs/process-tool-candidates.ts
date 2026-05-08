@@ -1,4 +1,4 @@
-import { loadAllToolIds, loadPendingToolCandidates, markToolCandidateRejected, publishToolCandidate } from '@/lib/db/queries';
+import { loadAllToolIds, loadPendingToolCandidates, markToolCandidateRejected, draftToolCandidate } from '@/lib/db/queries';
 import { chat } from '@/lib/llm';
 
 const BATCH = 6;
@@ -165,28 +165,27 @@ export async function processToolCandidates(): Promise<{ processed: number; reje
     existingIds.add(slug);
 
     try {
-      await publishToolCandidate(candidate.id, {
+      await draftToolCandidate(candidate.id, {
         slug,
-        name: candidate.name.slice(0, 80),
-        en: (candidate.description || candidate.name).slice(0, 240),
         zh: enriched.zh,
         catId: enriched.catId,
         pricing: enriched.pricing,
-        url: candidate.url,
         chinaAccess: enriched.chinaAccess,
         features: enriched.features,
-        howToUse: enriched.howToUse,
-        faqs: enriched.faqs,
-        registerMethod: enriched.registerMethod,
-        needsOverseasPhone: enriched.needsOverseasPhone,
-        needsRealName: enriched.needsRealName,
-        overseasPaymentOnly: enriched.overseasPaymentOnly,
-        priceCny: enriched.priceCny,
-        miniProgram: enriched.miniProgram,
-        appStoreCn: enriched.appStoreCn,
-        publicAccount: enriched.publicAccount,
-        cnAlternatives: enriched.cnAlternatives,
-        tutorialLinks: enriched.tutorialLinks,
+        aiDraft: {
+          howToUse: enriched.howToUse,
+          faqs: enriched.faqs,
+          registerMethod: enriched.registerMethod,
+          needsOverseasPhone: enriched.needsOverseasPhone,
+          needsRealName: enriched.needsRealName,
+          overseasPaymentOnly: enriched.overseasPaymentOnly,
+          priceCny: enriched.priceCny,
+          miniProgram: enriched.miniProgram,
+          appStoreCn: enriched.appStoreCn,
+          publicAccount: enriched.publicAccount,
+          cnAlternatives: enriched.cnAlternatives,
+          tutorialLinks: enriched.tutorialLinks,
+        },
       });
       processed++;
     } catch {

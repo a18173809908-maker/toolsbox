@@ -41,6 +41,8 @@ export async function POST(
   const en = candidate.description || candidate.name;
   const now = new Date();
 
+  const draft = candidate.aiDraft;
+
   await db
     .insert(tools)
     .values({
@@ -55,6 +57,18 @@ export async function POST(
       url: candidate.url,
       chinaAccess: candidate.chinaAccess,
       features: candidate.features ?? undefined,
+      howToUse: draft?.howToUse ?? undefined,
+      faqs: draft?.faqs ?? undefined,
+      registerMethod: draft?.registerMethod ?? undefined,
+      needsOverseasPhone: draft?.needsOverseasPhone ?? false,
+      needsRealName: draft?.needsRealName ?? false,
+      overseasPaymentOnly: draft?.overseasPaymentOnly ?? false,
+      priceCny: draft?.priceCny ?? undefined,
+      miniProgram: draft?.miniProgram ?? undefined,
+      appStoreCn: draft?.appStoreCn ?? false,
+      publicAccount: draft?.publicAccount ?? undefined,
+      cnAlternatives: draft?.cnAlternatives ?? undefined,
+      tutorialLinks: draft?.tutorialLinks ?? undefined,
       pricingUpdatedAt: now,
       accessUpdatedAt: now,
       featuresUpdatedAt: now,

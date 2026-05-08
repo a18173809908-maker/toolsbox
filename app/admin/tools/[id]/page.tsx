@@ -108,6 +108,56 @@ export default async function ToolDetailPage({ params }: Props) {
           )}
         </div>
 
+        {/* aiDraft extended fields */}
+        {candidate.aiDraft && (
+          <div style={{ background: C.panel, border: `1px solid ${C.rule}`, borderRadius: 12, padding: 24, marginBottom: 16 }}>
+            <p style={{ margin: '0 0 16px', fontSize: 11, fontWeight: 600, color: C.inkMuted, textTransform: 'uppercase', letterSpacing: '.06em' }}>
+              AI 起草详细字段
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '4px 24px', marginBottom: 16 }}>
+              {[
+                ['是否需要海外手机', candidate.aiDraft.needsOverseasPhone ? '是' : '否'],
+                ['是否实名认证', candidate.aiDraft.needsRealName ? '是' : '否'],
+                ['仅海外支付', candidate.aiDraft.overseasPaymentOnly ? '是' : '否'],
+                ['人民币价格', candidate.aiDraft.priceCny || '—'],
+                ['微信小程序', candidate.aiDraft.miniProgram || '—'],
+                ['中国区 App Store', candidate.aiDraft.appStoreCn ? '是' : '否'],
+                ['微信公众号', candidate.aiDraft.publicAccount || '—'],
+              ].map(([label, val]) => (
+                <div key={label as string} style={{ padding: '6px 0', borderBottom: `1px solid ${C.ruleSoft}` }}>
+                  <span style={{ fontSize: 11, color: C.inkMuted, display: 'block', marginBottom: 2 }}>{label}</span>
+                  <span style={{ fontSize: 13, color: C.ink }}>{val}</span>
+                </div>
+              ))}
+            </div>
+            {candidate.aiDraft.registerMethod && candidate.aiDraft.registerMethod.length > 0 && (
+              <Field label="注册方式" value={candidate.aiDraft.registerMethod.join(' / ')} />
+            )}
+            {candidate.aiDraft.howToUse && candidate.aiDraft.howToUse.length > 0 && (
+              <Field label="使用步骤 howToUse" value={
+                <ol style={{ margin: 0, paddingLeft: 20 }}>
+                  {candidate.aiDraft.howToUse.map((s, i) => <li key={i} style={{ marginBottom: 4 }}>{s}</li>)}
+                </ol>
+              } />
+            )}
+            {candidate.aiDraft.faqs && candidate.aiDraft.faqs.length > 0 && (
+              <Field label="常见问题 faqs" value={
+                <div>
+                  {candidate.aiDraft.faqs.map((f, i) => (
+                    <div key={i} style={{ marginBottom: 12 }}>
+                      <div style={{ fontWeight: 600, marginBottom: 2 }}>{f.q}</div>
+                      <div style={{ color: C.inkSoft }}>{f.a}</div>
+                    </div>
+                  ))}
+                </div>
+              } />
+            )}
+            {candidate.aiDraft.cnAlternatives && candidate.aiDraft.cnAlternatives.length > 0 && (
+              <Field label="国产替代" value={candidate.aiDraft.cnAlternatives.join(', ')} />
+            )}
+          </div>
+        )}
+
         {/* Source description */}
         {candidate.description && (
           <div style={{ background: C.panel, border: `1px solid ${C.rule}`, borderRadius: 12, padding: 24, marginBottom: 16 }}>

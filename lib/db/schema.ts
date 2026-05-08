@@ -119,6 +119,21 @@ export const toolCandidates = pgTable(
     reviewedBy: text('reviewed_by'),
     reviewedAt: timestamp('reviewed_at'),
     rejectReason: text('reject_reason'),
+    // AI 起草的完整结构化数据（howToUse/faqs/国内用户字段等）
+    aiDraft: jsonb('ai_draft').$type<{
+      howToUse?: string[];
+      faqs?: { q: string; a: string }[];
+      registerMethod?: string[];
+      needsOverseasPhone?: boolean;
+      needsRealName?: boolean;
+      overseasPaymentOnly?: boolean;
+      priceCny?: string;
+      miniProgram?: string;
+      appStoreCn?: boolean;
+      publicAccount?: string;
+      cnAlternatives?: string[];
+      tutorialLinks?: { platform: string; url: string; title: string }[];
+    }>(),
   },
   (t) => ({
     statusIdx: index('tool_candidates_status_idx').on(t.status),
