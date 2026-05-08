@@ -12,7 +12,7 @@
 
 一句话：**Claude Code 更像一个贴着本地开发环境走的终端搭档；Codex 更像一个可以被派发任务的云端工程代理。**
 
-本次小样本实测中，使用同一任务“分析这个项目的 `/compare/[slug]` 对比页渲染流程”：**Claude Code（桌面端使用 Claude Sonnet 4.6）解释更细、更快；Codex（GPT-5.5）解释更完整、速度慢一些，但更会结合项目整体上下文。**
+本次小样本实测中，使用同一任务“分析这个项目的 `/compare/[slug]` 对比页渲染流程”：**Claude Code（桌面端使用 Claude Opus 4.7）解释更细、更快；Codex（GPT-5.5）解释更完整、速度慢一些，但更会结合项目整体上下文。**
 
 ## 核心差异速览
 
@@ -153,7 +153,7 @@ Codex 方面，OpenAI 文档说明 Codex 包含在 ChatGPT Plus、Pro、Business
 | 字段 | 当前值 |
 |---|---|
 | testedAt | 2026-05-08 |
-| testedVersion | Claude Code：桌面端使用 Claude Sonnet 4.6；Codex：GPT-5.5 |
+| testedVersion | Claude Code：桌面端使用 Claude Opus 4.7；Codex：GPT-5.5 |
 | testedEnv | 中国大陆网络，默认需要 VPN / 代理；本次不比较直连可用性 |
 | testedBy | 编辑实测 |
 | evalSet | 同一 Next.js 项目中，让两个工具分析 `/compare/[slug]` 对比页渲染流程，不改代码；确认订阅额度消耗与 API 计费是否分离 |
@@ -167,7 +167,7 @@ Codex 方面，OpenAI 文档说明 Codex 包含在 ChatGPT Plus、Pro、Business
 
 | 工具 | 观察结果 |
 |---|---|
-| Claude Code | 桌面端使用 Claude Sonnet 4.6；解释更细，响应更快；适合边看代码边追具体实现路径 |
+| Claude Code | 桌面端使用 Claude Opus 4.7；解释更细，响应更快；适合边看代码边追具体实现路径 |
 | Codex | 使用 GPT-5.5；解释更完整，速度稍慢；更会结合项目整体结构和上下文做总结 |
 
 这次样本只覆盖“代码理解/流程解释”任务，不足以代表 bugfix、PR 草稿、测试补全和代码审查等场景。正式发布前，建议至少再补 1 个改代码任务和 1 个 code review 任务。
