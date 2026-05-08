@@ -111,9 +111,14 @@ export const toolCandidates = pgTable(
     aibotLikes: integer('aibot_likes'),
     hotnessScore: integer('hotness_score'),
     firstSeenAt: timestamp('first_seen_at').notNull().defaultNow(),
+    // status 取值：'pending' / 'processed' / 'ai_drafted' / 'approved' / 'rejected'
+    // ai_drafted = AI 已起草、待人工审核（I8.5 后由 'processed' 迁移）
     status: text('status').notNull().default('pending'),
     fetchedAt: timestamp('fetched_at').notNull().defaultNow(),
     publishedAt: timestamp('published_at'),
+    reviewedBy: text('reviewed_by'),
+    reviewedAt: timestamp('reviewed_at'),
+    rejectReason: text('reject_reason'),
   },
   (t) => ({
     statusIdx: index('tool_candidates_status_idx').on(t.status),
@@ -135,6 +140,9 @@ export const articles = pgTable(
     publishedAt: timestamp('published_at'),
     fetchedAt: timestamp('fetched_at').notNull().defaultNow(),
     status: text('status').notNull().default('published'),
+    reviewedBy: text('reviewed_by'),
+    reviewedAt: timestamp('reviewed_at'),
+    rejectReason: text('reject_reason'),
   },
   (t) => ({
     publishedIdx: index('articles_published_idx').on(t.publishedAt),
@@ -163,10 +171,15 @@ export const comparisons = pgTable(
     reproducible: boolean('reproducible').default(false),
     repoUrl: text('repo_url'),
     seoKeywords: text('seo_keywords').array(),
+    // status 取值：'draft' / 'published' / 'rejected'
     status: text('status').notNull().default('draft'),
     publishedAt: timestamp('published_at'),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
+    // 审核字段：reviewedBy 是审核人（区别于上方 testedBy = 实测人）
+    reviewedBy: text('reviewed_by'),
+    reviewedAt: timestamp('reviewed_at'),
+    rejectReason: text('reject_reason'),
   },
   (t) => ({
     statusIdx: index('comparisons_status_idx').on(t.status),
