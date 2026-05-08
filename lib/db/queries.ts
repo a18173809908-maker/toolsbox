@@ -1,5 +1,5 @@
 import { db } from './index';
-import { categories, tools, githubTrending, articles, sources, toolCandidates, comparisons } from './schema';
+import { categories, tools, githubTrending, articles, sources, toolCandidates, comparisons, toolConnectivity } from './schema';
 import { desc, asc, eq, ilike, or, isNull, count, max, and, inArray, gt } from 'drizzle-orm';
 import type { TrendingPeriod, Tool, Category, RepoItem, HomepageStats } from '@/lib/data';
 import type { Comparison, Tool as DbTool } from './schema';
@@ -459,6 +459,23 @@ export async function loadLabReportsByToolId(toolId: string): Promise<Comparison
     .orderBy(desc(comparisons.publishedAt), desc(comparisons.updatedAt))
     .limit(5);
   return attachComparisonTools(rows);
+}
+
+export async function loadConnectivityByToolId(toolId: string) {
+  const rows = await db
+    .select()
+    .from(toolConnectivity)
+    .where(eq(toolConnectivity.toolId, toolId))
+    .orderBy(desc(toolConnectivity.reportedAt));
+
+  const latestByCarrier = new Map<string, (typeof rows)[number]>();
+  for (const row of rows) {
+    if (!latestByCarrier.has(row.carrier)) latestByCarrier.set(row.carrier, row);
+  }
+
+  return ['telecom', 'unicom', 'mobile']
+    .map((carrier) => latestByCarrier.get(carrier))
+    .filter((row): row is NonNullable<typeof row> => Boolean(row));
 }
 
 export async function loadPendingArticles(limit = 20) {

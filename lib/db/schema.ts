@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { pgTable, text, integer, boolean, timestamp, serial, index, jsonb } from 'drizzle-orm/pg-core';
 
 export const categories = pgTable('categories', {
@@ -74,6 +75,26 @@ export const githubTrending = pgTable(
   (t) => ({
     periodIdx: index('gh_period_idx').on(t.period),
     gainedIdx: index('gh_gained_idx').on(t.gained),
+  }),
+);
+
+export const toolConnectivity = pgTable(
+  'tool_connectivity',
+  {
+    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+    toolId: text('tool_id').notNull().references(() => tools.id),
+    carrier: text('carrier').notNull(),
+    region: text('region'),
+    status: text('status').notNull(),
+    latencyMs: integer('latency_ms'),
+    source: text('source').notNull(),
+    reportedAt: timestamp('reported_at').notNull().defaultNow(),
+    reportedBy: text('reported_by'),
+    note: text('note'),
+  },
+  (t) => ({
+    toolCarrierIdx: index('tool_connectivity_tool_carrier_idx').on(t.toolId, t.carrier),
+    reportedIdx: index('tool_connectivity_reported_idx').on(t.reportedAt),
   }),
 );
 
@@ -205,6 +226,7 @@ export const comparisons = pgTable(
 export type Category = typeof categories.$inferSelect;
 export type Tool = typeof tools.$inferSelect;
 export type RepoItem = typeof githubTrending.$inferSelect;
+export type ToolConnectivity = typeof toolConnectivity.$inferSelect;
 export type Source = typeof sources.$inferSelect;
 export type ToolCandidate = typeof toolCandidates.$inferSelect;
 export type Article = typeof articles.$inferSelect;

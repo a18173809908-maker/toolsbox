@@ -29,7 +29,8 @@
     "cleanup:tool-data": "tsx --env-file=.env.local scripts/cleanup-tool-data.ts",
     "cleanup:articles": "tsx --env-file=.env.local scripts/cleanup-articles.ts",
     "seed:cn-tools": "tsx --env-file=.env.local scripts/seed-cn-tools.ts",
-    "seed:domestic-categories": "tsx --env-file=.env.local scripts/seed-domestic-categories.ts"
+    "seed:domestic-categories": "tsx --env-file=.env.local scripts/seed-domestic-categories.ts",
+    "seed:connectivity": "tsx --env-file=.env.local scripts/seed-connectivity.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

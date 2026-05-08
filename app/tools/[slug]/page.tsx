@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import type React from 'react';
 import { SiteHeader } from '@/components/SiteHeader';
 import { AccessBadge, ToolIcon } from '@/components/ToolBadges';
-import { loadToolById, loadAllToolIds, loadToolsByCategory, loadRelatedArticles, loadToolsByIds, loadLabReportsByToolId } from '@/lib/db/queries';
+import { loadToolById, loadAllToolIds, loadToolsByCategory, loadRelatedArticles, loadToolsByIds, loadLabReportsByToolId, loadConnectivityByToolId } from '@/lib/db/queries';
 
 export const revalidate = 3600; // ISR — regenerate hourly
 export const dynamic = 'force-dynamic';
@@ -96,16 +96,34 @@ function FreshnessNotice({
   );
 }
 
+const CONNECTIVITY_CARRIER: Record<string, string> = {
+  telecom: '电信',
+  unicom: '联通',
+  mobile: '移动',
+};
+
+const CONNECTIVITY_STATUS: Record<string, { label: string; bg: string; color: string }> = {
+  direct: { label: '直连', bg: '#DCFCE7', color: '#166534' },
+  'proxy-needed': { label: '需代理', bg: '#FEF3C7', color: '#92400E' },
+  blocked: { label: '受限', bg: '#FEE2E2', color: '#991B1B' },
+  unknown: { label: '待确认', bg: '#F3F4F6', color: '#6B7280' },
+};
+
+function isStaleConnectivity(date: Date) {
+  return Math.floor((Date.now() - date.getTime()) / 86_400_000) > 14;
+}
+
 export default async function ToolDetailPage({ params }: Props) {
   const { slug } = await params;
   const tool = await loadToolById(slug);
   if (!tool) notFound();
 
-  const [related, relatedArticles, alternativeTools, labReports] = await Promise.all([
+  const [related, relatedArticles, alternativeTools, labReports, connectivity] = await Promise.all([
     loadToolsByCategory(tool.cat).then((ts) => ts.filter((t) => t.id !== tool.id).slice(0, 4)),
     loadRelatedArticles(tool.name, 5),
     loadToolsByIds(tool.cnAlternatives ?? []),
     loadLabReportsByToolId(tool.id),
+    loadConnectivityByToolId(tool.id),
   ]);
 
   const jsonLd = {
@@ -268,6 +286,48 @@ export default async function ToolDetailPage({ params }: Props) {
               </div>
             </div>
           </div>
+
+          {connectivity.length > 0 && (
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #FED7AA', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(20px, 4vw, 28px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 10px', letterSpacing: '-0.01em' }}>国内连通性实测</h2>
+              <p style={{ fontSize: 13, color: '#6B7280', lineHeight: 1.7, margin: '0 0 14px' }}>
+                仅展示最近一次编辑或用户报告，不代表实时状态；超过 14 天的结果会标记为待确认。
+              </p>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 620 }}>
+                  <thead>
+                    <tr>
+                      {['运营商', '状态', '延迟', '最后更新', '来源', '备注'].map((label) => (
+                        <th key={label} style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #F3E8D0', color: '#9CA3AF', fontSize: 12 }}>{label}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {connectivity.map((row) => {
+                      const stale = isStaleConnectivity(row.reportedAt);
+                      const status = stale ? CONNECTIVITY_STATUS.unknown : (CONNECTIVITY_STATUS[row.status] ?? CONNECTIVITY_STATUS.unknown);
+                      return (
+                        <tr key={row.id}>
+                          <td style={{ padding: '12px', borderBottom: '1px solid #F3E8D0', color: '#1F2937', fontWeight: 700 }}>
+                            {CONNECTIVITY_CARRIER[row.carrier] ?? row.carrier}{row.region ? ` · ${row.region}` : ''}
+                          </td>
+                          <td style={{ padding: '12px', borderBottom: '1px solid #F3E8D0' }}>
+                            <span style={{ padding: '3px 9px', borderRadius: 999, background: status.bg, color: status.color, fontWeight: 800, fontSize: 12 }}>
+                              {stale ? '状态待确认' : status.label}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px', borderBottom: '1px solid #F3E8D0', color: '#4B5563' }}>{row.latencyMs ? `${row.latencyMs}ms` : '—'}</td>
+                          <td style={{ padding: '12px', borderBottom: '1px solid #F3E8D0', color: '#4B5563' }}>{row.reportedAt.toLocaleDateString('zh-CN')}</td>
+                          <td style={{ padding: '12px', borderBottom: '1px solid #F3E8D0', color: '#4B5563' }}>{row.source === 'editor' ? '编辑实测' : '用户报告'}</td>
+                          <td style={{ padding: '12px', borderBottom: '1px solid #F3E8D0', color: '#6B7280' }}>{row.note ?? '—'}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #FED7AA', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(20px, 4vw, 28px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
             <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 18px', letterSpacing: '-0.01em' }}>中国用户实操信息</h2>
