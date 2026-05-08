@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
 import { v2Tokens as T } from '@/lib/tokens';
 import type { Category, HomepageStats, RepoItem, Tool, TrendingPeriod } from '@/lib/data';
+import { LANG_COLOR } from '@/lib/data';
 
 type HomeData = {
   tools: Tool[];
@@ -604,7 +605,22 @@ function FeaturedTools({
   );
 }
 
-function TrendingRail({ repos }: { repos: RepoItem[] }) {
+function formatStars(n: number) {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+  return n.toString();
+}
+
+const PERIOD_LABELS: { value: TrendingPeriod; label: string }[] = [
+  { value: 'today', label: '今日' },
+  { value: 'week', label: '本周' },
+  { value: 'month', label: '本月' },
+];
+
+function TrendingRail({ trending }: { trending: Record<TrendingPeriod, RepoItem[]> }) {
+  const [period, setPeriod] = React.useState<TrendingPeriod>('today');
+  const repos = trending[period].slice(0, 5);
+
   return (
     <aside
       style={{
@@ -616,32 +632,117 @@ function TrendingRail({ repos }: { repos: RepoItem[] }) {
         alignSelf: 'start',
       }}
     >
-      <h3 style={{ margin: '0 0 12px', fontSize: 18 }}>开发者趋势</h3>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
+        <h3 style={{ margin: 0, fontSize: 18 }}>📈 开发者趋势</h3>
+        <Link href="/trending" style={{ color: T.accent, fontSize: 12, fontWeight: 700 }}>
+          完整榜单 →
+        </Link>
+      </div>
+
+      <div
+        style={{
+          display: 'inline-flex',
+          gap: 4,
+          padding: 4,
+          borderRadius: 8,
+          background: '#FAF5EA',
+          marginBottom: 8,
+        }}
+      >
+        {PERIOD_LABELS.map((p) => {
+          const active = period === p.value;
+          return (
+            <button
+              key={p.value}
+              type="button"
+              onClick={() => setPeriod(p.value)}
+              style={{
+                padding: '4px 12px',
+                borderRadius: 6,
+                border: 'none',
+                background: active ? T.panel : 'transparent',
+                color: active ? T.ink : T.inkMuted,
+                fontWeight: active ? 800 : 600,
+                fontSize: 12,
+                cursor: 'pointer',
+                boxShadow: active ? '0 1px 3px rgba(0,0,0,.08)' : 'none',
+              }}
+            >
+              {p.label}
+            </button>
+          );
+        })}
+      </div>
 
       <div>
-        {repos.slice(0, 3).map((repo, index) => (
-          <Link
-            key={repo.repo}
-            href={`/trending/${repo.repo}`}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr auto',
-              gap: 12,
-              padding: '12px 0',
-              borderTop: index === 0 ? 'none' : `1px solid ${T.rule}`,
-            }}
-          >
-            <div style={{ minWidth: 0 }}>
-              <strong style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>{repo.repo}</strong>
-              <span style={{ color: T.inkSoft, fontSize: 12, lineHeight: 1.55 }}>
-                {repo.descZh || repo.desc}
+        {repos.length === 0 ? (
+          <div style={{ padding: '16px 0', color: T.inkMuted, fontSize: 13 }}>暂无数据</div>
+        ) : repos.map((repo, index) => {
+          const langColor = LANG_COLOR[repo.lang] ?? '#9CA3AF';
+          return (
+            <Link
+              key={repo.repo}
+              href={`/trending/${repo.repo}`}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '24px 1fr',
+                gap: 10,
+                padding: '12px 0',
+                borderTop: index === 0 ? 'none' : `1px solid ${T.rule}`,
+              }}
+            >
+              <span
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: '50%',
+                  background: index === 0 ? T.accent : '#FAF5EA',
+                  color: index === 0 ? '#fff' : T.inkSoft,
+                  display: 'grid',
+                  placeItems: 'center',
+                  fontWeight: 900,
+                  fontSize: 12,
+                  marginTop: 2,
+                }}
+              >
+                {index + 1}
               </span>
-            </div>
-            <span style={{ color: '#B7472A', fontSize: 13, fontWeight: 900, whiteSpace: 'nowrap' }}>
-              +{repo.gained.toLocaleString()}
-            </span>
-          </Link>
-        ))}
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+                  <strong style={{
+                    fontSize: 14,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    minWidth: 0,
+                  }}>{repo.repo}</strong>
+                  <span style={{ color: '#B7472A', fontSize: 12, fontWeight: 900, whiteSpace: 'nowrap' }}>
+                    +{formatStars(repo.gained)}
+                  </span>
+                </div>
+                <p style={{
+                  margin: '4px 0 6px',
+                  color: T.inkSoft,
+                  fontSize: 12,
+                  lineHeight: 1.5,
+                  overflow: 'hidden',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical' as const,
+                }}>
+                  {repo.descZh || repo.desc}
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 11, color: T.inkMuted }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: langColor }} />
+                    {repo.lang}
+                  </span>
+                  <span>⭐ {formatStars(repo.stars)}</span>
+                </div>
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </aside>
   );
@@ -715,7 +816,7 @@ export default function V2ProHomepage({ tools, categories, trending, stats }: Ho
                 categories={categories}
                 mobile={mobile}
               />
-              <TrendingRail repos={trending.today} />
+              <TrendingRail trending={trending} />
             </div>
           </div>
         </section>
