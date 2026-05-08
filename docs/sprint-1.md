@@ -8,35 +8,23 @@
 
 ---
 
-## 给 CODEX 接手的 1 分钟概要（2026-05-07）
+## 给 CODEX 接手的 1 分钟概要（2026-05-08）
 
-**当前状态**：J1-J6 + I1-I7 全部完成 + 5 个附加任务（header/footer/news 文案/联系方式/废弃旧 seed）完成。**剩 I8.1-I8.5 + I9。**
+**当前状态**：✅ **Sprint 1 全部完成。** J1-J6 + I1-I7 + 5 个附加任务 + I8.1-I8.5 + I9 均已合并到 main 并部署到 Vercel。
 
-**接下来的事**：
+**接下来的事**：Sprint 1 无剩余任务。下一步是 **sprint-2.md**（第 31-60 天，内容 + 运营）。
 
-1. ✅ ~~I8.1（30 分钟）~~ — 已完成 (adf807a)，9 字段 db:push 已生效
-2. ✅ ~~I8.2（1-2 小时）~~ — 已完成 (1230fad)，鉴权层就位（中间件 + login + cookie + logout）
-3. **I8.3（3-4 小时）**：admin 列表页（总览 + 3 类）← **下一步**
-4. **I8.4（3-4 小时）**：审核详情页 + approve/reject/hide API
-5. **I8.5（30 分钟）**：改 process-tool-candidates 行为，**最后做**
-6. **I9（0.5 天）**：Resend 邮件提醒
+**Sprint 1 已上线的关键系统**：
+- Admin 后台：`/admin`（cookie 鉴权，密码来自 `ADMIN_PASSWORD` 环境变量）
+- 审核流程：工具候选 `ai_drafted` → 人工 approve → 写入 `tools` 表
+- 每日 09:00 审核提醒邮件（Vercel cron `0 1 * * *` → `/api/cron/notify-review`）
 
-**关键约束**：
-- I8.5 必须最后做（停掉 auto-publish 之前必须确认 admin UI 已部署可用）
-- 改完 I8.5 后立即触发 Vercel redeploy
-- 全程不要动 `docs/whitepaper.md` 和 `docs/sprint-2.md`（它们已与白皮书对齐）
-- 每个子任务独立 commit，commit message 用 `feat(I8.X): ...` 模板
+**尚需人工操作的环境变量**（在 Vercel Dashboard 添加）：
+- `RESEND_API_KEY` — Resend 邮件服务 API Key（I9 审核提醒邮件必须）
+- `ADMIN_NOTIFY_EMAIL` — 接收审核提醒的邮箱地址
+- `ADMIN_PASSWORD` — 若还未在生产环境配置，务必添加（I8.2）
 
-**环境变量**：
-- I8.2 需要 Vercel 配 `ADMIN_PASSWORD`（用户去 Vercel Dashboard 加，不需要 CODEX 操作）
-- I9 需要 `RESEND_API_KEY`、`ADMIN_NOTIFY_EMAIL`（M11 manual 任务，用户负责）
-
-**已存在的代码可复用**：
-- `components/SiteHeader.tsx` / `components/SiteFooter.tsx` / `components/LegalPage.tsx`：合规页样式 token 可复用为 admin 页样式
-- `components/AccessBadge` / `components/ToolIcon`：审核详情页渲染工具卡片时复用
-- `lib/db/queries.ts` 已有完整的 tools / comparisons / articles 查询，扩展时直接加新函数即可
-
-**联系信息**（如果生产文档要引用）：
+**联系信息**：
 - 邮箱：4514407@qq.com
 - 微信公众号：aiboxprocn
 

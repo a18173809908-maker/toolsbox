@@ -13,7 +13,35 @@
 
 ---
 
-## 进度状态（最近更新：2026-05-07）
+## 给 CODEX 接手的 1 分钟概要（2026-05-08）
+
+**当前状态**：Sprint 1 已全部完成并部署。Sprint 2 刚启动，进度如下：
+- I6 工程链路已就绪（`npm run draft:comparison` 脚本可用）；**内容尚未产出**，10 篇对比页均为草稿 0 条
+- I7 Lab 报告代码框架已就绪（`comparisons.isLabReport` 字段 + schema）；**内容尚未产出**
+- I8-I13 均未开始
+
+**下一步（按优先级）**：
+
+1. **I6 内容（最高优先）**：用 `npm run draft:comparison -- <tool-a> <tool-b>` 为清单里的 10 对工具各生成草稿 → 人工审核 + 填 Methodology Box → 在 `/admin/comparisons` 里 approve → 上线
+   - 第一篇优先：`cursor-vs-trae`（搜索量最高）
+2. **I8 SEO schema**：给工具详情页和对比页加 JSON-LD（Product / Article schema）
+3. **I9 连通性数据**：`/tools/[slug]` 实测可用性数据填充（手工 + 脚本辅助）
+4. **I10-I13 运营**：图文生成、社区分发 SOP、工具方互推、小红书——非工程任务，可与工程并行
+
+**关键约束**：
+- **不要动 `docs/whitepaper.md`**（已与白皮书对齐，改动需人工确认）
+- 对比页内容必须经过 admin 审核流程（status='draft' → approve → status='published'），不要直接写 SQL 插 status='published'
+- Commit message 用 `feat(I6): ...` / `feat(I8): ...` 格式
+
+**工程链路已就绪可直接调用**：
+- `npm run draft:comparison -- cursor trae` — 生成对比草稿 markdown
+- `npm run draft:comparison -- cursor trae --prompt-only` — 只输出 prompt（省 API 费用）
+- `npm run draft:comparison -- --list` — 列出所有可用工具 ID
+- Admin：`https://www.aiboxpro.cn/admin/comparisons`（approve 后立即对外可见）
+
+---
+
+## 进度状态（最近更新：2026-05-08）
 
 | 任务 | 类型 | 状态 | Commit |
 |---|---|---|---|
