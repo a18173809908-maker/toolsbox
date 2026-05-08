@@ -68,6 +68,33 @@ function accessText(value?: string | null) {
   return '待核实';
 }
 
+function stripMarkdown(value: string) {
+  return value
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[`*_>#-]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function extractFaqs(markdown?: string | null) {
+  if (!markdown) return [];
+  const matches = Array.from(markdown.matchAll(/^##\s+(.+)\n([\s\S]*?)(?=^##\s+|$)/gm));
+  return matches
+    .map((match) => {
+      const heading = stripMarkdown(match[1]);
+      const answer = stripMarkdown(
+        match[2]
+          .split('\n')
+          .filter((line) => line.trim() && !line.trim().startsWith('|'))
+          .slice(0, 4)
+          .join(' '),
+      );
+      return { q: heading, a: answer };
+    })
+    .filter((item) => item.q.length > 4 && item.a.length > 30)
+    .slice(0, 6);
+}
+
 function pricingText(tool: { priceCny?: string; pricingDetail?: string; pricing: string }) {
   return tool.priceCny ?? tool.pricingDetail ?? tool.pricing;
 }
@@ -123,7 +150,7 @@ export default async function CompareDetailPage({ params }: Props) {
     .filter((item) => [item.toolAId, item.toolBId].some((id) => id === comparison.toolAId || id === comparison.toolBId))
     .slice(0, 3);
 
-  const jsonLd = {
+  const articleJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: comparison.title,
@@ -134,10 +161,31 @@ export default async function CompareDetailPage({ params }: Props) {
     publisher: { '@type': 'Organization', name: 'AIBoxPro' },
     mainEntityOfPage: `${BASE}/compare/${comparison.id}`,
   };
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: '首页', item: BASE },
+      { '@type': 'ListItem', position: 2, name: '工具对比', item: `${BASE}/compare` },
+      { '@type': 'ListItem', position: 3, name: comparison.title, item: `${BASE}/compare/${comparison.id}` },
+    ],
+  };
+  const faqs = extractFaqs(comparison.body);
+  const faqJsonLd = faqs.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.q,
+      acceptedAnswer: { '@type': 'Answer', text: faq.a },
+    })),
+  } : null;
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {[articleJsonLd, breadcrumbJsonLd, faqJsonLd].filter(Boolean).map((item, index) => (
+        <script key={index} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(item) }} />
+      ))}
       <div style={{ minHeight: '100vh', background: C.bg, fontFamily: 'Inter, ui-sans-serif, system-ui, "PingFang SC", "Microsoft YaHei", sans-serif' }}>
         <SiteHeader />
 

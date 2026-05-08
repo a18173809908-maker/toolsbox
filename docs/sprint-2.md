@@ -531,6 +531,15 @@ export const toolConnectivity = pgTable('tool_connectivity', {
 >
 > **执行顺序**：I8 → I14 → I15。每个独立 commit。
 
+### Codex 更新（2026-05-09）
+
+- ✅ I8-A 已实现：新增 `lib/alternatives.ts`、`/alternatives` 列表页、`/alternatives/[slug]` 详情页；首批 5 个专题为 `cursor` / `chatgpt` / `midjourney` / `notion-ai` / `runway`。
+- ✅ I8-B 已实现：`/compare/[slug]` 增加 Article、BreadcrumbList、FAQPage JSON-LD；FAQ 从正文 H2 与后续段落提取。
+- ✅ I8-C 已实现：`app/sitemap.ts` 加入 `/alternatives` 和 5 个专题页。
+- ✅ I14 已实现：首页搜索框 placeholder 改为 `输入工具名（如 Cursor / Claude / 豆包）`。
+- ✅ I15 已实现：`/admin/tools/[id]` 底部新增「编辑推荐设置」，复用 `FeaturedToggle`；若候选已入库则可直接切换 featured，未入库显示灰态提示。
+- 验证：`npm.cmd run lint` 通过；`npm.cmd run build` 通过，构建输出包含 `/alternatives` 和 5 个专题页。
+
 ### I8 实施细节（替代品专题 + SEO schema）
 
 > 上文 I8 段落只给了大方向，本节给 Codex 落地用的具体清单。
@@ -652,4 +661,3 @@ JSON-LD ItemList schema
 最后做 I10（图文自动生成，3-5 天复杂工程）
 I7/I9/I13 等用户参与后再继续
 ```
-

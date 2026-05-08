@@ -321,7 +321,7 @@ function Hero({
                   submitSearch();
                 }
               }}
-              placeholder="输入工具名或对比，例如 Claude Code vs Codex"
+              placeholder="输入工具名（如 Cursor / Claude / 豆包）"
               style={{
                 flex: 1,
                 minWidth: 0,

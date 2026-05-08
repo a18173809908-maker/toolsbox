@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next';
+import { alternativeTopics } from '@/lib/alternatives';
 
 const BASE = 'https://www.aiboxpro.cn';
 
@@ -7,6 +8,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: BASE,                    lastModified: new Date(), changeFrequency: 'hourly',  priority: 1   },
     { url: `${BASE}/tools`,         lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
     { url: `${BASE}/compare`,       lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
+    { url: `${BASE}/alternatives`,  lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.8 },
     { url: `${BASE}/trending`,      lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.9 },
     { url: `${BASE}/news`,          lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.9 },
     { url: `${BASE}/about`,         lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
@@ -14,9 +16,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/submit-guide`,  lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
     { url: `${BASE}/disclaimer`,    lastModified: new Date(), changeFrequency: 'yearly',  priority: 0.3 },
   ];
+  const staticAlternativePages: MetadataRoute.Sitemap = alternativeTopics.map((topic) => ({
+    url: `${BASE}/alternatives/${topic.slug}`,
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }));
 
   if (!process.env.DATABASE_URL) {
-    return statics;
+    return [...statics, ...staticAlternativePages];
   }
 
   const [{ db }, schemaModule, drizzleModule] = await Promise.all([
@@ -78,6 +85,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: 'weekly' as const,
     priority: 0.7,
   }));
-
-  return [...statics, ...toolPages, ...catPages, ...newsPages, ...repoPages, ...comparePages];
+  return [...statics, ...toolPages, ...catPages, ...newsPages, ...repoPages, ...comparePages, ...staticAlternativePages];
 }

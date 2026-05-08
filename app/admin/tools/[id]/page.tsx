@@ -1,8 +1,9 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { loadAdminToolCandidateById } from '@/lib/db/queries';
+import { loadAdminToolCandidateById, loadToolById } from '@/lib/db/queries';
 import AdminLogoutButton from '@/components/AdminLogoutButton';
 import ToolReviewActions from './ToolReviewActions';
+import FeaturedToggle from '../../featured/FeaturedToggle';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,6 +44,7 @@ export default async function ToolDetailPage({ params }: Props) {
   const statusLabel = candidate.status === 'ai_drafted' ? 'AI 草稿' : candidate.status;
   const statusColor = candidate.status === 'ai_drafted' ? C.amber : C.orange;
   const statusBg = candidate.status === 'ai_drafted' ? C.amberBg : C.orangeBg;
+  const approvedTool = candidate.slug ? await loadToolById(candidate.slug) : null;
 
   return (
     <div style={{ minHeight: '100vh', background: C.bg, fontFamily: FONT, padding: 'clamp(20px, 4vw, 40px)' }}>
@@ -177,6 +179,25 @@ export default async function ToolDetailPage({ params }: Props) {
           slug={candidate.slug}
           catId={candidate.catId}
         />
+
+        <section style={{ background: C.panel, border: `1px solid ${C.rule}`, borderRadius: 12, padding: 24, marginTop: 16 }}>
+          <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 600, color: C.inkMuted, textTransform: 'uppercase', letterSpacing: '.06em' }}>
+            编辑推荐设置
+          </p>
+          {approvedTool ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+              <div>
+                <div style={{ color: C.ink, fontSize: 14, fontWeight: 700 }}>{approvedTool.name}</div>
+                <div style={{ color: C.inkSoft, fontSize: 13, marginTop: 3 }}>已入库工具，可直接设为首页编辑推荐。</div>
+              </div>
+              <FeaturedToggle slug={approvedTool.id} featured={Boolean(approvedTool.featured)} />
+            </div>
+          ) : (
+            <div style={{ color: C.inkMuted, fontSize: 14 }}>
+              批准入库后才能设置首页编辑推荐。
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );
