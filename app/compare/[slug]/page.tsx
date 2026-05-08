@@ -176,25 +176,27 @@ export default async function CompareDetailPage({ params }: Props) {
             </p>
           </section>
 
-          <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px, 100%), 1fr))', gap: 14, background: C.panel, border: `1px solid ${C.rule}`, borderRadius: 12, padding: 20, marginBottom: 24 }}>
-            <div style={{ gridColumn: '1 / -1', color: C.ink, fontSize: 18, fontWeight: 800 }}>Methodology Box</div>
-            <MethodologyItem label="测试时间" value={formatDate(comparison.testedAt)} />
-            <MethodologyItem label="测试版本" value={comparison.testedVersion} />
-            <MethodologyItem label="测试环境" value={comparison.testedEnv} />
-            <MethodologyItem label="评测集说明" value={comparison.evalSet} />
-            <MethodologyItem label="测试人" value={comparison.testedBy} />
-            {comparison.isLabReport && (
-              <>
-                <MethodologyItem label="Lab ID" value={comparison.labReportId} />
-                <MethodologyItem label="样本规模" value={comparison.sampleSize} />
-                <div style={{ borderTop: `1px solid ${C.ruleSoft}`, paddingTop: 12 }}>
-                  <div style={{ color: C.inkMuted, fontSize: 12, fontWeight: 700, marginBottom: 4 }}>可复现性</div>
-                  <div style={{ color: C.ink, fontSize: 14, lineHeight: 1.55 }}><ReproducibleValue value={comparison.reproducible} /></div>
-                </div>
-                <MethodologyItem label="测试仓库" value={comparison.repoUrl} />
-              </>
-            )}
-          </section>
+          {(comparison.isLabReport || comparison.testedAt || comparison.testedVersion || comparison.testedEnv || comparison.evalSet || comparison.testedBy) && (
+            <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px, 100%), 1fr))', gap: 14, background: C.panel, border: `1px solid ${C.rule}`, borderRadius: 12, padding: 20, marginBottom: 24 }}>
+              <div style={{ gridColumn: '1 / -1', color: C.ink, fontSize: 18, fontWeight: 800 }}>Methodology Box</div>
+              <MethodologyItem label="测试时间" value={formatDate(comparison.testedAt)} />
+              <MethodologyItem label="测试版本" value={comparison.testedVersion} />
+              <MethodologyItem label="测试环境" value={comparison.testedEnv} />
+              <MethodologyItem label="评测集说明" value={comparison.evalSet} />
+              <MethodologyItem label="测试人" value={comparison.testedBy} />
+              {comparison.isLabReport && (
+                <>
+                  <MethodologyItem label="Lab ID" value={comparison.labReportId} />
+                  <MethodologyItem label="样本规模" value={comparison.sampleSize} />
+                  <div style={{ borderTop: `1px solid ${C.ruleSoft}`, paddingTop: 12 }}>
+                    <div style={{ color: C.inkMuted, fontSize: 12, fontWeight: 700, marginBottom: 4 }}>可复现性</div>
+                    <div style={{ color: C.ink, fontSize: 14, lineHeight: 1.55 }}><ReproducibleValue value={comparison.reproducible} /></div>
+                  </div>
+                  <MethodologyItem label="测试仓库" value={comparison.repoUrl} />
+                </>
+              )}
+            </section>
+          )}
 
           <section style={{ background: C.panel, border: `1px solid ${C.rule}`, borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
             {[
@@ -217,8 +219,24 @@ export default async function CompareDetailPage({ params }: Props) {
 
           <section style={{ background: C.panel, border: `1px solid ${C.rule}`, borderRadius: 12, padding: 24, marginBottom: 24 }}>
             <div style={{ color: C.ink, fontSize: 18, fontWeight: 800, marginBottom: 14 }}>详细对比</div>
-            <div style={{ color: C.inkSoft, fontSize: 15, lineHeight: 1.8 }} dangerouslySetInnerHTML={{ __html: bodyHtml }} />
+            <div className="compare-body" style={{ color: C.inkSoft, fontSize: 15, lineHeight: 1.8 }} dangerouslySetInnerHTML={{ __html: bodyHtml }} />
           </section>
+          <style>{`
+            .compare-body h2 { color: ${C.ink}; font-size: 20px; font-weight: 800; margin: 28px 0 12px; }
+            .compare-body h2:first-child { margin-top: 0; }
+            .compare-body h3 { color: ${C.ink}; font-size: 16px; font-weight: 700; margin: 20px 0 8px; }
+            .compare-body p { margin: 0 0 12px; }
+            .compare-body ul, .compare-body ol { margin: 0 0 12px; padding-left: 24px; }
+            .compare-body li { margin-bottom: 4px; }
+            .compare-body table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; font-size: 14px; table-layout: fixed; }
+            .compare-body table th, .compare-body table td { border: 1px solid ${C.ruleSoft}; padding: 8px 10px; text-align: left; vertical-align: top; word-break: break-word; }
+            .compare-body table th { background: #FFFBF5; color: ${C.ink}; font-weight: 700; }
+            .compare-body table tr:nth-child(even) td { background: #FFFDF8; }
+            .compare-body blockquote { margin: 12px 0; padding: 10px 14px; border-left: 3px solid ${C.primary}; background: ${C.primaryBg}; color: ${C.ink}; border-radius: 0 6px 6px 0; }
+            .compare-body blockquote p { margin: 0; }
+            .compare-body a { color: ${C.accent}; text-decoration: underline; }
+            .compare-body code { background: ${C.ruleSoft}; padding: 1px 6px; border-radius: 4px; font-size: 13px; }
+          `}</style>
 
           <section style={{ background: C.greenBg, border: `1px solid ${C.green}`, borderRadius: 12, padding: 22, marginBottom: 24 }}>
             <div style={{ color: C.green, fontSize: 13, fontWeight: 800, marginBottom: 8 }}>编辑结论</div>

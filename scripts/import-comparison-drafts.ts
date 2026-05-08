@@ -49,10 +49,17 @@ function parseDraft(filename: string, raw: string): ParsedDraft {
     if (firstPara) summary = firstPara.replace(/\*\*/g, '').slice(0, 280);
   }
 
-  return { id, toolAId, toolBId, title, summary, verdict, body: raw, seoKeywords };
+  // body = 从 "## 核心差异速览" 开始到文末。剥离掉 H1、元信息 blockquote、编辑结论
+  // （这些已分别进入 title / summary / verdict 字段，避免页面重复渲染）
+  const bodyStartIdx = raw.indexOf('## 核心差异速览');
+  const body = bodyStartIdx >= 0 ? raw.slice(bodyStartIdx).trim() : raw;
+
+  return { id, toolAId, toolBId, title, summary, verdict, body, seoKeywords };
 }
 
 async function main() {
+  const updateMode = process.argv.includes('--update');
+  const forceMode = process.argv.includes('--force');
   const files = readdirSync(DRAFTS_DIR).filter((f) => f.endsWith('.md'));
   if (files.length === 0) throw new Error('No draft files found');
 
@@ -72,18 +79,42 @@ async function main() {
   }
   console.log(`✓ 校验通过：${allToolIds.length} 个工具 ID 全部存在`);
 
-  // 2. 检查 comparisons 表里是否已有同 id（避免重复插入）
-  const existingComps = (await sql`SELECT id FROM comparisons WHERE id = ANY(${drafts.map((d) => d.id)})`) as { id: string }[];
-  const existingCompSet = new Set(existingComps.map((r) => r.id));
+  // 2. 检查 comparisons 表里是否已有同 id
+  const existingComps = (await sql`SELECT id, status FROM comparisons WHERE id = ANY(${drafts.map((d) => d.id)})`) as { id: string; status: string }[];
+  const existingCompMap = new Map(existingComps.map((r) => [r.id, r.status]));
 
-  // 3. 入库
+  // 3. 入库 / 更新
   let inserted = 0;
+  let updated = 0;
   let skipped = 0;
   const now = new Date();
   for (const d of drafts) {
-    if (existingCompSet.has(d.id)) {
-      console.log(`  ⏭  ${d.id} 已存在，跳过`);
-      skipped++;
+    const existingStatus = existingCompMap.get(d.id);
+    if (existingStatus) {
+      if (!updateMode) {
+        console.log(`  ⏭  ${d.id} 已存在 (status=${existingStatus})，跳过；使用 --update 可刷新内容`);
+        skipped++;
+        continue;
+      }
+      if (existingStatus === 'published' && !forceMode) {
+        console.log(`  ⚠  ${d.id} 已发布，跳过（不覆盖已发布内容；如需强制覆盖请加 --force）`);
+        skipped++;
+        continue;
+      }
+      await sql`
+        UPDATE comparisons SET
+          tool_a_id = ${d.toolAId},
+          tool_b_id = ${d.toolBId},
+          title = ${d.title},
+          summary = ${d.summary},
+          body = ${d.body},
+          verdict = ${d.verdict},
+          seo_keywords = ${d.seoKeywords},
+          updated_at = ${now}
+        WHERE id = ${d.id}
+      `;
+      console.log(`  ↻ ${d.id}  (${d.toolAId} vs ${d.toolBId}) 已更新`);
+      updated++;
       continue;
     }
     await sql`
@@ -95,7 +126,7 @@ async function main() {
     console.log(`  ✓ ${d.id}  (${d.toolAId} vs ${d.toolBId})`);
     inserted++;
   }
-  console.log(`\n完成：插入 ${inserted}，跳过 ${skipped}`);
+  console.log(`\n完成：插入 ${inserted}，更新 ${updated}，跳过 ${skipped}`);
   console.log(`下一步：访问 https://www.aiboxpro.cn/admin/comparisons 审核并发布`);
 }
 
