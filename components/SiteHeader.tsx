@@ -112,6 +112,7 @@ export function SiteHeader({ onOpenPalette }: SiteHeaderProps) {
         <button
           type="button"
           onClick={onOpenPalette}
+          aria-label="搜索工具"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -128,11 +129,12 @@ export function SiteHeader({ onOpenPalette }: SiteHeaderProps) {
           }}
         >
           <span>⌘K</span>
-          {!isMobile && <span>搜索</span>}
+          {!isMobile && <span>搜索工具</span>}
         </button>
       ) : (
         <Link
           href="/tools"
+          aria-label="搜索工具"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -148,7 +150,7 @@ export function SiteHeader({ onOpenPalette }: SiteHeaderProps) {
             flexShrink: 0,
           }}
         >
-          {isMobile ? '⌘K' : '⌘K 搜索'}
+          {isMobile ? '⌘K' : '搜索工具'}
         </Link>
       )}
     </header>
