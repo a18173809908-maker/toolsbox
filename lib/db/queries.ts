@@ -155,6 +155,23 @@ export async function loadToolById(id: string): Promise<(Tool & { catEn: string;
   };
 }
 
+// admin: 列出所有工具用于编辑推荐管理（按 featured DESC, name ASC）
+export async function loadAllToolsForAdmin() {
+  const rows = await db
+    .select({
+      id: tools.id,
+      name: tools.name,
+      catId: tools.catId,
+      featured: tools.featured,
+      pricing: tools.pricing,
+      chinaAccess: tools.chinaAccess,
+      publishedAt: tools.publishedAt,
+    })
+    .from(tools)
+    .orderBy(desc(tools.featured), asc(tools.name));
+  return rows;
+}
+
 export async function loadAllToolIds(): Promise<string[]> {
   const rows = await db.select({ id: tools.id }).from(tools);
   return rows.map((r) => r.id);

@@ -528,55 +528,76 @@ function FeaturedTools({
   mobile: boolean;
 }) {
   return (
-    <div style={{ display: 'grid', gap: 10 }}>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: mobile ? '1fr' : 'repeat(auto-fill, minmax(min(320px, 100%), 1fr))',
+        gap: 14,
+      }}
+    >
       {tools.map((tool) => {
         const category = categories.find((item) => item.id === tool.cat);
+        const tagline = tool.features?.slice(0, 2).join(' · ') || category?.zh || getRecommendationReason(tool);
         return (
           <Link
             key={tool.id}
             href={`/tools/${tool.id}`}
             style={{
-              display: 'grid',
-              gridTemplateColumns: mobile ? '52px minmax(0, 1fr)' : '52px minmax(0, 1fr) 170px 120px',
-              gap: 14,
-              alignItems: 'center',
-              padding: 14,
-              borderRadius: 8,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+              padding: 18,
+              borderRadius: 10,
               background: T.panel,
               border: `1px solid ${T.rule}`,
               boxShadow: cardShadow,
+              minHeight: 156,
             }}
           >
-            <ToolIcon name={tool.name} mono={tool.mono} brand={tool.brand} url={tool.url} size={44} />
-            <div style={{ minWidth: 0 }}>
-              <strong style={{ display: 'block', marginBottom: 4, fontSize: 16 }}>{tool.name}</strong>
-              <span style={{ display: 'block', color: T.inkSoft, fontSize: 13, lineHeight: 1.5 }}>
-                {tool.zh || tool.en}
-              </span>
-            </div>
-            {!mobile ? (
-              <div>
-                <strong style={{ display: 'block', marginBottom: 3, fontSize: 13 }}>适合</strong>
-                <span style={{ color: T.inkSoft, fontSize: 12, lineHeight: 1.5 }}>
-                  {tool.features?.slice(0, 2).join('、') || category?.zh || getRecommendationReason(tool)}
-                </span>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                <ToolIcon name={tool.name} mono={tool.mono} brand={tool.brand} url={tool.url} size={40} />
+                <strong style={{
+                  fontSize: 16,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  minWidth: 0,
+                }}>{tool.name}</strong>
               </div>
-            ) : null}
-            <div
-              style={{
-                gridColumn: mobile ? '2' : 'auto',
-                justifySelf: mobile ? 'start' : 'end',
-                minWidth: 82,
-                padding: '7px 10px',
-                borderRadius: 8,
+              <span style={{
+                flexShrink: 0,
+                padding: '4px 10px',
+                borderRadius: 6,
                 background: T.primaryBg,
                 color: T.accent,
-                textAlign: 'center',
                 fontWeight: 900,
-                fontSize: 13,
-              }}
-            >
-              {getPricingLabel(tool.pricing)}
+                fontSize: 12,
+              }}>
+                {getPricingLabel(tool.pricing)}
+              </span>
+            </div>
+            <p style={{
+              margin: 0,
+              color: T.inkSoft,
+              fontSize: 13,
+              lineHeight: 1.55,
+              overflow: 'hidden',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical' as const,
+              flex: 1,
+            }}>
+              {tool.zh || tool.en}
+            </p>
+            <div style={{
+              fontSize: 12,
+              color: T.inkMuted,
+              borderTop: `1px solid ${T.rule}`,
+              paddingTop: 10,
+            }}>
+              <span style={{ color: T.accent, fontWeight: 700 }}>适合</span>
+              <span style={{ marginLeft: 6 }}>{tagline}</span>
             </div>
           </Link>
         );
@@ -597,134 +618,147 @@ const PERIOD_LABELS: { value: TrendingPeriod; label: string }[] = [
   { value: 'month', label: '本月' },
 ];
 
-function TrendingRail({ trending }: { trending: Record<TrendingPeriod, RepoItem[]> }) {
+function TrendingRail({ trending, mobile }: { trending: Record<TrendingPeriod, RepoItem[]>; mobile: boolean }) {
   const [period, setPeriod] = React.useState<TrendingPeriod>('today');
-  const repos = trending[period].slice(0, 5);
+  const repos = trending[period].slice(0, 6);
 
   return (
-    <aside
-      style={{
-        borderRadius: 8,
-        background: T.panel,
-        border: `1px solid ${T.rule}`,
-        boxShadow: cardShadow,
-        padding: 18,
-        alignSelf: 'start',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
-        <h3 style={{ margin: 0, fontSize: 18 }}>📈 开发者趋势</h3>
-        <Link href="/trending" style={{ color: T.accent, fontSize: 12, fontWeight: 700 }}>
-          完整榜单 →
-        </Link>
-      </div>
-
-      <div
-        style={{
-          display: 'inline-flex',
-          gap: 4,
-          padding: 4,
-          borderRadius: 8,
-          background: '#FAF5EA',
-          marginBottom: 8,
-        }}
-      >
-        {PERIOD_LABELS.map((p) => {
-          const active = period === p.value;
-          return (
-            <button
-              key={p.value}
-              type="button"
-              onClick={() => setPeriod(p.value)}
-              style={{
-                padding: '4px 12px',
-                borderRadius: 6,
-                border: 'none',
-                background: active ? T.panel : 'transparent',
-                color: active ? T.ink : T.inkMuted,
-                fontWeight: active ? 800 : 600,
-                fontSize: 12,
-                cursor: 'pointer',
-                boxShadow: active ? '0 1px 3px rgba(0,0,0,.08)' : 'none',
-              }}
-            >
-              {p.label}
-            </button>
-          );
-        })}
-      </div>
-
-      <div>
-        {repos.length === 0 ? (
-          <div style={{ padding: '16px 0', color: T.inkMuted, fontSize: 13 }}>暂无数据</div>
-        ) : repos.map((repo, index) => {
-          const langColor = LANG_COLOR[repo.lang] ?? '#9CA3AF';
-          return (
-            <Link
-              key={repo.repo}
-              href={`/trending/${repo.repo}`}
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '24px 1fr',
-                gap: 10,
-                padding: '12px 0',
-                borderTop: index === 0 ? 'none' : `1px solid ${T.rule}`,
-              }}
-            >
-              <span
+    <div>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
+        marginBottom: 14,
+        flexWrap: 'wrap',
+      }}>
+        <div
+          style={{
+            display: 'inline-flex',
+            gap: 4,
+            padding: 4,
+            borderRadius: 8,
+            background: '#FAF5EA',
+          }}
+        >
+          {PERIOD_LABELS.map((p) => {
+            const active = period === p.value;
+            return (
+              <button
+                key={p.value}
+                type="button"
+                onClick={() => setPeriod(p.value)}
                 style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: '50%',
-                  background: index === 0 ? T.accent : '#FAF5EA',
-                  color: index === 0 ? '#fff' : T.inkSoft,
-                  display: 'grid',
-                  placeItems: 'center',
-                  fontWeight: 900,
-                  fontSize: 12,
-                  marginTop: 2,
+                  padding: '5px 14px',
+                  borderRadius: 6,
+                  border: 'none',
+                  background: active ? T.panel : 'transparent',
+                  color: active ? T.ink : T.inkMuted,
+                  fontWeight: active ? 800 : 600,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  boxShadow: active ? '0 1px 3px rgba(0,0,0,.08)' : 'none',
                 }}
               >
-                {index + 1}
-              </span>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
-                  <strong style={{
-                    fontSize: 14,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    minWidth: 0,
-                  }}>{repo.repo}</strong>
-                  <span style={{ color: '#B7472A', fontSize: 12, fontWeight: 900, whiteSpace: 'nowrap' }}>
+                {p.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {repos.length === 0 ? (
+        <div style={{ padding: '40px 0', textAlign: 'center', color: T.inkMuted, fontSize: 13 }}>暂无数据</div>
+      ) : (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: mobile ? '1fr' : 'repeat(auto-fill, minmax(min(320px, 100%), 1fr))',
+            gap: 14,
+          }}
+        >
+          {repos.map((repo, index) => {
+            const langColor = LANG_COLOR[repo.lang] ?? '#9CA3AF';
+            return (
+              <Link
+                key={repo.repo}
+                href={`/trending/${repo.repo}`}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10,
+                  padding: 18,
+                  borderRadius: 10,
+                  background: T.panel,
+                  border: `1px solid ${T.rule}`,
+                  boxShadow: cardShadow,
+                  minHeight: 150,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                    <span
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: '50%',
+                        background: index === 0 ? T.accent : '#FAF5EA',
+                        color: index === 0 ? '#fff' : T.inkSoft,
+                        display: 'grid',
+                        placeItems: 'center',
+                        fontWeight: 900,
+                        fontSize: 12,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {index + 1}
+                    </span>
+                    <strong style={{
+                      fontSize: 14,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      minWidth: 0,
+                    }}>{repo.repo}</strong>
+                  </div>
+                  <span style={{ color: '#B7472A', fontSize: 12, fontWeight: 900, whiteSpace: 'nowrap', flexShrink: 0 }}>
                     +{formatStars(repo.gained)}
                   </span>
                 </div>
                 <p style={{
-                  margin: '4px 0 6px',
+                  margin: 0,
                   color: T.inkSoft,
-                  fontSize: 12,
-                  lineHeight: 1.5,
+                  fontSize: 13,
+                  lineHeight: 1.55,
                   overflow: 'hidden',
                   display: '-webkit-box',
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical' as const,
+                  flex: 1,
                 }}>
                   {repo.descZh || repo.desc}
                 </p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 11, color: T.inkMuted }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  fontSize: 11,
+                  color: T.inkMuted,
+                  borderTop: `1px solid ${T.rule}`,
+                  paddingTop: 10,
+                }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                     <span style={{ width: 8, height: 8, borderRadius: '50%', background: langColor }} />
                     {repo.lang}
                   </span>
                   <span>⭐ {formatStars(repo.stars)}</span>
                 </div>
-              </div>
-            </Link>
-          );
-        })}
-      </div>
-    </aside>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -732,7 +766,10 @@ export default function V2ProHomepage({ tools, categories, trending, stats }: Ho
   const mobile = useIsMobile();
   const [query, setQuery] = React.useState('');
 
-  const featuredTools = tools.filter((tool) => tool.featured).slice(0, 4);
+  // TODO: featured 当前是 DB 里的人工标记字段（seed 脚本和 admin 手动 SQL 写入），
+  // 没有任何自动评分逻辑。等接入 PV/upvotes 数据后改为「featured 加权 + 行为分」自动排序：
+  //   ORDER BY (CASE WHEN featured THEN 100 ELSE 0 END) + upvotes * 2 + recent_views / 10 DESC
+  const featuredTools = tools.filter((tool) => tool.featured).slice(0, 6);
 
   const filteredTools = tools.filter((tool) => {
     const needle = query.trim().toLowerCase();
@@ -745,7 +782,7 @@ export default function V2ProHomepage({ tools, categories, trending, stats }: Ho
     return matchesQuery;
   });
 
-  const recommendedTools = (filteredTools.length > 0 ? filteredTools : tools).slice(0, 4);
+  const recommendedTools = (filteredTools.length > 0 ? filteredTools : tools).slice(0, 6);
 
   return (
     <div
@@ -783,21 +820,23 @@ export default function V2ProHomepage({ tools, categories, trending, stats }: Ho
               actionLabel="进入工具库"
               actionHref="/tools"
             />
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: mobile ? '1fr' : 'minmax(0, 1fr) 360px',
-                gap: 18,
-                alignItems: 'start',
-              }}
-            >
-              <FeaturedTools
-                tools={featuredTools.length > 0 ? featuredTools : recommendedTools}
-                categories={categories}
-                mobile={mobile}
-              />
-              <TrendingRail trending={trending} />
-            </div>
+            <FeaturedTools
+              tools={featuredTools.length > 0 ? featuredTools : recommendedTools}
+              categories={categories}
+              mobile={mobile}
+            />
+          </div>
+        </section>
+
+        <section style={{ marginBottom: 34 }}>
+          <div style={shellStyle}>
+            <SectionTitle
+              title="📈 开发者趋势"
+              description="GitHub 每日新增星数最高的 AI 项目，发现下一个值得用的开源工具。"
+              actionLabel="完整榜单"
+              actionHref="/trending"
+            />
+            <TrendingRail trending={trending} mobile={mobile} />
           </div>
         </section>
 
