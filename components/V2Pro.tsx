@@ -40,26 +40,26 @@ const heroShadow = '0 18px 44px rgba(24, 32, 28, .10)';
 
 const decisionLinks: DecisionLink[] = [
   {
-    title: '对比两个 AI 工具',
-    description: 'Cursor 还是 Trae？Claude Code 还是 Codex？纠结时来这里看横评。',
+    title: '看 AI 工具横评',
+    description: 'Cursor 还是 Trae？Claude Code 还是 Codex？纠结时来这里。',
     href: '/compare',
     icon: '⚖️',
     accent: T.accent,
     tone: T.primaryBg,
   },
   {
-    title: '寻找替代方案',
-    description: '海外工具贵、不稳定、被墙？看看哪些国产工具能直接用。',
+    title: '国内可直连工具',
+    description: '海外工具被墙、不稳定？看哪些工具国内能直接打开。',
     href: '/tools?china=accessible',
-    icon: '🔄',
+    icon: '🇨🇳',
     accent: '#B7472A',
     tone: '#FFE1D4',
   },
   {
-    title: '查看编辑榜单',
-    description: '编辑实测后的工具排名，按新手、团队、中文场景分别给出推荐。',
-    href: '/tools?sort=score',
-    icon: '📊',
+    title: '看 GitHub 开发趋势',
+    description: '每天追踪 AI 圈最火的开源项目，比看博客快一步。',
+    href: '/trending',
+    icon: '📈',
     accent: '#8A5A00',
     tone: '#F4E5BD',
   },
@@ -69,26 +69,26 @@ const compareCards: CompareCard[] = [
   {
     title: 'Claude Code vs Codex',
     summary: '看终端开发、本地代码代理、任务委派和 OpenAI 生态协作的差异。',
-    href: '/compare',
+    href: '/compare/claude-code-vs-codex',
     badges: ['AI 编程', '开发者'],
   },
   {
     title: 'Cursor vs Trae',
     summary: '比较 AI IDE、中文体验、上手门槛和团队落地难度。',
-    href: '/compare',
+    href: '/compare/cursor-vs-trae',
     badges: ['代码助手', '中文体验'],
   },
   {
-    title: 'ChatGPT vs Kimi',
-    summary: '从长文档、联网搜索、中文写作和日常办公角度看谁更顺手。',
-    href: '/compare',
-    badges: ['智能对话', '办公'],
+    title: 'DeepSeek vs ChatGPT',
+    summary: '中文场景下两者各自的优劣、价格差异和国内访问稳定性。',
+    href: '/compare/deepseek-vs-chatgpt',
+    badges: ['智能对话', '中文场景'],
   },
   {
-    title: 'Midjourney vs 即梦',
-    summary: '比较画质、商用可行性、中文提示词和国内使用门槛。',
-    href: '/compare',
-    badges: ['AI 绘图', '创作者'],
+    title: '豆包 vs Kimi',
+    summary: '日常办公、长文档、联网搜索哪个更顺手，国内用户怎么挑。',
+    href: '/compare/doubao-vs-kimi',
+    badges: ['国产对比', '办公'],
   },
 ];
 
@@ -217,12 +217,12 @@ function Hero({
   mobile: boolean;
 }) {
   const router = useRouter();
-  const hotQueries = [
-    'Claude Code vs Codex',
-    'Cursor 替代品',
-    '国内 AI 编程工具',
-    '免费 AI 绘图工具',
-    'AI PPT 工具推荐',
+  const hotQueries: { label: string; href: string }[] = [
+    { label: 'Claude Code vs Codex', href: '/compare/claude-code-vs-codex' },
+    { label: 'Cursor vs Trae',       href: '/compare/cursor-vs-trae' },
+    { label: '国内 AI 编程工具',     href: '/tools?cat=code&china=accessible' },
+    { label: '免费 AI 绘图工具',     href: '/tools?cat=image&pricing=Free' },
+    { label: 'AI PPT 工具',          href: '/tools?cat=ppt' },
   ];
 
   const submitSearch = () => {
@@ -370,10 +370,9 @@ function Hero({
 
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
             {hotQueries.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setQuery(item)}
+              <Link
+                key={item.label}
+                href={item.href}
                 style={{
                   padding: '6px 10px',
                   borderRadius: 8,
@@ -381,11 +380,11 @@ function Hero({
                   background: 'rgba(255, 253, 247, .78)',
                   color: T.inkSoft,
                   fontSize: 13,
-                  cursor: 'pointer',
+                  textDecoration: 'none',
                 }}
               >
-                {item}
-              </button>
+                {item.label}
+              </Link>
             ))}
           </div>
         </div>
