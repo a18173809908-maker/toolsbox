@@ -32,6 +32,7 @@ yarn-error.log*
 .dev.log
 
 # local agent settings
+.claude/
 .claude/settings.local.json
 
 # env files (can opt-in for committing if needed)

@@ -5,7 +5,6 @@
 import { db } from '@/lib/db';
 import { tools, toolCandidates, sources } from '@/lib/db/schema';
 import { or, ilike, eq } from 'drizzle-orm';
-import { sql } from 'drizzle-orm';
 
 // 匹配新闻文章的关键词（与 process-tool-candidates.ts 保持一致）
 const NEWS_KEYWORDS = [
