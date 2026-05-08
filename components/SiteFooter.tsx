@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { v2Tokens as T } from '@/lib/tokens';
 
 const C = {
@@ -76,8 +79,13 @@ function FooterColumn({ title, links }: { title: string; links: FooterLink[] }) 
 /**
  * 全站统一页脚。出现在所有公共页面（主页、工具库、对比页、合规页等）底部。
  * 提供合规页入口（之前合规页只在 sitemap 中，没有从 UI 进入的路径）。
+ *
+ * 在 /admin/* 路径下隐藏（后台不需要公共站文案）。
  */
 export function SiteFooter() {
+  const pathname = usePathname();
+  if (pathname?.startsWith('/admin')) return null;
+
   return (
     <footer
       style={{
