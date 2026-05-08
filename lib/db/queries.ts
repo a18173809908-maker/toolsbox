@@ -1,6 +1,6 @@
 import { db } from './index';
 import { categories, tools, githubTrending, articles, sources, toolCandidates, comparisons } from './schema';
-import { desc, asc, eq, ilike, or, isNull, count, max, and, inArray } from 'drizzle-orm';
+import { desc, asc, eq, ilike, or, isNull, count, max, and, inArray, gt } from 'drizzle-orm';
 import type { TrendingPeriod, Tool, Category, RepoItem, HomepageStats } from '@/lib/data';
 import type { Comparison, Tool as DbTool } from './schema';
 
@@ -700,4 +700,99 @@ export async function loadAutomationStatus() {
       activeSources: activeSources[0]?.value ?? 0,
     },
   };
+}
+
+// ── Admin ─────────────────────────────────────────────────────────────────────
+
+export async function loadAdminCounts() {
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const [toolCount, compCount, artCount, toolRev, compRev, artRev] = await Promise.all([
+    db.select({ value: count() }).from(toolCandidates)
+      .where(inArray(toolCandidates.status, ['ai_drafted', 'processed'])),
+    db.select({ value: count() }).from(comparisons)
+      .where(eq(comparisons.status, 'draft')),
+    db.select({ value: count() }).from(articles)
+      .where(and(eq(articles.status, 'published'), gt(articles.publishedAt, thirtyDaysAgo))),
+    db.select({ value: count() }).from(toolCandidates)
+      .where(gt(toolCandidates.reviewedAt, todayStart)),
+    db.select({ value: count() }).from(comparisons)
+      .where(gt(comparisons.reviewedAt, todayStart)),
+    db.select({ value: count() }).from(articles)
+      .where(gt(articles.reviewedAt, todayStart)),
+  ]);
+
+  return {
+    pendingTools: toolCount[0]?.value ?? 0,
+    pendingComparisons: compCount[0]?.value ?? 0,
+    recentArticles: artCount[0]?.value ?? 0,
+    todayReviewed:
+      (toolRev[0]?.value ?? 0) + (compRev[0]?.value ?? 0) + (artRev[0]?.value ?? 0),
+  };
+}
+
+export async function loadAdminPendingTools(limit = 20, offset = 0) {
+  const [items, totalRows] = await Promise.all([
+    db.select({
+      id: toolCandidates.id,
+      name: toolCandidates.name,
+      url: toolCandidates.url,
+      sourceName: toolCandidates.sourceName,
+      status: toolCandidates.status,
+      fetchedAt: toolCandidates.fetchedAt,
+    }).from(toolCandidates)
+      .where(inArray(toolCandidates.status, ['ai_drafted', 'processed']))
+      .orderBy(desc(toolCandidates.fetchedAt))
+      .limit(limit)
+      .offset(offset),
+    db.select({ value: count() }).from(toolCandidates)
+      .where(inArray(toolCandidates.status, ['ai_drafted', 'processed'])),
+  ]);
+  return { items, total: totalRows[0]?.value ?? 0 };
+}
+
+export async function loadAdminDraftComparisons(limit = 20, offset = 0) {
+  const [items, totalRows] = await Promise.all([
+    db.select({
+      id: comparisons.id,
+      title: comparisons.title,
+      testedBy: comparisons.testedBy,
+      status: comparisons.status,
+      createdAt: comparisons.createdAt,
+    }).from(comparisons)
+      .where(eq(comparisons.status, 'draft'))
+      .orderBy(desc(comparisons.createdAt))
+      .limit(limit)
+      .offset(offset),
+    db.select({ value: count() }).from(comparisons)
+      .where(eq(comparisons.status, 'draft')),
+  ]);
+  return { items, total: totalRows[0]?.value ?? 0 };
+}
+
+export async function loadAdminRecentArticles(limit = 20, offset = 0) {
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const [items, totalRows] = await Promise.all([
+    db.select({
+      id: articles.id,
+      title: articles.title,
+      titleZh: articles.titleZh,
+      url: articles.url,
+      tag: articles.tag,
+      status: articles.status,
+      publishedAt: articles.publishedAt,
+      fetchedAt: articles.fetchedAt,
+      sourceName: sources.name,
+    }).from(articles)
+      .leftJoin(sources, eq(articles.sourceId, sources.id))
+      .where(and(eq(articles.status, 'published'), gt(articles.publishedAt, thirtyDaysAgo)))
+      .orderBy(desc(articles.publishedAt))
+      .limit(limit)
+      .offset(offset),
+    db.select({ value: count() }).from(articles)
+      .where(and(eq(articles.status, 'published'), gt(articles.publishedAt, thirtyDaysAgo))),
+  ]);
+  return { items, total: totalRows[0]?.value ?? 0 };
 }
