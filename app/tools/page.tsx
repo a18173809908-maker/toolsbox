@@ -72,10 +72,13 @@ export default async function ToolsPage({ searchParams }: Props) {
 
   const [{ items, total }, cats] = await Promise.all([
     loadToolsPage({ cat: cat || undefined, pricing: pricing || undefined, china: china || undefined, q: q || undefined, page, pageSize }),
-    loadAllCategories(),
+    // 计数应用其他已激活筛选（不含 cat），保持徽章数与列表数一致
+    loadAllCategories({ pricing: pricing || undefined, china: china || undefined, q: q || undefined }),
   ]);
 
   const totalPages = Math.ceil(total / pageSize);
+  // 「全部」徽章 = 应用其他筛选后跨所有分类的总数（cats 已按 pricing/china/q 过滤，求和即可）
+  const allCatsTotal = cats.reduce((sum, c) => sum + c.count, 0);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -118,6 +121,7 @@ export default async function ToolsPage({ searchParams }: Props) {
                 }}
               >
                 全部
+                {allCatsTotal > 0 && <span style={{ marginLeft: 5, opacity: 0.6, fontSize: 11 }}>{allCatsTotal}</span>}
               </Link>
               {cats.map((c) => {
                 const active = cat === c.id;

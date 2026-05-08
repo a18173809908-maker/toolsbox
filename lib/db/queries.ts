@@ -653,9 +653,24 @@ export async function loadToolsPage(opts: {
   return { items, total: totalRows[0]?.value ?? 0 };
 }
 
-export async function loadAllCategories() {
+export async function loadAllCategories(opts: {
+  pricing?: string;
+  china?: string;
+  q?: string;
+} = {}) {
   const cats = await db.select().from(categories);
-  const toolRows = await db.select({ catId: tools.catId }).from(tools);
+
+  // 计数时应用「其他已激活筛选」（不含分类本身），以反映点击该分类后的真实结果数
+  const conditions = [];
+  if (opts.pricing) conditions.push(eq(tools.pricing, opts.pricing));
+  if (opts.china) conditions.push(eq(tools.chinaAccess, opts.china));
+  if (opts.q) {
+    const pattern = `%${opts.q}%`;
+    conditions.push(or(ilike(tools.name, pattern), ilike(tools.zh, pattern), ilike(tools.en, pattern))!);
+  }
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const toolRows = await db.select({ catId: tools.catId }).from(tools).where(where);
   const countMap = new Map<string, number>();
   for (const t of toolRows) countMap.set(t.catId, (countMap.get(t.catId) ?? 0) + 1);
   return cats
