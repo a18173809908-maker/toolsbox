@@ -62,7 +62,7 @@ async function main() {
 
   // 1. 先校验工具 ID 都存在
   const allToolIds = Array.from(new Set(drafts.flatMap((d) => [d.toolAId, d.toolBId])));
-  const existing = await sql<{ id: string }[]>`SELECT id FROM tools WHERE id = ANY(${allToolIds})`;
+  const existing = (await sql`SELECT id FROM tools WHERE id = ANY(${allToolIds})`) as { id: string }[];
   const existingSet = new Set(existing.map((r) => r.id));
   const missing = allToolIds.filter((id) => !existingSet.has(id));
   if (missing.length > 0) {
@@ -73,7 +73,7 @@ async function main() {
   console.log(`✓ 校验通过：${allToolIds.length} 个工具 ID 全部存在`);
 
   // 2. 检查 comparisons 表里是否已有同 id（避免重复插入）
-  const existingComps = await sql<{ id: string }[]>`SELECT id FROM comparisons WHERE id = ANY(${drafts.map((d) => d.id)})`;
+  const existingComps = (await sql`SELECT id FROM comparisons WHERE id = ANY(${drafts.map((d) => d.id)})`) as { id: string }[];
   const existingCompSet = new Set(existingComps.map((r) => r.id));
 
   // 3. 入库

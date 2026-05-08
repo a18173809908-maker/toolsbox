@@ -99,7 +99,7 @@ async function main() {
   const sql = neon(process.env.DATABASE_URL!);
   const now = new Date();
 
-  const existing = await sql<{ id: string }[]>`SELECT id FROM tools WHERE id = ANY(${tools.map((t) => t.id)})`;
+  const existing = (await sql`SELECT id FROM tools WHERE id = ANY(${tools.map((t) => t.id)})`) as { id: string }[];
   const existingSet = new Set(existing.map((r) => r.id));
 
   let inserted = 0;
