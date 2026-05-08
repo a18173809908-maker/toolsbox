@@ -16,24 +16,48 @@
 ## 给 CODEX 接手的 1 分钟概要（2026-05-08）
 
 **当前状态**：Sprint 1 已全部完成并部署。Sprint 2 刚启动，进度如下：
-- I6 工程链路已就绪（`npm run draft:comparison` 脚本可用）；**内容尚未产出**，10 篇对比页均为草稿 0 条
+- I6 工程链路已就绪（`npm run draft:comparison` 脚本可用）；**内容首篇 `claude-code-vs-codex` 已完成草稿**（doc-based 模板），其余 9 篇待按同模板产出
 - I7 Lab 报告代码框架已就绪（`comparisons.isLabReport` 字段 + schema）；**内容尚未产出**
 - I8-I13 均未开始
 
-**下一步（按优先级）**：
+### ⚠️ 内容产出策略决策（2026-05-08，已与运营对齐）
 
-1. **I6 内容（最高优先）**：用 `npm run draft:comparison -- <tool-a> <tool-b>` 为清单里的 10 对工具各生成草稿 → 人工审核 + 填 Methodology Box → 在 `/admin/comparisons` 里 approve → 上线
-   - 第一篇优先：`cursor-vs-trae`（搜索量最高）
+**第一批 10 篇对比页全部走「方案 A：基于官方文档的对比」，不要求实测**。理由：
+
+- 实测每篇 60-90 分钟，10 篇会拖慢首批 SEO 落地页上线节奏
+- n=1 的伪实测（凭印象写"更快/更细"）反而会损耗信任
+- SEO 早期更需要"覆盖面"而不是"深度"，先抢收录窗口
+
+**方案 A 必须做到**：
+1. 文章顶部加 ⚠️ callout：「本文基于两款产品的官方文档与公开资料整理，不包含 AIBoxPro 实测数据」
+2. **不写** Methodology Box / 实测样本 / 待实测清单 / 「消耗感」「响应更快」等需要实测的判断
+3. 编辑结论只下**场景化**结论（"哪种场景适合哪个工具"），**不下性能结论**（"哪个更快/更准"）
+4. 价格、模型名、配置文件等具体事实必须有官方页面引用，不确定的数字写"以官网为准"
+5. comparison 表入库时 `isLabReport=false`
+
+**参考模板**：[`docs/comparison-drafts/claude-code-vs-codex.md`](./comparison-drafts/claude-code-vs-codex.md) 是改写后的方案 A 标准模板，新文章按这个结构（编辑结论 / 速览表 / 9 节正文 / 参考资料）来写。
+
+**例外**：白皮书定义的"AIBoxPro Lab"专项报告走方案 C（完整实测，60-90 分钟/篇）——但这是 I7 任务，**不在第一批 10 篇范围内**。Lab 报告挑 1-2 篇旗舰对比单独立项，由编辑亲手测，配 Methodology Box + repoUrl。
+
+### 下一步（按优先级）
+
+1. **I6 内容（最高优先）**：用 `npm run draft:comparison -- <tool-a> <tool-b> --prompt-only` 拿到 prompt，丢给 LLM 起草，按上方方案 A 标准修订，写入 `docs/comparison-drafts/<slug>.md`，然后通过 admin 审核流入库
+   - 已完成：`claude-code-vs-codex.md`
+   - 下一篇：`cursor-vs-trae`（搜索量最高）
+   - 完整 10 篇清单见 sprint-2.md 下方 §I6 表格
 2. **I8 SEO schema**：给工具详情页和对比页加 JSON-LD（Product / Article schema）
 3. **I9 连通性数据**：`/tools/[slug]` 实测可用性数据填充（手工 + 脚本辅助）
 4. **I10-I13 运营**：图文生成、社区分发 SOP、工具方互推、小红书——非工程任务，可与工程并行
 
-**关键约束**：
+### 关键约束
+
 - **不要动 `docs/whitepaper.md`**（已与白皮书对齐，改动需人工确认）
 - 对比页内容必须经过 admin 审核流程（status='draft' → approve → status='published'），不要直接写 SQL 插 status='published'
+- 第一批 10 篇严格遵守方案 A，**不要**自作主张加 Methodology Box
 - Commit message 用 `feat(I6): ...` / `feat(I8): ...` 格式
 
-**工程链路已就绪可直接调用**：
+### 工程链路已就绪可直接调用
+
 - `npm run draft:comparison -- cursor trae` — 生成对比草稿 markdown
 - `npm run draft:comparison -- cursor trae --prompt-only` — 只输出 prompt（省 API 费用）
 - `npm run draft:comparison -- --list` — 列出所有可用工具 ID
@@ -46,9 +70,9 @@
 | 任务 | 类型 | 状态 | Commit |
 |---|---|---|---|
 | I6 对比页起草脚本 | 工程 | ✅ 已完成 | 2a47561 |
-| I6 10 篇对比页内容 | 内容 | 🟡 待编辑产出 | — |
+| I6 10 篇对比页内容（doc-based） | 内容 | 🟡 1/10 已起草（claude-code-vs-codex） | — |
 | I7 Lab 报告代码支持 | 工程 | ✅ 已完成 | 1519082 |
-| I7 首份 Lab 报告内容 | 内容 | 🟡 待编辑产出 | — |
+| I7 首份 Lab 报告内容（实测） | 内容 | 🟡 待编辑实测 | — |
 | I8 Cursor 替代品 + SEO schema | 工程 | 🟡 待做 | — |
 | I9 连通性数据层 + 实测填充 | 工程 + 运营 | 🟡 待做 | — |
 | I10 图文自动生成系统 | 工程 | 🟡 待做 | — |
@@ -57,7 +81,8 @@
 | I13 小红书账号准备 | 运营前置 | 🟡 待做 | — |
 
 **当前阻塞**：
-- I6 / I7 内容产出依赖编辑实测，工程链路（脚本 + 模板 + 反向引用）已就绪
+- I6 内容首篇已起草（doc-based），其余 9 篇可按同模板批量产出，**不需要等待实测**
+- I7 Lab 报告内容依赖编辑实测，工程链路（脚本 + 模板 + 反向引用）已就绪，独立排期
 - I10 / I11 / I12 / I13 都在第 7-8 周计划中，可平行启动
 
 > 命名提醒：本 sprint 的 I6/I7/I8/I9 与 [sprint-1.md](./sprint-1.md) 的 I6/I7 编号有重叠但**指代不同**，引用时建议带前缀（如 "sprint-2 I6"）。
