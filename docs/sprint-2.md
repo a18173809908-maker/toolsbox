@@ -70,7 +70,7 @@
 | 任务 | 类型 | 状态 | Commit |
 |---|---|---|---|
 | I6 对比页起草脚本 | 工程 | ✅ 已完成 | 2a47561 |
-| I6 10 篇对比页内容（doc-based） | 内容 | 🟡 1/10 已起草（claude-code-vs-codex） | — |
+| I6 10 篇对比页内容（doc-based） | 内容 | ✅ 10/10 已起草 | — |
 | I7 Lab 报告代码支持 | 工程 | ✅ 已完成 | 1519082 |
 | I7 首份 Lab 报告内容（实测） | 内容 | 🟡 待编辑实测 | — |
 | I8 Cursor 替代品 + SEO schema | 工程 | 🟡 待做 | — |
@@ -101,7 +101,7 @@
 - `--list` 列出所有可用工具 ID
 - prompt 模板内置 5 个对比维度、3000-4000 字、必须明确推荐、不允许编造数据
 
-**待做（内容）**：编辑使用脚本产出 10 篇对比页草稿 → 人工审核 / 补 Methodology Box → 写入 `comparisons` 表 status='published'。
+**待做（内容）**：编辑审核 10 篇 doc-based 草稿 → 确认顶部 callout、场景化结论和价格口径 → 写入 `comparisons` 表 `status='draft'`、`isLabReport=false`，审核后再发布。
 
 **第一批对比页清单**（按搜索热度排序，优先执行靠前的）：
 
@@ -118,14 +118,14 @@
 | 9 | `deepseek-vs-chatgpt` | DeepSeek vs ChatGPT：中文场景对比 | DeepSeek 和 ChatGPT 哪个好 |
 | 10 | `kimi-vs-wenxin` | Kimi vs 文心一言：长文本处理对比 | Kimi 和文心一言比较 |
 
-**内容生产流程**（每篇约 60-90 分钟）：
+**内容生产流程**（每篇约 30-45 分钟）：
 
 ```
-1. DeepSeek 起草对比正文（使用下方 prompt 模板）
+1. 参考 `docs/comparison-drafts/claude-code-vs-codex.md` 的结构起草正文
 2. 人工核对两个工具的定价、版本号、国内可用性
-3. 人工填写 Methodology Box（testedAt / testedEnv / testedBy / evalSet）
-4. 写 verdict（编辑结论，2-3 句，明确说谁适合谁）
-5. 写入 comparisons 表 status='draft' → 审核 → status='published'
+3. 顶部写 doc-based callout，不写 Methodology Box
+4. 写 verdict（编辑结论，2-3 句，只给场景化建议）
+5. 写入 comparisons 表 `status='draft'`、`isLabReport=false` → 审核 → `status='published'`
 ```
 
 **DeepSeek 内容生成脚本**：新建 `scripts/draft-comparison.ts`
@@ -488,7 +488,7 @@ export const toolConnectivity = pgTable('tool_connectivity', {
 
 **工程任务**
 
-- [ ] I6：10 个对比页 `status='published'`，`/compare` 列表页均可见，每篇有 Methodology Box
+- [ ] I6：10 个对比页 doc-based 草稿审核通过，写入 `comparisons` 表时 `isLabReport=false`，发布后 `/compare` 列表页均可见
 - [ ] I7：Lab 报告上线，Methodology Box 所有字段有真实值，Claude Code / Cursor 详情页反向引用
 - [ ] I8：`/alternatives/cursor` 上线，至少 3 个工具；FAQ schema 通过 Rich Results Test
 - [ ] I9：30 条连通性数据入库，10 个工具详情页显示连通性表格
