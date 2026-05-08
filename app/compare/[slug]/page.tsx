@@ -246,6 +246,15 @@ export default async function CompareDetailPage({ params }: Props) {
             </section>
           )}
 
+          {!comparison.isLabReport && (
+            <section style={{ background: '#FEF3C7', border: '1px solid #F59E0B', borderRadius: 12, padding: 18, marginBottom: 24 }}>
+              <div style={{ color: '#92400E', fontSize: 13, fontWeight: 900, marginBottom: 6 }}>内容说明</div>
+              <p style={{ color: C.ink, fontSize: 14, lineHeight: 1.7, margin: 0 }}>
+                本文基于两款产品的官方文档与公开资料整理，不包含 AIBoxPro 实测数据。具体价格、模型版本、额度和企业能力请以官网为准。
+              </p>
+            </section>
+          )}
+
           <section style={{ background: C.panel, border: `1px solid ${C.rule}`, borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
             {[
               ['价格', pricingText(comparison.toolA), pricingText(comparison.toolB)],
