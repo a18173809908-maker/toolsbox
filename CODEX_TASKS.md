@@ -1608,6 +1608,7 @@ export const toolConnectivity = pgTable('tool_connectivity', {
 - [ ] I7：1 份 Lab 报告上线，所有 Methodology Box 字段有值
 - [x] I8：`/alternatives/cursor` 上线，新页面 Sitemap 已提交
 - [ ] I9：30 条连通性数据入库，工具详情页连通性表格可见（I9-A 工程已完成；I9-B 真人实测待做）
+- [x] I10：图文自动生成系统跑通，单篇对比页 5 分钟内产出三平台草稿包（仅对比页分发包，不含 GitHub Trending 教程草稿）
 - [ ] SEO：核心对比词在 Search Console 有展示量，至少 3 个页面进入目标词前 50
 
 ---

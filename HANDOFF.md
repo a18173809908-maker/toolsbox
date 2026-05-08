@@ -107,6 +107,11 @@ Do not commit `.env.local`; it is ignored.
    - Added `loadConnectivityByToolId`.
    - Tool detail pages render a connectivity table when data exists.
    - `npm run seed:connectivity -- <measurements.json>` imports real measurements only; no fake seed data is bundled.
+11. Completed Sprint 2 I10 comparison-page social draft generator:
+   - `npm run draft:social -- <comparison-slug>` reads a published comparison.
+   - Outputs WeChat, Xiaohongshu, and Zhihu markdown plus PNG cover/cards under `draft-package/<slug>/`.
+   - `draft-package/` is gitignored.
+   - This does not generate GitHub Trending tutorial drafts.
 
 ## Known Notes / Caveats
 
@@ -137,6 +142,7 @@ npm run db:seed
 npm run fetch:trending
 npm run translate:trending
 npm run seed:connectivity -- <measurements.json>
+npm run draft:social -- <comparison-slug>
 ```
 
 Be careful with:
@@ -151,7 +157,7 @@ It clears and re-inserts seed rows.
 
 1. Fill I9-B real connectivity data using `npm run seed:connectivity -- <measurements.json>`.
 2. Produce the first I7 Lab report with real Methodology Box values.
-3. Decide whether to keep I10 in scope; the previous social/trending draft generator experiment was intentionally reverted.
+3. Use I10 for comparison-page social distribution drafts; GitHub Trending tutorial drafts are intentionally out of scope.
 4. Keep docs synchronized:
    - `docs/sprint-2.md`
    - `docs/manual-tasks.md`

@@ -30,7 +30,8 @@
     "cleanup:articles": "tsx --env-file=.env.local scripts/cleanup-articles.ts",
     "seed:cn-tools": "tsx --env-file=.env.local scripts/seed-cn-tools.ts",
     "seed:domestic-categories": "tsx --env-file=.env.local scripts/seed-domestic-categories.ts",
-    "seed:connectivity": "tsx --env-file=.env.local scripts/seed-connectivity.ts"
+    "seed:connectivity": "tsx --env-file=.env.local scripts/seed-connectivity.ts",
+    "draft:social": "tsx --env-file=.env.local scripts/draft-social.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
@@ -45,7 +46,8 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "resend": "^6.12.3",
-    "sanitize-html": "^2.17.3"
+    "sanitize-html": "^2.17.3",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
