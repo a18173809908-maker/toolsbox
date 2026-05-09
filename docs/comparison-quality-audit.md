@@ -6,21 +6,17 @@
 
 ## 复审优先级
 
-1. 🟡 `kimi-vs-wenxin` — 正文偏短，建议补充到标准模板深度；外部引用少于 2 个，事实口径需要补来源；claude-assisted 标记，建议人工复审
-2. 🟡 `doubao-vs-kimi` — 正文偏短，建议补充到标准模板深度；外部引用少于 2 个，事实口径需要补来源；claude-assisted 标记，建议人工复审
-3. 🟡 `cursor-vs-windsurf` — 正文偏短，建议补充到标准模板深度；外部引用少于 2 个，事实口径需要补来源；claude-assisted 标记，建议人工复审
-4. 🟡 `trae-vs-github-copilot` — 正文偏短，建议补充到标准模板深度；外部引用少于 2 个，事实口径需要补来源；claude-assisted 标记，建议人工复审
-5. 🟡 `deepseek-vs-kimi` — 正文偏短，建议补充到标准模板深度；外部引用少于 2 个，事实口径需要补来源；claude-assisted 标记，建议人工复审
-6. 🟡 `cursor-vs-github-copilot` — 正文偏短，建议补充到标准模板深度；外部引用少于 2 个，事实口径需要补来源；claude-assisted 标记，建议人工复审
-7. 🟡 `claude-code-vs-cursor` — 正文偏短，建议补充到标准模板深度；外部引用少于 2 个，事实口径需要补来源；claude-assisted 标记，建议人工复审
-8. 🟡 `cursor-vs-trae` — 正文偏短，建议补充到标准模板深度；claude-assisted 标记，建议人工复审
+1. 🟡 `cursor-vs-windsurf` — 正文偏短，建议补充到标准模板深度；外部引用少于 2 个，事实口径需要补来源；claude-assisted 标记，建议人工复审
+2. 🟡 `trae-vs-github-copilot` — 正文偏短，建议补充到标准模板深度；外部引用少于 2 个，事实口径需要补来源；claude-assisted 标记，建议人工复审
+3. 🟡 `deepseek-vs-kimi` — 正文偏短，建议补充到标准模板深度；外部引用少于 2 个，事实口径需要补来源；claude-assisted 标记，建议人工复审
+4. 🟡 `cursor-vs-github-copilot` — 正文偏短，建议补充到标准模板深度；外部引用少于 2 个，事实口径需要补来源；claude-assisted 标记，建议人工复审
+5. 🟡 `claude-code-vs-cursor` — 正文偏短，建议补充到标准模板深度；外部引用少于 2 个，事实口径需要补来源；claude-assisted 标记，建议人工复审
+6. 🟡 `cursor-vs-trae` — 正文偏短，建议补充到标准模板深度；claude-assisted 标记，建议人工复审
 
 ## 明细表
 
 | 状态 | slug | 字符数 | 章节数 | 链接数 | 审核标记 | 风险数 |
 |---|---|---:|---:|---:|---|---:|
-| 🟡 | `kimi-vs-wenxin` | 1385 | 11 | 0 | claude-assisted | 3 |
-| 🟡 | `doubao-vs-kimi` | 1396 | 11 | 0 | claude-assisted | 3 |
 | 🟡 | `cursor-vs-windsurf` | 1705 | 11 | 0 | claude-assisted | 3 |
 | 🟡 | `trae-vs-github-copilot` | 1746 | 11 | 0 | claude-assisted | 3 |
 | 🟡 | `deepseek-vs-kimi` | 1843 | 11 | 0 | claude-assisted | 3 |
@@ -28,33 +24,11 @@
 | 🟡 | `claude-code-vs-cursor` | 1950 | 11 | 0 | claude-assisted | 3 |
 | 🟡 | `cursor-vs-trae` | 4747 | 11 | 4 | claude-assisted | 2 |
 | 🟢 | `deepseek-vs-chatgpt` | 5190 | 11 | 6 | claude-assisted | 1 |
+| 🟢 | `doubao-vs-kimi` | 5000 | 18 | 7 | admin | 0 |
+| 🟢 | `kimi-vs-wenxin` | 5024 | 17 | 7 | admin | 0 |
 | 🟢 | `claude-code-vs-codex` | 5313 | 11 | 2 | admin | 0 |
 
 ## 风险详情
-
-### 🟡 Kimi vs 文心一言：长文本与中文办公怎么选
-
-- slug：`kimi-vs-wenxin`
-- 审核标记：claude-assisted
-- 正文字符数：1385
-- 章节数：11
-- 外部链接数：0
-- 正文内说明：由页面模板统一渲染
-- 编辑结论：有
-- 参考资料/官方来源：有
-- 风险：正文偏短，建议补充到标准模板深度；外部引用少于 2 个，事实口径需要补来源；claude-assisted 标记，建议人工复审
-
-### 🟡 豆包 vs Kimi：日常中文 AI 助手怎么选
-
-- slug：`doubao-vs-kimi`
-- 审核标记：claude-assisted
-- 正文字符数：1396
-- 章节数：11
-- 外部链接数：0
-- 正文内说明：由页面模板统一渲染
-- 编辑结论：有
-- 参考资料/官方来源：有
-- 风险：正文偏短，建议补充到标准模板深度；外部引用少于 2 个，事实口径需要补来源；claude-assisted 标记，建议人工复审
 
 ### 🟡 Cursor vs Windsurf：AI IDE 怎么选
 
@@ -139,6 +113,30 @@
 - 编辑结论：有
 - 参考资料/官方来源：有
 - 风险：claude-assisted 标记，建议人工复审
+
+### 🟢 豆包 vs Kimi：日常中文 AI 助手怎么选
+
+- slug：`doubao-vs-kimi`
+- 审核标记：admin
+- 正文字符数：5000
+- 章节数：18
+- 外部链接数：7
+- 正文内说明：由页面模板统一渲染
+- 编辑结论：有
+- 参考资料/官方来源：有
+- 风险：暂无明显自动化风险
+
+### 🟢 Kimi vs 文心一言：长文本与中文办公怎么选
+
+- slug：`kimi-vs-wenxin`
+- 审核标记：admin
+- 正文字符数：5024
+- 章节数：17
+- 外部链接数：7
+- 正文内说明：由页面模板统一渲染
+- 编辑结论：有
+- 参考资料/官方来源：有
+- 风险：暂无明显自动化风险
 
 ### 🟢 Claude Code vs Codex：AI 编程助手怎么选
 
