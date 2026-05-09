@@ -1645,6 +1645,8 @@ export const toolConnectivity = pgTable('tool_connectivity', {
 
 **状态（2026-05-09）**：✅ 已完成。已发布 `jimeng-vs-kling`、`sora-vs-kling`、`hailuo-vs-pika`、`runway-vs-sora-cinematic`；4 篇均为 `published` / `reviewed_by='admin'` / 审计风险 0。
 
+**扩容（2026-05-09）**：✅ 已完成。新增发布 `kling-vs-jimeng`、`kling-vs-hailuo`、`runway-vs-luma`、`sora-vs-runway`、`pika-vs-luma`、`jimeng-vs-hailuo`；视频类对比页累计 10 篇，新增 6 篇均为 `published` / `reviewed_by='admin'` / 审计风险 0。
+
 优先顺序：
 1. `jimeng-vs-kling`
 2. `sora-vs-kling`
@@ -1653,6 +1655,7 @@ export const toolConnectivity = pgTable('tool_connectivity', {
 
 验证：
 - 4 篇 `status='published'`
+- 视频类累计 10 篇 `status='published'`
 - 每篇正文 4500-6000 字符
 - 每篇至少 5 个官方来源链接
 - `reviewed_by='admin'`
