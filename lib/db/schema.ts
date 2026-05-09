@@ -67,6 +67,16 @@ export const githubTrending = pgTable(
     description: text('description').notNull(),
     descriptionZh: text('description_zh'),
     readmeZh: text('readme_zh'),
+    aiInsights: jsonb('ai_insights').$type<{
+      oneSentenceSummary?: string;
+      useCase?: string;
+      keyPoints?: string[];
+      whyTrending?: string;
+      audience?: string[];
+      projectType?: string;
+      maturity?: string;
+      chinaValue?: string;
+    }>(),
     lang: text('lang').notNull(),
     stars: integer('stars').notNull(),
     gained: integer('gained').notNull(),
@@ -180,6 +190,7 @@ export const articles = pgTable(
       whoShouldCare?: string[];
       relatedTools?: { id?: string; name: string; reason?: string }[];
     }>(),
+    hotnessScore: integer('hotness_score').notNull().default(0),
     tag: text('tag'),
     publishedAt: timestamp('published_at'),
     fetchedAt: timestamp('fetched_at').notNull().defaultNow(),
@@ -190,6 +201,7 @@ export const articles = pgTable(
   },
   (t) => ({
     publishedIdx: index('articles_published_idx').on(t.publishedAt),
+    hotnessIdx: index('articles_hotness_idx').on(t.hotnessScore),
     statusIdx: index('articles_status_idx').on(t.status),
   }),
 );

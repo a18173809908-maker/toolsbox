@@ -1,7 +1,8 @@
 import { db } from '@/lib/db';
 import { articles, sources, tools } from '@/lib/db/schema';
-import { isNull, eq, and, or } from 'drizzle-orm';
+import { isNull, eq, and, or, desc } from 'drizzle-orm';
 import { chat } from '@/lib/llm';
+import { estimateArticleHotness } from '@/lib/article-hotness';
 
 const BATCH = 10;
 
@@ -185,11 +186,15 @@ export async function processArticles(): Promise<{ processed: number; skipped: n
       title: articles.title,
       titleZh: articles.titleZh,
       summary: articles.summary,
+      summaryZh: articles.summaryZh,
+      tag: articles.tag,
+      sourceName: sources.name,
       lang: sources.lang,
     })
     .from(articles)
     .leftJoin(sources, eq(articles.sourceId, sources.id))
     .where(and(eq(articles.status, 'published'), or(isNull(articles.titleZh), isNull(articles.aiInsights))))
+    .orderBy(desc(articles.publishedAt), desc(articles.fetchedAt))
     .limit(BATCH);
 
   const catalog = await db
@@ -216,6 +221,14 @@ export async function processArticles(): Promise<{ processed: number; skipped: n
         summaryZh: result.summaryZh,
         aiInsights: result.aiInsights,
         tag: result.tag,
+        hotnessScore: estimateArticleHotness({
+          title: art.title,
+          titleZh: art.titleZh ?? art.title,
+          summary: art.summary,
+          summaryZh: result.summaryZh,
+          tag: result.tag,
+          sourceName: art.sourceName,
+        }),
       });
       if (updated) processed++;
       else skipped++;
@@ -233,6 +246,14 @@ export async function processArticles(): Promise<{ processed: number; skipped: n
       summaryZh: result.summaryZh,
       aiInsights: result.aiInsights,
       tag: result.tag,
+      hotnessScore: estimateArticleHotness({
+        title: art.title,
+        titleZh: art.titleZh ?? result.titleZh,
+        summary: art.summary ?? result.summary,
+        summaryZh: result.summaryZh,
+        tag: result.tag,
+        sourceName: art.sourceName,
+      }),
     });
     if (updated) processed++;
     else skipped++;

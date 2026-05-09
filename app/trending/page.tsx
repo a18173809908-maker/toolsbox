@@ -48,6 +48,19 @@ const C = {
   green: '#16A34A', greenBg: '#DCFCE7',
 };
 
+function Pill({ children, tone = 'neutral' }: { children: React.ReactNode; tone?: 'neutral' | 'accent' | 'green' }) {
+  const style = tone === 'accent'
+    ? { background: C.primaryBg, color: C.accent }
+    : tone === 'green'
+      ? { background: C.greenBg, color: C.green }
+      : { background: C.ruleSoft, color: C.inkSoft };
+  return (
+    <span style={{ ...style, padding: '3px 7px', borderRadius: 5, fontSize: 11, fontWeight: 700, lineHeight: 1.2 }}>
+      {children}
+    </span>
+  );
+}
+
 export default async function TrendingPage({ searchParams }: Props) {
   const { period = 'today' } = await searchParams;
   const safe = (['today', 'week', 'month'] as const).includes(period as 'today')
@@ -107,6 +120,9 @@ export default async function TrendingPage({ searchParams }: Props) {
             {repos.map((r, i) => {
               const [owner, name] = r.repo.split('/');
               const langColor = LANG_COLOR[r.lang] || '#888';
+              const insights = r.aiInsights;
+              const summary = insights?.oneSentenceSummary || r.descriptionZh || r.description;
+              const keyPoints = insights?.keyPoints?.slice(0, 3) ?? [];
               return (
                 <Link
                   key={r.id}
@@ -141,10 +157,42 @@ export default async function TrendingPage({ searchParams }: Props) {
                         )}
                       </div>
 
-                      {/* Description */}
-                      <p style={{ fontSize: 13, color: C.inkSoft, margin: '0 0 10px', lineHeight: 1.55, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
-                        {r.descriptionZh || r.description}
-                      </p>
+                      {/* Summary */}
+                      <div style={{ display: 'grid', gap: 5, color: C.inkSoft, fontSize: 13, lineHeight: 1.65, marginBottom: 10 }}>
+                        <p style={{ margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
+                          <span style={{ marginRight: 6 }}>📌</span>
+                          <span style={{ color: C.inkMuted }}>一句话摘要</span>
+                          <span style={{ margin: '0 6px', color: C.rule }}>·</span>
+                          <span style={{ color: C.ink, fontWeight: insights ? 650 : 400 }}>{summary}</span>
+                        </p>
+
+                        {insights?.useCase && (
+                          <p style={{ margin: 0 }}>
+                            <span style={{ marginRight: 6 }}>🧭</span>
+                            <span style={{ color: C.inkMuted }}>适用场景</span>
+                            <span style={{ margin: '0 6px', color: C.rule }}>·</span>
+                            <span>{insights.useCase}</span>
+                          </p>
+                        )}
+
+                        {keyPoints.length > 0 && (
+                          <p style={{ margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' as const }}>
+                            <span style={{ marginRight: 6 }}>📝</span>
+                            <span style={{ color: C.inkMuted }}>亮点</span>
+                            <span style={{ margin: '0 6px', color: C.rule }}>·</span>
+                            <span>{keyPoints.join(' / ')}</span>
+                          </p>
+                        )}
+
+                        {insights?.whyTrending && (
+                          <p style={{ margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' as const }}>
+                            <span style={{ marginRight: 6 }}>🔥</span>
+                            <span style={{ color: C.inkMuted }}>上榜原因</span>
+                            <span style={{ margin: '0 6px', color: C.rule }}>·</span>
+                            <span>{insights.whyTrending}</span>
+                          </p>
+                        )}
+                      </div>
 
                       {/* Stats row */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 12, color: C.inkMuted, flexWrap: 'wrap' }}>
@@ -155,6 +203,9 @@ export default async function TrendingPage({ searchParams }: Props) {
                             {safe === 'today' ? '今日' : safe === 'week' ? '本周' : '本月'}
                           </span>
                         </span>
+                        {insights?.projectType && <Pill tone="accent">{insights.projectType}</Pill>}
+                        {insights?.maturity && <Pill tone="green">{insights.maturity}</Pill>}
+                        {insights?.audience?.slice(0, 2).map((item) => <Pill key={item}>{item}</Pill>)}
                       </div>
                     </div>
 

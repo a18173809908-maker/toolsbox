@@ -1,5 +1,6 @@
 import { load } from 'cheerio';
 import { loadSources, upsertArticles } from '@/lib/db/queries';
+import { estimateArticleHotness } from '@/lib/article-hotness';
 
 interface ParsedItem {
   title: string;
@@ -105,6 +106,12 @@ export async function fetchAllArticles(): Promise<{ source: string; fetched: num
           title: it.title,
           url: it.url,
           summary: it.description,
+          hotnessScore: estimateArticleHotness({
+            title: it.title,
+            summary: it.description,
+            tag: src.name,
+            sourceName: src.name,
+          }),
           tag: src.name,
           publishedAt: it.publishedAt,
         })),

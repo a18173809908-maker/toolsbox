@@ -188,6 +188,7 @@ export async function upsertArticles(items: {
   title: string;
   url: string;
   summary?: string;
+  hotnessScore?: number;
   tag?: string;
   publishedAt?: Date;
 }[]): Promise<number> {
@@ -199,6 +200,7 @@ export async function upsertArticles(items: {
       title: item.title,
       url: item.url,
       summary: item.summary,
+      hotnessScore: item.hotnessScore,
       tag: item.tag,
       publishedAt: item.publishedAt,
     }).onConflictDoNothing();
@@ -498,6 +500,7 @@ export async function loadArticlesPage(page = 1, pageSize = 30, tag?: string) {
       summary: articles.summary,
       summaryZh: articles.summaryZh,
       aiInsights: articles.aiInsights,
+      hotnessScore: articles.hotnessScore,
       tag: articles.tag,
       publishedAt: articles.publishedAt,
       sourceName: sources.name,
@@ -505,7 +508,7 @@ export async function loadArticlesPage(page = 1, pageSize = 30, tag?: string) {
     .from(articles)
     .leftJoin(sources, eq(articles.sourceId, sources.id))
     .where(eq(articles.status, 'published'))
-    .orderBy(desc(articles.publishedAt));
+    .orderBy(desc(articles.hotnessScore), desc(articles.publishedAt), desc(articles.fetchedAt));
 
   // Tag filter applied after the fact (drizzle dynamic where)
   const rows = await base.limit(pageSize).offset(offset);
@@ -595,6 +598,7 @@ export async function loadArticleById(id: number) {
       id: articles.id, title: articles.title, titleZh: articles.titleZh,
       url: articles.url, summary: articles.summary, summaryZh: articles.summaryZh,
       aiInsights: articles.aiInsights,
+      hotnessScore: articles.hotnessScore,
       tag: articles.tag, publishedAt: articles.publishedAt,
       sourceName: sources.name, sourceUrl: sources.url,
     })
@@ -646,6 +650,7 @@ export async function updateArticleAi(id: number, data: {
   summary?: string;
   summaryZh?: string;
   aiInsights?: typeof articles.$inferInsert['aiInsights'];
+  hotnessScore?: number;
   tag?: string;
 }) {
   await db.update(articles).set(data).where(eq(articles.id, id));
@@ -892,6 +897,7 @@ export async function loadAdminArticleById(id: number) {
       summary: articles.summary,
       summaryZh: articles.summaryZh,
       aiInsights: articles.aiInsights,
+      hotnessScore: articles.hotnessScore,
       tag: articles.tag,
       status: articles.status,
       publishedAt: articles.publishedAt,
