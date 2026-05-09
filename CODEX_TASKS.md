@@ -1630,6 +1630,8 @@ export const toolConnectivity = pgTable('tool_connectivity', {
 
 ### K2：视频对比页起草脚手架
 
+**状态（2026-05-09）**：✅ 已完成。新增 `scripts/seed-video-comparisons.ts` / `npm run seed:video-comparisons`，视频 doc-based 页面明确不写无实测支撑的画质、速度、稳定性排名。
+
 复用 `draft:comparison`，增加视频品类约束：doc-based 页面不凭空写画质/速度/稳定性；Lab 页面必须有实测样本、提示词、生成设置、截图或产出链接。
 
 验证：
@@ -1637,6 +1639,8 @@ export const toolConnectivity = pgTable('tool_connectivity', {
 - 草稿明确区分 doc-based 与 Lab
 
 ### K3：发布首批 4 篇 doc-based 视频对比页
+
+**状态（2026-05-09）**：✅ 已完成。已发布 `jimeng-vs-kling`、`sora-vs-kling`、`hailuo-vs-pika`、`runway-vs-sora-cinematic`；4 篇均为 `published` / `reviewed_by='admin'` / 审计风险 0。
 
 优先顺序：
 1. `jimeng-vs-kling`
