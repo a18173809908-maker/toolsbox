@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { v2Tokens as T } from '@/lib/tokens';
+import { BrandLogo } from '@/components/BrandLogo';
 
 type SiteHeaderProps = {
   onOpenPalette?: () => void;
@@ -37,44 +38,7 @@ export function SiteHeader({ onOpenPalette }: SiteHeaderProps) {
         zIndex: 10,
       }}
     >
-      <Link
-        href="/"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          textDecoration: 'none',
-          flexShrink: 0,
-        }}
-      >
-        <div
-          style={{
-            width: 30,
-            height: 30,
-            borderRadius: 8,
-            background: `linear-gradient(135deg, ${T.primary} 0%, #FBBF24 100%)`,
-            display: 'grid',
-            placeItems: 'center',
-            color: '#fff',
-            fontFamily: 'Georgia, serif',
-            fontWeight: 900,
-            fontSize: 17,
-            fontStyle: 'italic',
-          }}
-        >
-          A
-        </div>
-        <span
-          style={{
-            fontFamily: 'Georgia, serif',
-            fontWeight: 700,
-            fontSize: isMobile ? 16 : 18,
-            color: T.ink,
-          }}
-        >
-          AIBoxPro
-        </span>
-      </Link>
+      <BrandLogo size={30} compact={isMobile} />
 
       <nav
         style={{

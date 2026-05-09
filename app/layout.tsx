@@ -55,6 +55,11 @@ export const metadata: Metadata = {
     description: '帮中文用户更快完成 AI 工具选型。',
     images: [`${BASE}/og?type=default`],
   },
+  icons: {
+    icon: '/aiboxpro-icon.svg',
+    shortcut: '/aiboxpro-icon.svg',
+    apple: '/aiboxpro-icon.svg',
+  },
   alternates: { canonical: BASE },
   robots: { index: true, follow: true },
 };

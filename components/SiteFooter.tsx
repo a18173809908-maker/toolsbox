@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { v2Tokens as T } from '@/lib/tokens';
+import { BrandLogo } from '@/components/BrandLogo';
 
 const C = {
   bg:       '#FFF7ED',
@@ -107,37 +108,9 @@ export function SiteFooter() {
         }}
       >
         <div style={{ maxWidth: 320 }}>
-          <Link
-            href="/"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 10,
-              textDecoration: 'none',
-              marginBottom: 12,
-            }}
-          >
-            <span
-              style={{
-                width: 30,
-                height: 30,
-                borderRadius: 8,
-                background: `linear-gradient(135deg, ${T.primary} 0%, #FBBF24 100%)`,
-                display: 'grid',
-                placeItems: 'center',
-                color: '#fff',
-                fontFamily: 'Georgia, serif',
-                fontWeight: 900,
-                fontSize: 17,
-                fontStyle: 'italic',
-              }}
-            >
-              A
-            </span>
-            <span style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 18, color: C.ink }}>
-              AIBoxPro
-            </span>
-          </Link>
+          <div style={{ marginBottom: 12 }}>
+            <BrandLogo size={30} />
+          </div>
           <p style={{ margin: 0, color: C.inkSoft, fontSize: 13, lineHeight: 1.7 }}>
             中文用户的 AI 工具决策平台。比较价格、中文支持、国内可用情况，帮你更快决定用哪个。
           </p>
