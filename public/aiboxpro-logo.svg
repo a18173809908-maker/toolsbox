@@ -12,13 +12,13 @@
   </defs>
   <rect x="18" y="18" width="144" height="144" rx="36" fill="url(#bg)"/>
   <rect x="21" y="21" width="138" height="138" rx="33" stroke="#DED6C7" stroke-width="6"/>
-  <path d="M54 72 90 53l36 19v41L90 133l-36-20V72Z" fill="#FFFDF7" stroke="url(#line)" stroke-width="10" stroke-linejoin="round"/>
-  <path d="M55 73 90 92l35-19M90 92v38" stroke="#0F6B57" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M73 113V90M73 90l-10 23M73 90l10 23M67 104h12M94 89v24M108 89v24" stroke="#17201C" stroke-width="6" stroke-linecap="round"/>
-  <path d="M102 57c8-10 18-15 30-17-3 11-9 20-18 27" stroke="#F59E0B" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M132 40 129 62 113 47Z" fill="#F59E0B"/>
-  <path d="M67 39 70 30l4 9 9 4-9 3-4 10-3-10-10-3 10-4Z" fill="#F59E0B"/>
-  <text x="196" y="94" fill="#17201C" font-family="Inter, Arial, sans-serif" font-size="52" font-weight="800" letter-spacing="0">AIBox</text>
-  <text x="359" y="94" fill="#0F6B57" font-family="Inter, Arial, sans-serif" font-size="52" font-weight="800" letter-spacing="0">Pro</text>
+  <path d="M51 75 90 54l39 21v43L90 139l-39-21V75Z" fill="#FFFDF7" stroke="url(#line)" stroke-width="11" stroke-linejoin="round"/>
+  <path d="M52 76 90 96l38-20M90 96v40" stroke="#0F6B57" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M70 118V92M110 92v26M80 124h20" stroke="#17201C" stroke-width="8" stroke-linecap="round"/>
+  <path d="M99 59c8-8 17-14 29-16-3 12-8 21-16 30" stroke="#F59E0B" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M128 43 125 64 110 50Z" fill="#F59E0B"/>
+  <path d="M67 43 70 34l4 9 9 4-9 3-4 10-3-10-10-3 10-4Z" fill="#F59E0B"/>
+  <text x="196" y="94" fill="#17201C" font-family="Inter, Arial, sans-serif" font-size="52" font-weight="850" letter-spacing="0">AIBox</text>
+  <text x="359" y="94" fill="#0F6B57" font-family="Inter, Arial, sans-serif" font-size="52" font-weight="850" letter-spacing="0">Pro</text>
   <text x="198" y="126" fill="#65706B" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="600" letter-spacing="0">中文 AI 工具决策平台</text>
 </svg>

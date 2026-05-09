@@ -38,7 +38,7 @@ export function SiteHeader({ onOpenPalette }: SiteHeaderProps) {
         zIndex: 10,
       }}
     >
-      <BrandLogo size={30} compact={isMobile} />
+      <BrandLogo size={34} compact={isMobile} />
 
       <nav
         style={{

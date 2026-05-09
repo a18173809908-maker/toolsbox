@@ -109,7 +109,7 @@ export function SiteFooter() {
       >
         <div style={{ maxWidth: 320 }}>
           <div style={{ marginBottom: 12 }}>
-            <BrandLogo size={30} />
+            <BrandLogo size={34} />
           </div>
           <p style={{ margin: 0, color: C.inkSoft, fontSize: 13, lineHeight: 1.7 }}>
             中文用户的 AI 工具决策平台。比较价格、中文支持、国内可用情况，帮你更快决定用哪个。

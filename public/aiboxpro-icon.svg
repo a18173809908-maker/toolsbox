@@ -12,10 +12,10 @@
   </defs>
   <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#bg)"/>
   <rect x="22" y="22" width="468" height="468" rx="106" stroke="#DED6C7" stroke-width="12"/>
-  <path d="M128 180 256 112l128 68v146L256 396 128 326V180Z" fill="#FFFDF7" stroke="url(#line)" stroke-width="34" stroke-linejoin="round"/>
-  <path d="M132 184 256 250l124-66M256 250v136" stroke="#0F6B57" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M194 324v-80M194 244l-35 80M194 244l35 80M172 293h44M270 242v82M320 242v82" stroke="#17201C" stroke-width="24" stroke-linecap="round"/>
-  <path d="M296 123c29-32 62-51 102-57-11 37-31 69-62 94" stroke="#F59E0B" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M398 66 388 139 334 91Z" fill="#F59E0B"/>
-  <path d="M166 94 177 65l10 29 29 10-29 11-10 29-11-29-29-11 29-10Z" fill="#F59E0B"/>
+  <path d="M118 194 256 122l138 72v152L256 420 118 346V194Z" fill="#FFFDF7" stroke="url(#line)" stroke-width="36" stroke-linejoin="round"/>
+  <path d="M123 198 256 267l133-69M256 267v140" stroke="#0F6B57" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M188 344v-88M324 256v88M222 362h68" stroke="#17201C" stroke-width="28" stroke-linecap="round"/>
+  <path d="M284 136c28-28 60-46 100-55-9 38-28 71-55 99" stroke="#F59E0B" stroke-width="31" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M384 81 375 152 323 105Z" fill="#F59E0B"/>
+  <path d="M166 110 177 81l10 29 29 10-29 11-10 29-11-29-29-11 29-10Z" fill="#F59E0B"/>
 </svg>

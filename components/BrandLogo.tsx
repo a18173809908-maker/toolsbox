@@ -17,9 +17,9 @@ export function BrandLogo({ href = '/', size = 32, showWordmark = true, compact 
       style={{
         display: 'inline-flex',
         alignItems: 'baseline',
-        fontFamily: 'Fraunces, Georgia, serif',
-        fontWeight: 800,
-        fontSize: compact ? 17 : 19,
+        fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif',
+        fontWeight: 850,
+        fontSize: compact ? 17 : 18,
         color: T.ink,
         lineHeight: 1,
         letterSpacing: 0,
@@ -79,14 +79,14 @@ export function LogoMark({ size = 32 }: { size?: number }) {
       <rect x="1" y="1" width="38" height="38" rx="10" fill="url(#aiboxpro-mark-bg)" />
       <rect x="1.5" y="1.5" width="37" height="37" rx="9.5" fill="none" stroke="#DED6C7" />
       <path
-        d="M10.5 14.5 20 9.5l9.5 5v10.8L20 30.5l-9.5-5.2V14.5Z"
+        d="M9.5 15.8 20 10.3l10.5 5.5v11.6L20 33 9.5 27.4V15.8Z"
         fill="#FFFDF7"
         stroke="url(#aiboxpro-mark-line)"
-        strokeWidth="2.5"
+        strokeWidth="2.8"
         strokeLinejoin="round"
       />
       <path
-        d="M10.8 14.8 20 19.7l9.2-4.9M20 19.7v10.1"
+        d="M10.1 16.1 20 21.4l9.9-5.3M20 21.4v10.6"
         fill="none"
         stroke="#0F6B57"
         strokeWidth="2"
@@ -95,23 +95,23 @@ export function LogoMark({ size = 32 }: { size?: number }) {
         opacity="0.9"
       />
       <path
-        d="M15.1 25.6v-6.2M15.1 19.4l-2.7 6.2M15.1 19.4l2.7 6.2M13.4 23.2h3.4M20.9 19.2v6.4M24.8 19.2v6.4"
+        d="M14.6 27.2v-6.8M25.4 20.4v6.8M17.2 28.6h5.6"
         fill="none"
         stroke="#17201C"
-        strokeWidth="1.7"
+        strokeWidth="2.1"
         strokeLinecap="round"
       />
       <path
-        d="M23.2 10.2c2.2-2.4 4.7-3.8 7.6-4.2-.8 2.8-2.3 5.2-4.6 7.1"
+        d="M21.9 11.6c2.1-2.1 4.6-3.5 7.6-4.2-.7 2.9-2.1 5.4-4.2 7.5"
         fill="none"
         stroke="#F59E0B"
-        strokeWidth="2.3"
+        strokeWidth="2.4"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <path d="M30.8 6 30 11.5 25.9 7.9Z" fill="#F59E0B" />
+      <path d="M29.5 7.4 28.8 12.8 24.8 9.2Z" fill="#F59E0B" />
       <path
-        d="M13.2 8.4 14 6.2l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8Z"
+        d="M13.2 9.4 14 7.2l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8Z"
         fill="#F59E0B"
       />
     </svg>
