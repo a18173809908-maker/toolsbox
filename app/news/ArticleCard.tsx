@@ -8,6 +8,15 @@ const C = {
   primary: '#F97316', primaryBg: '#FFEDD5', accent: '#C2410C',
 };
 
+function InsightLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: C.inkMuted, fontWeight: 650, whiteSpace: 'nowrap' }}>
+      <span style={{ width: 4, height: 14, borderRadius: 2, background: C.primary, display: 'inline-block' }} />
+      {children}
+    </span>
+  );
+}
+
 function relTime(iso: Date | null): string {
   if (!iso) return '';
   const ms = Date.now() - new Date(iso).getTime();
@@ -41,11 +50,18 @@ export type ArticleRow = {
 
 export function ArticleCard({ art }: { art: ArticleRow }) {
   const oneLine = art.aiInsights?.oneSentenceSummary || art.summaryZh || art.summary;
-  const keyPoint = art.aiInsights?.keyPoints?.[0];
+  const detailLine = [
+    art.aiInsights?.keyPoints?.[0],
+    art.summaryZh,
+    art.summary,
+    art.aiInsights?.whyItMatters,
+    art.aiInsights?.chinaImpact,
+  ].find((item) => item && item !== oneLine);
 
   return (
     <Link href={`/news/${art.id}`} style={{
       display: 'flex', flexDirection: 'column', gap: 12,
+      height: '100%',
       background: C.panel, borderRadius: 12, padding: 22,
       border: `1px solid ${C.rule}`, textDecoration: 'none',
       boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
@@ -66,15 +82,15 @@ export function ArticleCard({ art }: { art: ArticleRow }) {
       {oneLine && (
         <div style={{ display: 'grid', gap: 5, color: C.inkSoft, fontSize: 14, lineHeight: 1.65 }}>
           <p style={{ margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
-            <span style={{ color: C.inkMuted, fontWeight: 650 }}>摘要</span>
+            <InsightLabel>一句话摘要</InsightLabel>
             <span style={{ margin: '0 7px', color: C.rule }}>·</span>
             <span>{oneLine}</span>
           </p>
-          {keyPoint && keyPoint !== oneLine && (
+          {detailLine && (
             <p style={{ margin: 0 }}>
-              <span style={{ color: C.inkMuted, fontWeight: 650 }}>要点</span>
+              <InsightLabel>详细摘要</InsightLabel>
               <span style={{ margin: '0 7px', color: C.rule }}>·</span>
-              <span>{keyPoint}</span>
+              <span>{detailLine}</span>
             </p>
           )}
         </div>

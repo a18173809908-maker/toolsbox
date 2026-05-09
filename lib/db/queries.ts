@@ -1,8 +1,14 @@
 import { db } from './index';
 import { categories, tools, githubTrending, articles, sources, sourceCandidates, toolCandidates, comparisons, toolConnectivity } from './schema';
-import { desc, asc, eq, ilike, or, isNull, count, max, and, inArray, gt } from 'drizzle-orm';
+import { desc, asc, eq, ilike, or, isNull, count, max, and, inArray, gt, sql } from 'drizzle-orm';
 import type { TrendingPeriod, Tool, Category, RepoItem, HomepageStats } from '@/lib/data';
 import type { Comparison, Tool as DbTool } from './schema';
+
+const toolHotnessScore = sql<number>`
+  (case when ${tools.featured} then 1000 else 0 end)
+  + coalesce(${tools.upvotes}, 0)
+  - coalesce(${tools.downvotes}, 0)
+`;
 
 // ── Homepage ─────────────────────────────────────────────────────────────────
 
@@ -14,7 +20,7 @@ export async function loadHomepageData(): Promise<{
 }> {
   const [cats, ts, gh] = await Promise.all([
     db.select().from(categories),
-    db.select().from(tools).orderBy(desc(tools.publishedAt)),
+    db.select().from(tools).orderBy(desc(toolHotnessScore), desc(tools.publishedAt)),
     db.select().from(githubTrending).orderBy(asc(githubTrending.period), desc(githubTrending.gained)),
   ]);
 
@@ -491,7 +497,11 @@ export async function loadPendingArticles(limit = 20) {
 
 export async function loadArticlesPage(page = 1, pageSize = 30, tag?: string) {
   const offset = (page - 1) * pageSize;
-  const base = db
+  const where = tag
+    ? and(eq(articles.status, 'published'), eq(articles.tag, tag))
+    : eq(articles.status, 'published');
+
+  return db
     .select({
       id: articles.id,
       title: articles.title,
@@ -507,13 +517,10 @@ export async function loadArticlesPage(page = 1, pageSize = 30, tag?: string) {
     })
     .from(articles)
     .leftJoin(sources, eq(articles.sourceId, sources.id))
-    .where(eq(articles.status, 'published'))
-    .orderBy(desc(articles.hotnessScore), desc(articles.publishedAt), desc(articles.fetchedAt));
-
-  // Tag filter applied after the fact (drizzle dynamic where)
-  const rows = await base.limit(pageSize).offset(offset);
-  const filtered = tag ? rows.filter((r) => r.tag === tag) : rows;
-  return filtered;
+    .where(where)
+    .orderBy(desc(articles.hotnessScore), desc(articles.publishedAt), desc(articles.fetchedAt))
+    .limit(pageSize)
+    .offset(offset);
 }
 
 export async function loadArticleTags(): Promise<string[]> {
@@ -642,7 +649,7 @@ export async function loadToolsByCategory(catId: string) {
     .select()
     .from(tools)
     .where(eq(tools.catId, catId))
-    .orderBy(desc(tools.publishedAt));
+    .orderBy(desc(toolHotnessScore), desc(tools.publishedAt));
 }
 
 export async function updateArticleAi(id: number, data: {
@@ -688,7 +695,7 @@ export async function loadToolsPage(opts: {
     })
       .from(tools)
       .where(where)
-      .orderBy(desc(tools.publishedAt))
+      .orderBy(desc(toolHotnessScore), desc(tools.publishedAt))
       .limit(pageSize)
       .offset(offset),
     db.select({ value: count() }).from(tools).where(where),

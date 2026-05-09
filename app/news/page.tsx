@@ -83,7 +83,7 @@ export default async function NewsPage({ searchParams }: Props) {
               <p style={{ fontSize: 16 }}>暂无资讯，稍后再来查看</p>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(320px, 100%), 1fr))', alignItems: 'start', gap: 20 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(320px, 100%), 1fr))', gap: 20 }}>
               {articles.map((art) => (
                 <ArticleCard key={art.id} art={art} />
               ))}

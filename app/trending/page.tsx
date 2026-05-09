@@ -61,6 +61,22 @@ function Pill({ children, tone = 'neutral' }: { children: React.ReactNode; tone?
   );
 }
 
+function InsightLabel({ children, tone = 'accent' }: { children: React.ReactNode; tone?: 'accent' | 'soft' }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: C.inkMuted, fontWeight: 650, whiteSpace: 'nowrap' }}>
+      <span style={{
+        width: 7,
+        height: 7,
+        borderRadius: 2,
+        background: tone === 'accent' ? C.primary : C.rule,
+        display: 'inline-block',
+        transform: 'rotate(45deg)',
+      }} />
+      {children}
+    </span>
+  );
+}
+
 export default async function TrendingPage({ searchParams }: Props) {
   const { period = 'today' } = await searchParams;
   const safe = (['today', 'week', 'month'] as const).includes(period as 'today')
@@ -121,8 +137,17 @@ export default async function TrendingPage({ searchParams }: Props) {
               const [owner, name] = r.repo.split('/');
               const langColor = LANG_COLOR[r.lang] || '#888';
               const insights = r.aiInsights;
-              const summary = insights?.oneSentenceSummary || r.descriptionZh || r.description;
-              const keyPoints = insights?.keyPoints?.slice(0, 3) ?? [];
+              const summary = insights?.oneSentenceSummary || r.descriptionZh || r.description || `${name} 是近期 Star 增长较快的开源项目。`;
+              const periodLabel = safe === 'today' ? '今日' : safe === 'week' ? '本周' : '本月';
+              const useCase = insights?.useCase || `${r.lang || '开源'} 生态相关项目，可作为技术选型或实现参考。`;
+              const keyPoints = insights?.keyPoints?.length
+                ? insights.keyPoints.slice(0, 3)
+                : [
+                    r.descriptionZh || r.description || '近期关注度增长明显',
+                    `${periodLabel}新增 ${r.gained.toLocaleString()} stars`,
+                    r.lang ? `主要使用 ${r.lang}` : '建议查看 README 进一步评估',
+                  ];
+              const whyTrending = insights?.whyTrending || `${periodLabel} Star 增长 ${r.gained.toLocaleString()}，开发者关注度正在上升。`;
               return (
                 <Link
                   key={r.id}
@@ -160,34 +185,30 @@ export default async function TrendingPage({ searchParams }: Props) {
                       {/* Summary */}
                       <div style={{ display: 'grid', gap: 5, color: C.inkSoft, fontSize: 13, lineHeight: 1.65, marginBottom: 10 }}>
                         <p style={{ margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
-                          <span style={{ color: C.inkMuted, fontWeight: 650 }}>摘要</span>
+                          <InsightLabel>一句话摘要</InsightLabel>
                           <span style={{ margin: '0 6px', color: C.rule }}>·</span>
                           <span style={{ color: C.ink, fontWeight: insights ? 650 : 400 }}>{summary}</span>
                         </p>
 
-                        {insights?.useCase && (
-                          <p style={{ margin: 0 }}>
-                            <span style={{ color: C.inkMuted, fontWeight: 650 }}>场景</span>
-                            <span style={{ margin: '0 6px', color: C.rule }}>·</span>
-                            <span>{insights.useCase}</span>
-                          </p>
-                        )}
+                        <p style={{ margin: 0 }}>
+                          <InsightLabel tone="soft">适用场景</InsightLabel>
+                          <span style={{ margin: '0 6px', color: C.rule }}>·</span>
+                          <span>{useCase}</span>
+                        </p>
 
                         {keyPoints.length > 0 && (
                           <p style={{ margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' as const }}>
-                            <span style={{ color: C.inkMuted, fontWeight: 650 }}>亮点</span>
+                            <InsightLabel tone="soft">亮点</InsightLabel>
                             <span style={{ margin: '0 6px', color: C.rule }}>·</span>
                             <span>{keyPoints.join(' / ')}</span>
                           </p>
                         )}
 
-                        {insights?.whyTrending && (
-                          <p style={{ margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' as const }}>
-                            <span style={{ color: C.inkMuted, fontWeight: 650 }}>上榜</span>
-                            <span style={{ margin: '0 6px', color: C.rule }}>·</span>
-                            <span>{insights.whyTrending}</span>
-                          </p>
-                        )}
+                        <p style={{ margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' as const }}>
+                          <InsightLabel tone="soft">上榜原因</InsightLabel>
+                          <span style={{ margin: '0 6px', color: C.rule }}>·</span>
+                          <span>{whyTrending}</span>
+                        </p>
                       </div>
 
                       {/* Stats row */}
@@ -196,7 +217,7 @@ export default async function TrendingPage({ searchParams }: Props) {
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: C.green, fontWeight: 600 }}>
                           <span>+{r.gained.toLocaleString()}</span>
                           <span style={{ fontWeight: 400, color: C.inkMuted }}>
-                            {safe === 'today' ? '今日' : safe === 'week' ? '本周' : '本月'}
+                            {periodLabel}
                           </span>
                         </span>
                         {insights?.projectType && <Pill tone="accent">{insights.projectType}</Pill>}
