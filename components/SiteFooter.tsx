@@ -112,7 +112,7 @@ export function SiteFooter() {
             <BrandLogo size={34} />
           </div>
           <p style={{ margin: 0, color: C.inkSoft, fontSize: 13, lineHeight: 1.7 }}>
-            中文用户的 AI 工具决策平台。比较价格、中文支持、国内可用情况，帮你更快决定用哪个。
+            给中文用户看的 AI 工具参考站。先看能不能用、贵不贵、适不适合，再决定要不要试。
           </p>
         </div>
 

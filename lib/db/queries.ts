@@ -471,6 +471,22 @@ export async function loadLabReportsByToolId(toolId: string): Promise<Comparison
   return attachComparisonTools(rows);
 }
 
+export async function loadComparisonsByToolId(toolId: string, limit = 5): Promise<ComparisonWithTools[]> {
+  const rows = await db
+    .select()
+    .from(comparisons)
+    .where(
+      and(
+        eq(comparisons.status, 'published'),
+        eq(comparisons.isLabReport, false),
+        or(eq(comparisons.toolAId, toolId), eq(comparisons.toolBId, toolId)),
+      ),
+    )
+    .orderBy(desc(comparisons.publishedAt), desc(comparisons.updatedAt))
+    .limit(limit);
+  return attachComparisonTools(rows);
+}
+
 export async function loadConnectivityByToolId(toolId: string) {
   const rows = await db
     .select()
@@ -518,9 +534,127 @@ export async function loadArticlesPage(page = 1, pageSize = 30, tag?: string) {
     .from(articles)
     .leftJoin(sources, eq(articles.sourceId, sources.id))
     .where(where)
-    .orderBy(desc(articles.hotnessScore), desc(articles.publishedAt), desc(articles.fetchedAt))
+    .orderBy(
+      desc(sql<number>`case when ${articles.hotnessScore} >= 70 then 1 else 0 end`),
+      desc(articles.publishedAt),
+      desc(articles.hotnessScore),
+      desc(articles.fetchedAt),
+    )
     .limit(pageSize)
     .offset(offset);
+}
+
+export async function loadArticleHotTopics(limit = 5, days = 3) {
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const rows = await db
+    .select({
+      title: articles.title,
+      titleZh: articles.titleZh,
+      summary: articles.summary,
+      summaryZh: articles.summaryZh,
+      aiInsights: articles.aiInsights,
+      tag: articles.tag,
+      hotnessScore: articles.hotnessScore,
+      publishedAt: articles.publishedAt,
+    })
+    .from(articles)
+    .where(and(eq(articles.status, 'published'), gt(articles.publishedAt, since)))
+    .orderBy(desc(articles.hotnessScore), desc(articles.publishedAt))
+    .limit(120);
+
+  const topicMap = new Map<string, { topic: string; count: number; maxHotness: number; latestAt: Date | null; samples: string[]; event: boolean }>();
+  const genericTopics = new Set([
+    '模型发布', '产品评测', '行业动态', '工具更新', '技术研究', '国内动态',
+    '人工智能', '中国AI', 'AI', 'AIGC', '大模型', '生成式AI', 'GPT',
+  ]);
+
+  const addTopic = (raw: string, row: (typeof rows)[number], event = false) => {
+    const topic = raw.trim().replace(/[，。；：、,!?！？"'“”‘’()[\]【】]/g, '').replace(/^\.+|\.+$/g, '');
+    if (!topic || topic.length < 2 || topic.length > 32 || genericTopics.has(topic)) return;
+    if (/^\d+$/.test(topic)) return;
+    const current = topicMap.get(topic) ?? { topic, count: 0, maxHotness: 0, latestAt: null, samples: [], event };
+    current.count += 1;
+    current.event = current.event || event;
+    current.maxHotness = Math.max(current.maxHotness, row.hotnessScore ?? 0);
+    if (!current.latestAt || (row.publishedAt && row.publishedAt > current.latestAt)) current.latestAt = row.publishedAt;
+    const sample = row.titleZh || row.title;
+    if (sample && current.samples.length < 2 && !current.samples.includes(sample)) current.samples.push(sample);
+    topicMap.set(topic, current);
+  };
+
+  const extractTopics = (text: string) => {
+    const topics = new Set<string>();
+    const normalized = text.replace(/\s+/g, ' ');
+    const lower = normalized.toLowerCase();
+    const addIf = (condition: boolean, topic: string) => {
+      if (condition) topics.add(`!${topic}`);
+    };
+
+    addIf(/deepseek/i.test(normalized) && /融资|参投|投资/.test(normalized), 'DeepSeek 融资');
+    addIf(/openai/i.test(normalized) && /语音|同传|翻译/.test(normalized), 'OpenAI 语音模型');
+    addIf(/openai/i.test(normalized) && /后训练|agentic|heuristic/i.test(normalized), 'OpenAI 后训练');
+    addIf(/chatgpt/i.test(normalized) && /免费模型|升级|幻觉|记忆/.test(normalized), 'ChatGPT 免费模型升级');
+    addIf(/chrome/i.test(normalized) && /gemini/i.test(normalized), 'Chrome Gemini 模型');
+    addIf(/文心|百度/.test(normalized) && /5\.?1/.test(normalized), '文心大模型 5.1');
+    addIf(/claude code/i.test(normalized), 'Claude Code');
+    addIf(/华为/.test(normalized) && /灵境|openjiuwen/i.test(normalized), '华为灵境造物');
+    addIf(/阶跃/.test(normalized) && /语音/.test(normalized), '阶跃语音模型');
+    addIf(/香蕉|gpt image/i.test(normalized), 'AI 生图模型');
+    addIf(/ai 短片|纸手机|穿帮镜头/i.test(lower), 'AI 短片创作');
+
+    const known = [
+      'DeepSeek', 'OpenAI', 'ChatGPT', 'Claude Code', 'Claude', 'Gemini', 'Google',
+      'Anthropic', 'Meta', '微软', '百度', '文心', '文心大模型', '阿里', '通义',
+      '腾讯', '字节', '豆包', 'Kimi', '月之暗面', '华为', '英伟达', 'NVIDIA',
+      'Sora', 'Midjourney', 'Runway', '可灵', '即梦',
+    ];
+    for (const item of known) {
+      if (normalized.toLowerCase().includes(item.toLowerCase())) topics.add(item);
+    }
+    const entityPatterns = [
+      /((?:GPT|Gemini|Claude|DeepSeek|文心|通义|豆包|Kimi)(?:\s?\d(?:\.\d)?)?)/gi,
+    ];
+    for (const pattern of entityPatterns) {
+      for (const match of normalized.matchAll(pattern)) {
+        if (match[1]) topics.add(match[1]);
+      }
+    }
+    return Array.from(topics);
+  };
+
+  for (const row of rows) {
+    const insights = row.aiInsights;
+    const text = [
+      row.titleZh,
+      row.title,
+      row.summaryZh,
+      row.summary,
+      insights?.oneSentenceSummary,
+      ...(insights?.keyPoints ?? []),
+    ].filter(Boolean).join(' ');
+    for (const topic of extractTopics(text)) {
+      addTopic(topic.startsWith('!') ? topic.slice(1) : topic, row, topic.startsWith('!'));
+    }
+  }
+
+  const ranked = Array.from(topicMap.values())
+    .map((item) => ({
+      ...item,
+      score: item.maxHotness * 3 + item.count * 12 + (item.event ? 180 : 0) + (item.latestAt ? Math.floor(item.latestAt.getTime() / 86_400_000) % 100 : 0),
+    }))
+    .sort((a, b) => b.score - a.score || b.count - a.count);
+
+  const finalTopics: typeof ranked = [];
+  for (const topic of ranked) {
+    const duplicateIndex = finalTopics.findIndex((item) => item.topic.includes(topic.topic) || topic.topic.includes(item.topic));
+    if (duplicateIndex === -1) {
+      finalTopics.push(topic);
+    } else if (topic.event && !finalTopics[duplicateIndex].event) {
+      finalTopics[duplicateIndex] = topic;
+    }
+    if (finalTopics.length >= limit) break;
+  }
+  return finalTopics;
 }
 
 export async function loadArticleTags(): Promise<string[]> {
@@ -691,7 +825,11 @@ export async function loadToolsPage(opts: {
       id: tools.id, name: tools.name, mono: tools.mono, brand: tools.brand,
       catId: tools.catId, en: tools.en, zh: tools.zh,
       pricing: tools.pricing, url: tools.url, chinaAccess: tools.chinaAccess,
-      features: tools.features, featured: tools.featured, publishedAt: tools.publishedAt,
+      chineseUi: tools.chineseUi, freeQuota: tools.freeQuota,
+      apiAvailable: tools.apiAvailable, openSource: tools.openSource,
+      features: tools.features, featured: tools.featured,
+      upvotes: tools.upvotes, downvotes: tools.downvotes,
+      publishedAt: tools.publishedAt,
     })
       .from(tools)
       .where(where)

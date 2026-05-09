@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     siteName: 'AIBoxPro',
     title: 'AIBoxPro | 中文 AI 工具决策平台',
     description:
-      '比较价格、中文支持、国内使用情况、适合场景和替代方案，让中文用户更快完成 AI 工具选型。',
+      '帮中文用户看清 AI 工具的价格、访问、中文体验和替代选择，少踩坑，快一点选到合适的工具。',
     images: [{ url: `${BASE}/og?type=default`, width: 1200, height: 630, alt: 'AIBoxPro' }],
   },
   twitter: {

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { ShareButton } from '@/components/ShareButton';
 
 const C = {
   panel: '#FFFFFF', ink: '#1F2937', inkSoft: '#4B5563',
@@ -46,6 +47,7 @@ export type ArticleRow = {
   tag: string | null;
   publishedAt: Date | null;
   sourceName: string | null;
+  hotnessScore?: number;
 };
 
 export function ArticleCard({ art }: { art: ArticleRow }) {
@@ -58,25 +60,43 @@ export function ArticleCard({ art }: { art: ArticleRow }) {
     art.aiInsights?.chinaImpact,
   ].find((item) => item && item !== oneLine);
 
+  const href = `/news/${art.id}`;
+  const isBurst = (art.hotnessScore ?? 0) >= 70;
+
   return (
-    <Link href={`/news/${art.id}`} style={{
+    <article style={{
       display: 'flex', flexDirection: 'column', gap: 12,
       height: '100%',
       background: C.panel, borderRadius: 12, padding: 22,
-      border: `1px solid ${C.rule}`, textDecoration: 'none',
+      border: `1px solid ${isBurst ? C.primary : C.rule}`, textDecoration: 'none',
       boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
       transition: 'box-shadow .15s, border-color .15s',
     }}
     onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.boxShadow = '0 6px 20px -4px rgba(249,115,22,0.18)'; el.style.borderColor = C.primary; }}
-    onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'; el.style.borderColor = C.rule; }}
+    onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'; el.style.borderColor = isBurst ? C.primary : C.rule; }}
     >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {isBurst && <span style={{ padding: '3px 8px', borderRadius: 999, background: C.primaryBg, color: C.accent, fontSize: 11, fontWeight: 900 }}>爆点</span>}
+          {art.hotnessScore !== undefined && art.hotnessScore > 0 && (
+            <span style={{ padding: '3px 8px', borderRadius: 999, background: '#F8FAFC', color: C.inkMuted, fontSize: 11, fontWeight: 800 }}>热度 {art.hotnessScore}</span>
+          )}
+        </div>
+        <ShareButton
+          title={art.titleZh || art.title}
+          text={oneLine ?? undefined}
+          path={href}
+          compact
+        />
+      </div>
+
       {/* Title */}
-      <div>
+      <Link href={href} style={{ textDecoration: 'none', display: 'block' }}>
         {art.titleZh && (
           <h2 style={{ fontWeight: 750, fontSize: 18, margin: '0 0 6px', color: C.ink, lineHeight: 1.45 }}>{art.titleZh}</h2>
         )}
         <p style={{ fontSize: 13, color: art.titleZh ? C.inkMuted : C.ink, margin: 0, lineHeight: 1.5, fontWeight: art.titleZh ? 400 : 600, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>{art.title}</p>
-      </div>
+      </Link>
 
       {/* Summary */}
       {oneLine && (
@@ -106,6 +126,6 @@ export function ArticleCard({ art }: { art: ArticleRow }) {
           <span key={item} style={{ padding: '4px 8px', borderRadius: 999, background: C.ruleSoft, color: C.inkSoft, fontWeight: 650 }}>{item}</span>
         ))}
       </div>
-    </Link>
+    </article>
   );
 }

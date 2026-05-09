@@ -280,7 +280,7 @@ function Hero({
               lineHeight: 1.75,
             }}
           >
-            比较价格、中文支持、国内能不能直接用、适合什么场景、有没有替代方案。一次看完，再决定用哪个。
+            把价格、国内访问、中文体验和替代选择放在一起看。少翻几轮资料，更快找到顺手的工具。
           </p>
 
           <div
@@ -804,7 +804,7 @@ export default function V2ProHomepage({ tools, categories, trending, stats }: Ho
           <div style={shellStyle}>
             <SectionTitle
               title="热门对比"
-              description="这些工具经常被拿来比较，点进去看清楚区别再选。"
+              description="容易纠结的选择题，先把差异看明白。"
               actionLabel="查看全部对比"
               actionHref="/compare"
             />
@@ -816,7 +816,7 @@ export default function V2ProHomepage({ tools, categories, trending, stats }: Ho
           <div style={shellStyle}>
             <SectionTitle
               title="编辑推荐"
-              description="编辑挑出来的工具，标注适合谁用、为什么推荐。"
+              description="一些值得优先试的工具，以及它们更适合的用法。"
               actionLabel="进入工具库"
               actionHref="/tools"
             />
@@ -832,7 +832,7 @@ export default function V2ProHomepage({ tools, categories, trending, stats }: Ho
           <div style={shellStyle}>
             <SectionTitle
               title="📈 开发者趋势"
-              description="GitHub 每日新增星数最高的 AI 项目，发现下一个值得用的开源工具。"
+              description="看看最近开发者都在关注哪些 AI 开源项目。"
               actionLabel="完整榜单"
               actionHref="/trending"
             />

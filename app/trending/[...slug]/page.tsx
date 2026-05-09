@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Metadata } from 'next';
+import { ShareButton } from '@/components/ShareButton';
 import { SiteHeader } from '@/components/SiteHeader';
 import { hasBaiduTranslateConfig, translateReadmeExcerpt } from '@/lib/baidu-translate';
 import { fetchReadme, fetchRepoInfo, renderReadme } from '@/lib/github';
@@ -119,6 +120,7 @@ export default async function TrendingDetailPage({ params }: Props) {
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 999, border: `1px solid ${C.rule}`, background: C.panel, color: C.inkSoft, fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
                   ↓ 下载源码
                 </a>
+                <ShareButton title={`${repo} GitHub 趋势`} text={main.descriptionZh || main.description} path={`/trending/${repo}`} />
               </div>
               {repoInfo?.topics && repoInfo.topics.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 18 }}>

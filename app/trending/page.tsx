@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { ShareButton } from '@/components/ShareButton';
 import { SiteHeader } from '@/components/SiteHeader';
 import { loadTrendingList } from '@/lib/db/queries';
 
@@ -15,9 +16,9 @@ const LANG_COLOR: Record<string, string> = {
 };
 
 const PERIOD_META = {
-  today: { label: '今日',   labelEn: 'Today',      desc: '过去 24 小时 Star 增长最快的开源项目' },
-  week:  { label: '本周',   labelEn: 'This Week',  desc: '本周 Star 增长最快的开源项目' },
-  month: { label: '本月',   labelEn: 'This Month', desc: '本月 Star 增长最快的开源项目' },
+  today: { label: '今日',   labelEn: 'Today',      desc: '今天在 GitHub 上升最快的 AI 开源项目' },
+  week:  { label: '本周',   labelEn: 'This Week',  desc: '这周最受开发者关注的 AI 开源项目' },
+  month: { label: '本月',   labelEn: 'This Month', desc: '这个月增长最明显的 AI 开源项目' },
 };
 
 type Props = { searchParams: Promise<{ period?: string }> };
@@ -149,11 +150,7 @@ export default async function TrendingPage({ searchParams }: Props) {
                   ];
               const whyTrending = insights?.whyTrending || `${periodLabel} Star 增长 ${r.gained.toLocaleString()}，开发者关注度正在上升。`;
               return (
-                <Link
-                  key={r.id}
-                  href={`/trending/${r.repo}`}
-                  style={{ display: 'block', textDecoration: 'none' }}
-                >
+                <div key={r.id}>
                   <div style={{
                     background: C.panel, borderRadius: 14, border: `1px solid ${C.rule}`,
                     padding: 'clamp(16px, 4vw, 18px) clamp(16px, 5vw, 22px)', display: 'flex', alignItems: 'flex-start', gap: 14,
@@ -173,7 +170,7 @@ export default async function TrendingPage({ searchParams }: Props) {
                       {/* Repo name */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
                         <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 13, color: C.inkMuted }}>{owner} /</span>
-                        <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 15, fontWeight: 700, color: C.ink }}>{name}</span>
+                        <Link href={`/trending/${r.repo}`} style={{ fontFamily: 'ui-monospace, monospace', fontSize: 15, fontWeight: 700, color: C.ink, textDecoration: 'none' }}>{name}</Link>
                         {r.lang && (
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: C.inkSoft }}>
                             <span style={{ width: 10, height: 10, borderRadius: 5, background: langColor, display: 'inline-block', flexShrink: 0 }} />
@@ -227,9 +224,12 @@ export default async function TrendingPage({ searchParams }: Props) {
                     </div>
 
                     {/* Arrow */}
-                    <div style={{ color: C.inkMuted, fontSize: 16, flexShrink: 0, marginTop: 4 }}>›</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginTop: 0 }}>
+                      <ShareButton title={`${r.repo} GitHub ${periodLabel}趋势`} text={summary} path={`/trending/${r.repo}`} compact />
+                      <Link href={`/trending/${r.repo}`} style={{ color: C.inkMuted, fontSize: 16, textDecoration: 'none' }}>›</Link>
+                    </div>
                   </div>
-                </Link>
+                </div>
               );
             })}
           </div>

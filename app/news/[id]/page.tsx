@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { ShareButton } from '@/components/ShareButton';
 import { SiteHeader } from '@/components/SiteHeader';
 import { loadArticleById } from '@/lib/db/queries';
 
@@ -100,6 +101,7 @@ export default async function NewsDetailPage({ params }: Props) {
               {art.sourceName && (
                 <span style={{ fontSize: 13, color: C.inkMuted, marginLeft: 'auto' }}>来源：{art.sourceName}</span>
               )}
+              <ShareButton title={art.titleZh || art.title} text={description} path={`/news/${art.id}`} compact />
             </div>
 
             {/* Chinese title */}
@@ -200,6 +202,7 @@ export default async function NewsDetailPage({ params }: Props) {
                 阅读原文 ↗
               </a>
               <Link href="/news" style={{ fontSize: 13, color: C.inkSoft, textDecoration: 'none' }}>← 返回资讯列表</Link>
+              <ShareButton title={art.titleZh || art.title} text={description} path={`/news/${art.id}`} />
             </div>
           </article>
         </main>

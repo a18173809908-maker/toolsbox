@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import type React from 'react';
 import { SiteHeader } from '@/components/SiteHeader';
 import { AccessBadge, ToolIcon } from '@/components/ToolBadges';
-import { loadToolById, loadAllToolIds, loadToolsByCategory, loadRelatedArticles, loadToolsByIds, loadLabReportsByToolId, loadConnectivityByToolId } from '@/lib/db/queries';
+import { loadToolById, loadAllToolIds, loadToolsByCategory, loadRelatedArticles, loadToolsByIds, loadLabReportsByToolId, loadConnectivityByToolId, loadComparisonsByToolId } from '@/lib/db/queries';
 
 export const revalidate = 3600; // ISR — regenerate hourly
 export const dynamic = 'force-dynamic';
@@ -114,17 +114,46 @@ function isStaleConnectivity(date: Date) {
   return Math.floor((Date.now() - date.getTime()) / 86_400_000) > 14;
 }
 
+function buildFitNotes(tool: Awaited<ReturnType<typeof loadToolById>>) {
+  if (!tool) return { goodFor: [], notFor: [] };
+
+  const goodFor = [
+    tool.features?.length ? `需要${tool.features.slice(0, 2).join('、')}能力的用户` : '',
+    tool.chinaAccess === 'accessible' ? '希望国内访问门槛更低的中文用户' : '',
+    tool.chineseUi ? '偏好中文界面和中文资料的新手' : '',
+    tool.apiAvailable ? '需要把能力接入产品或工作流的开发者' : '',
+    tool.openSource ? '希望可自部署或二次开发的技术团队' : '',
+    tool.pricing === 'Free' ? '预算敏感、希望先免费尝试的个人用户' : '',
+    tool.pricing === 'Freemium' ? '想先试用再决定是否付费的个人或小团队' : '',
+  ].filter(Boolean).slice(0, 4);
+
+  const notFor = [
+    tool.chinaAccess === 'vpn-required' ? '不能接受代理或跨境访问不稳定的用户' : '',
+    tool.chinaAccess === 'blocked' ? '需要稳定国内直连的团队' : '',
+    !tool.chineseUi ? '必须全中文界面和中文客服的新手用户' : '',
+    tool.overseasPaymentOnly ? '只能使用国内支付方式的个人或团队' : '',
+    tool.needsOverseasPhone ? '没有海外手机号且不想折腾注册流程的用户' : '',
+    tool.pricing === 'Paid' ? '只接受永久免费工具的用户' : '',
+  ].filter(Boolean).slice(0, 4);
+
+  return {
+    goodFor: goodFor.length ? goodFor : ['想快速评估同类 AI 工具能力的用户'],
+    notFor: notFor.length ? notFor : ['需要强人工实测结论的场景，建议结合官方资料和实际试用判断'],
+  };
+}
+
 export default async function ToolDetailPage({ params }: Props) {
   const { slug } = await params;
   const tool = await loadToolById(slug);
   if (!tool) notFound();
 
-  const [related, relatedArticles, alternativeTools, labReports, connectivity] = await Promise.all([
+  const [related, relatedArticles, alternativeTools, labReports, connectivity, relatedComparisons] = await Promise.all([
     loadToolsByCategory(tool.cat).then((ts) => ts.filter((t) => t.id !== tool.id).slice(0, 4)),
     loadRelatedArticles(tool.name, 5),
     loadToolsByIds(tool.cnAlternatives ?? []),
     loadLabReportsByToolId(tool.id),
     loadConnectivityByToolId(tool.id),
+    loadComparisonsByToolId(tool.id, 5),
   ]);
 
   const jsonLd = {
@@ -161,6 +190,7 @@ export default async function ToolDetailPage({ params }: Props) {
   const pricingNotice = formatFreshnessWarning(tool.pricingUpdatedAt, 30, '价格信息');
   const accessNotice = formatFreshnessWarning(tool.accessUpdatedAt, 14, '国内访问状态');
   const complianceNotice = formatFreshnessWarning(tool.complianceUpdatedAt, 90, '合规状态');
+  const fitNotes = buildFitNotes(tool);
 
   return (
     <>
@@ -230,6 +260,28 @@ export default async function ToolDetailPage({ params }: Props) {
             <p style={{ fontSize: 16, color: '#4B5563', lineHeight: 1.8, margin: '0 0 20px' }}>{tool.en}</p>
             <div style={{ background: '#FFF7ED', borderRadius: 12, padding: 'clamp(14px, 4vw, 18px) clamp(16px, 5vw, 22px)', borderLeft: '4px solid #F97316' }}>
               <p style={{ fontSize: 15, color: '#4B5563', lineHeight: 1.75, margin: 0 }}>{tool.zh}</p>
+            </div>
+          </div>
+
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(22px, 4vw, 30px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
+            <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 18px', letterSpacing: '-0.01em' }}>适合谁使用</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
+              <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 12, padding: 16 }}>
+                <div style={{ color: '#166534', fontSize: 13, fontWeight: 900, marginBottom: 10 }}>更适合</div>
+                <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: 8 }}>
+                  {fitNotes.goodFor.map((item) => (
+                    <li key={item} style={{ color: '#374151', fontSize: 14, lineHeight: 1.6 }}>✓ {item}</li>
+                  ))}
+                </ul>
+              </div>
+              <div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 12, padding: 16 }}>
+                <div style={{ color: '#C2410C', fontSize: 13, fontWeight: 900, marginBottom: 10 }}>需要谨慎</div>
+                <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: 8 }}>
+                  {fitNotes.notFor.map((item) => (
+                    <li key={item} style={{ color: '#374151', fontSize: 14, lineHeight: 1.6 }}>· {item}</li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
 
@@ -431,6 +483,22 @@ export default async function ToolDetailPage({ params }: Props) {
                       <span style={{ fontSize: 15, fontWeight: 800 }}>{report.title}</span>
                     </div>
                     <div style={{ color: '#4B5563', fontSize: 13, lineHeight: 1.6 }}>{report.summary ?? report.verdict ?? '实测报告已发布。'}</div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {relatedComparisons.length > 0 && (
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(22px, 4vw, 32px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 18px', letterSpacing: '-0.01em' }}>
+                相关对比
+              </h2>
+              <div style={{ display: 'grid', gap: 10 }}>
+                {relatedComparisons.map((comparison) => (
+                  <Link key={comparison.id} href={`/compare/${comparison.id}`} style={{ display: 'block', padding: '14px 16px', borderRadius: 12, background: '#FFF7ED', border: '1px solid #F3E8D0', color: '#1F2937', textDecoration: 'none' }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 6 }}>{comparison.title}</div>
+                    <div style={{ color: '#6B7280', fontSize: 13, lineHeight: 1.6 }}>{comparison.summary ?? comparison.verdict ?? `${comparison.toolA.name} 与 ${comparison.toolB.name} 的工具选择对比。`}</div>
                   </Link>
                 ))}
               </div>

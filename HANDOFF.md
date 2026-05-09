@@ -1,6 +1,6 @@
 # Project Handoff
 
-Last updated: 2026-05-09
+Last updated: 2026-05-10
 
 ## Current Status
 
@@ -133,6 +133,16 @@ Do not commit `.env.local`; it is ignored.
    - Added `npm run discover:sources` to collect formal candidate sources and sample RSS titles.
    - Added `/admin/sources` and `/admin/sources/[id]` for source review.
    - Approving a source adds it to `sources`; rejected candidates stay out of the active fetch pool.
+16. Advanced Phase 1 tool library/detail work:
+   - Tool library sorting now uses hotness first, then publish date.
+   - Tool cards show decision cues such as suitable scenario, hotness signal, free quota, API, and open-source tags.
+   - Tool detail pages show “适合谁 / 需要谨慎” based on existing structured fields.
+   - Tool detail pages now link regular related comparisons in addition to Lab reports, related articles, alternatives, and same-category tools.
+17. Advanced Phase 1 news/trending reading flow:
+   - News list now prioritizes burst/hot items first, then recency, then hotness as a tie-breaker.
+   - `/news` includes a recent 3-day hot topics sidebar based on article tags.
+   - News cards/details and GitHub Trending cards/details include lightweight share/copy actions.
+   - Deferred: login-based favorites, subscriptions, RSS management UI, AI deep-analysis key configuration, and a personal center are not part of current P1.
 
 ## Known Notes / Caveats
 
@@ -183,10 +193,11 @@ It clears and re-inserts seed rows.
 ## Recommended Next Steps
 
 1. Prioritize automated/productized work only; manual participation is paused for now.
-2. Strengthen video alternative pages, especially Runway alternatives for Chinese users.
-3. Add doc-based video scenario pages that do not require real manual testing.
-4. Improve internal links across tool detail, comparison, alternative, and scenario pages.
-5. Keep comparison content tied to official sources and mark untested claims clearly.
+2. Finish Phase 1 data quality cleanup for existing tools: `howToUse`, `faqs`, `priceCny`, `registerMethod`, `cnAlternatives`, and tutorial links.
+3. Strengthen video alternative pages, especially Runway alternatives for Chinese users.
+4. Add doc-based video scenario pages that do not require real manual testing.
+5. Improve internal links across tool detail, comparison, alternative, and scenario pages.
+6. Keep comparison content tied to official sources and mark untested claims clearly.
 6. Keep docs synchronized:
    - `docs/current-position.md`
    - `docs/manual-tasks.md`

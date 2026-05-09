@@ -34,6 +34,26 @@ const PRICING_STYLE: Record<string, { bg: string; color: string }> = {
   Paid:     { bg: '#F3F4F6', color: '#374151' },
 };
 
+function fitLine(tool: {
+  features: string[] | null;
+  chineseUi: boolean;
+  apiAvailable: boolean;
+  openSource: boolean;
+}) {
+  if (tool.features?.length) return `适合：${tool.features.slice(0, 2).join('、')}`;
+  if (tool.apiAvailable) return '适合：需要 API 集成的开发者或团队';
+  if (tool.openSource) return '适合：偏好开源方案的技术用户';
+  if (tool.chineseUi) return '适合：优先中文界面的国内用户';
+  return '适合：先快速试用并评估工具能力';
+}
+
+function heatText(tool: { featured: boolean; upvotes: number; downvotes: number }) {
+  const score = (tool.featured ? 1000 : 0) + tool.upvotes - tool.downvotes;
+  if (tool.featured) return '编辑推荐';
+  if (score > 0) return `热度 ${score}`;
+  return '新近收录';
+}
+
 type SearchParams = { cat?: string; pricing?: string; china?: string; q?: string; page?: string };
 type Props = { searchParams: Promise<SearchParams> };
 
@@ -103,7 +123,7 @@ export default async function ToolsPage({ searchParams }: Props) {
               AI 工具库
             </h1>
             <p style={{ fontSize: 15, color: C.inkSoft, margin: 0 }}>
-              收录 {total} 个 AI 工具，标注国内可用情况与定价模式
+              现在有 {total} 个工具可查，先看能不能用、贵不贵、适不适合你。
             </p>
           </div>
 
@@ -249,6 +269,36 @@ export default async function ToolsPage({ searchParams }: Props) {
                       }}>
                         {tool.zh || tool.en}
                       </p>
+
+                      <div style={{ marginTop: 14, display: 'grid', gap: 8 }}>
+                        <p style={{
+                          fontSize: 12, color: C.inkSoft, margin: 0, lineHeight: 1.5,
+                          display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' as const,
+                          overflow: 'hidden',
+                        }}>
+                          {fitLine(tool)}
+                        </p>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          <span style={{ padding: '3px 8px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: C.ruleSoft, color: C.inkSoft }}>
+                            {heatText(tool)}
+                          </span>
+                          {tool.freeQuota && (
+                            <span style={{ padding: '3px 8px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: '#F8FAFC', color: C.inkMuted }}>
+                              {tool.freeQuota}
+                            </span>
+                          )}
+                          {tool.apiAvailable && (
+                            <span style={{ padding: '3px 8px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: '#EFF6FF', color: '#1D4ED8' }}>
+                              API
+                            </span>
+                          )}
+                          {tool.openSource && (
+                            <span style={{ padding: '3px 8px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: '#F0FDF4', color: '#166534' }}>
+                              开源
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </Link>
                 );
