@@ -57,7 +57,7 @@
 ### 下一步（按优先级）
 
 1. **复审第一批 10 篇**（建议优先）：先看 [`comparison-quality-audit.md`](./comparison-quality-audit.md) 和 [`comparison-review-prep.md`](./comparison-review-prep.md)，优先补 `kimi-vs-wenxin`、`doubao-vs-kimi`、`cursor-vs-windsurf` 等偏短且缺引用的页面
-2. **I9-B 连通性实测数据**：用 `npm run seed:connectivity -- <measurements.json>` 导入 10 个工具 × 3 运营商真实测量
+2. **I9-B 连通性实测数据**：用 `npm run seed:connectivity -- <measurements.json>` 导入 10 个核心工具的真实网络环境基线测量，不再按运营商拆分
 3. **I7 首份 Lab 报告**：编辑亲手测一对工具，配完整 Methodology Box（Claude 不代替这一步）
 4. **I13 运营前置**：小红书账号准备
 5. **复用 I11 / I12 SOP**：社区分发和工具方互推文档框架已完成，后续填真实执行数据
@@ -101,7 +101,7 @@
 **当前阻塞**：
 - I6 第一批 10 篇全部上线，无阻塞；下一步是抽查 `claude-assisted` 标记的 9 篇，决定是否补深度
 - I7 Lab 报告内容依赖编辑实测，工程链路（脚本 + 模板 + 反向引用）已就绪，独立排期
-- I9-A 工程链路已就绪；I9-B 需要真人在真实网络环境下测 10 个工具 × 3 运营商
+- I9-A 工程链路已就绪；I9-B 需要真人在真实网络环境下测 10 个核心工具，每个工具 1 条基线记录
 - I11 / I12 文档框架已就绪；M6 / M7 仍需真人补充账号状态、联系人和实际外联结果
 - I10 已完成对比页分发草稿包生成器；不包含 GitHub Trending 教程草稿
 - I13 仍在第 7-8 周计划中，可独立启动
@@ -218,7 +218,7 @@ Methodology Box 所有字段必须有真实值，不允许「待补充」：
 ```
 labReportId:  LAB-202501-001
 testedAt:     实际测试日期
-testedEnv:    操作系统 / IDE 版本 / 网络环境（运营商 + 是否代理）
+testedEnv:    操作系统 / IDE 版本 / 网络环境（是否代理）
 testedBy:     编辑署名
 evalSet:      具体评测集说明（如：Codeforces Div.2 A-C 题，随机抽取 30 题）
 sampleSize:   每题独立测试 N 次，取中位数
@@ -444,7 +444,7 @@ draft-package/cursor-vs-trae/
 export const toolConnectivity = pgTable('tool_connectivity', {
   id:         text('id').primaryKey().default(sql`gen_random_uuid()`),
   toolId:     text('tool_id').notNull(),
-  carrier:    text('carrier').notNull(),     // 'telecom' | 'unicom' | 'mobile'
+  carrier:    text('carrier').notNull(),     // 'general' | 'telecom' | 'unicom' | 'mobile'
   region:     text('region'),               // '上海' | '北京'（可选）
   status:     text('status').notNull(),     // 'direct' | 'proxy-needed' | 'blocked'
   latencyMs:  integer('latency_ms'),
@@ -457,11 +457,11 @@ export const toolConnectivity = pgTable('tool_connectivity', {
 
 运行 `npm run db:push`。（I9-A 已执行）
 
-新增 query：`loadConnectivityByToolId(toolId)` — 返回该工具最新一条各运营商数据（I9-A 已实现）
+新增 query：`loadConnectivityByToolId(toolId)` — 返回该工具最新连通性数据（I9-A 已实现）
 
 **初始数据填充脚本**：新建 `scripts/seed-connectivity.ts`（I9-A 已实现，脚本要求传入真实测量 JSON，不内置伪数据）
 
-手动录入以下 10 个核心工具 × 3 运营商 = 30 条编辑实测数据：
+手动录入以下 10 个核心工具的编辑实测基线数据。当前不要求区分运营商，统一使用 `carrier = 'general'`：
 
 | 工具 | 说明 |
 |---|---|
@@ -486,11 +486,9 @@ export const toolConnectivity = pgTable('tool_connectivity', {
 **前端展示**：`app/tools/[slug]/page.tsx`「国内用户须知」区块下方新增连通性表格：
 
 ```
-| 运营商 | 状态     | 延迟   | 最后更新      | 来源     |
+| 网络环境 | 状态     | 延迟   | 最后更新      | 来源     |
 |--------|----------|--------|---------------|----------|
-| 电信   | 需代理   | —      | 2025-01-15    | 编辑实测 |
-| 联通   | 直连     | 450ms  | 2025-01-15    | 编辑实测 |
-| 移动   | 需代理   | —      | 2025-01-15    | 编辑实测 |
+| 通用网络 | 直连/需代理/受限 | 450ms  | 2025-01-15    | 编辑实测 |
 ```
 
 **重要**：
@@ -498,7 +496,7 @@ export const toolConnectivity = pgTable('tool_connectivity', {
 - 不声称"实时"，所有数据必须显示来源和日期
 
 **验证**：
-- `npm run seed:connectivity` 写入 30 条数据
+- `npm run seed:connectivity` 写入 10 条基线数据
 - Claude、Cursor、豆包等工具详情页显示连通性表格
 - 超过 14 天的测试条目显示「状态待确认」
 - `npm run build` 通过
@@ -512,7 +510,7 @@ export const toolConnectivity = pgTable('tool_connectivity', {
 - [ ] I6：10 个对比页 doc-based 草稿审核通过，写入 `comparisons` 表时 `isLabReport=false`，发布后 `/compare` 列表页均可见
 - [ ] I7：Lab 报告上线，Methodology Box 所有字段有真实值，Claude Code / Cursor 详情页反向引用
 - [x] I8：`/alternatives/cursor` 上线，至少 3 个工具；对比页 JSON-LD 已生成
-- [ ] I9：30 条连通性数据入库，10 个工具详情页显示连通性表格
+- [ ] I9：10 条连通性基线数据入库，10 个工具详情页显示连通性表格
 - [x] I10：图文自动生成系统跑通，单篇对比页 5 分钟内产出三平台草稿包
 
 **运营任务**（CODEX 写文档框架，真人执行）

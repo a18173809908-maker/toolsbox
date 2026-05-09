@@ -1,0 +1,52 @@
+[
+  {
+    "toolId": "github-copilot",
+    "carrier": "general",
+    "region": "中国大陆",
+    "status": "direct",
+    "source": "editor",
+    "reportedAt": "2026-05-09T12:00:00+08:00",
+    "reportedBy": "admin",
+    "note": "用户确认国内可用，但有时不稳定，按通用网络基线录入"
+  },
+  {
+    "toolId": "claude",
+    "carrier": "general",
+    "region": "中国大陆",
+    "status": "proxy-needed",
+    "source": "editor",
+    "reportedAt": "2026-05-09T12:00:00+08:00",
+    "reportedBy": "admin",
+    "note": "用户确认需 VPN，按通用网络基线录入"
+  },
+  {
+    "toolId": "chatgpt",
+    "carrier": "general",
+    "region": "中国大陆",
+    "status": "proxy-needed",
+    "source": "editor",
+    "reportedAt": "2026-05-09T12:00:00+08:00",
+    "reportedBy": "admin",
+    "note": "用户确认需 VPN，按通用网络基线录入"
+  },
+  {
+    "toolId": "cursor",
+    "carrier": "general",
+    "region": "中国大陆",
+    "status": "proxy-needed",
+    "source": "editor",
+    "reportedAt": "2026-05-09T12:00:00+08:00",
+    "reportedBy": "admin",
+    "note": "用户确认 Cursor 可用；如使用 Claude、GPT 等海外模型则需 VPN"
+  },
+  {
+    "toolId": "wenxin-yiyan",
+    "carrier": "general",
+    "region": "中国大陆",
+    "status": "direct",
+    "source": "editor",
+    "reportedAt": "2026-05-09T12:00:00+08:00",
+    "reportedBy": "admin",
+    "note": "用户确认直连可用，按通用网络基线录入"
+  }
+]

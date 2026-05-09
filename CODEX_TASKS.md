@@ -1481,7 +1481,7 @@ export const comparisons = pgTable('comparisons', {
 **报告编号**: LAB-202501-001
 **测试时间**: YYYY-MM-DD
 **测试版本**: Claude Code CLI vX.X.X / Cursor vX.X.X
-**测试环境**: macOS / 网络运营商 / 是否代理
+**测试环境**: macOS / 网络环境 / 是否代理
 **评测集**: [具体说明，可链接到 GitHub]
 **样本量**: N 次独立测试，取中位数
 **测试人**: 编辑实测（可署名或匿名）
@@ -1548,7 +1548,7 @@ export const labReports = pgTable('lab_reports', {
 
 ### I9（第二期，第 46-60 天）：连通性地图冷启动
 
-**状态（2026-05-09）**：🟡 已拆分。I9-A 工程链路已完成，commit `ede3dd7`，包含 `tool_connectivity` 表、`loadConnectivityByToolId`、工具详情页表格、`seed:connectivity` 导入脚本，并已 `db:push` 到 Neon。I9-B 仍需真人实测 10 个工具 × 3 运营商并导入 30 条数据。
+**状态（2026-05-09）**：🟡 已拆分。I9-A 工程链路已完成，commit `ede3dd7`，包含 `tool_connectivity` 表、`loadConnectivityByToolId`、工具详情页表格、`seed:connectivity` 导入脚本，并已 `db:push` 到 Neon。I9-B 仍需真人实测 10 个核心工具并导入 10 条基线数据；当前不要求按运营商拆分。
 
 **说明**：白皮书 3.2 节，第一期不做（依赖用户量），第二期编辑实测填充初始数据。
 
@@ -1558,7 +1558,7 @@ export const labReports = pgTable('lab_reports', {
 export const toolConnectivity = pgTable('tool_connectivity', {
   id:          text('id').primaryKey().default(sql`gen_random_uuid()`),
   toolId:      text('tool_id').notNull(),
-  carrier:     text('carrier').notNull(),     // 'telecom' | 'unicom' | 'mobile'
+  carrier:     text('carrier').notNull(),     // 'general' | 'telecom' | 'unicom' | 'mobile'
   region:      text('region'),                // '上海' | '北京' 等，可选
   status:      text('status').notNull(),      // 'direct' | 'proxy-needed' | 'blocked'
   latencyMs:   integer('latency_ms'),
@@ -1571,24 +1571,22 @@ export const toolConnectivity = pgTable('tool_connectivity', {
 
 **编辑实测脚本**：
 
-`scripts/seed-connectivity.ts` — 手动录入初始实测数据（10 个核心工具 × 3 运营商）
+`scripts/seed-connectivity.ts` — 手动录入初始实测数据（10 个核心工具；当前使用 `carrier='general'`，不按运营商拆分）
 
 **前端展示**：
 
 在工具详情页「国内用户须知」区块下方新增小表格：
 
 ```
-| 运营商 | 状态     | 延迟   | 更新时间    | 来源     |
+| 网络环境 | 状态     | 延迟   | 更新时间    | 来源     |
 |--------|----------|--------|-------------|----------|
-| 电信   | 需代理   | -      | 2025-01-15  | 编辑实测 |
-| 联通   | 直连     | 450ms  | 2025-01-15  | 编辑实测 |
-| 移动   | 需代理   | -      | 2025-01-15  | 编辑实测 |
+| 通用网络 | 直连/需代理/受限 | 450ms | 2025-01-15 | 编辑实测 |
 ```
 
 **重要**：所有数据必须显示 `reportedAt` 和 `source`，不得声称"实时"。
 
 **验证标准**：
-- `scripts/seed-connectivity.ts` 跑完后 DB 中有至少 10 工具 × 3 运营商 = 30 条记录
+- `scripts/seed-connectivity.ts` 跑完后 DB 中有至少 10 条基线记录（10 个核心工具 × 1 条真实网络环境实测）
 - 工具详情页（Claude Code、Cursor、豆包等）可见连通性表格
 - 超过 14 天未更新的条目在前端显示「状态待确认」
 
@@ -1607,7 +1605,7 @@ export const toolConnectivity = pgTable('tool_connectivity', {
 - [ ] I6：10 个对比页 published，Search Console 有收录
 - [ ] I7：1 份 Lab 报告上线，所有 Methodology Box 字段有值
 - [x] I8：`/alternatives/cursor` 上线，新页面 Sitemap 已提交
-- [ ] I9：30 条连通性数据入库，工具详情页连通性表格可见（I9-A 工程已完成；I9-B 真人实测待做）
+- [ ] I9：10 条连通性基线数据入库，工具详情页连通性表格可见（I9-A 工程已完成；I9-B 真人实测待做）
 - [x] I10：图文自动生成系统跑通，单篇对比页 5 分钟内产出三平台草稿包（仅对比页分发包，不含 GitHub Trending 教程草稿）
 - [ ] SEO：核心对比词在 Search Console 有展示量，至少 3 个页面进入目标词前 50
 

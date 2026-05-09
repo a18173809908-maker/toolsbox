@@ -97,6 +97,7 @@ function FreshnessNotice({
 }
 
 const CONNECTIVITY_CARRIER: Record<string, string> = {
+  general: '通用网络',
   telecom: '电信',
   unicom: '联通',
   mobile: '移动',
@@ -297,7 +298,7 @@ export default async function ToolDetailPage({ params }: Props) {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 620 }}>
                   <thead>
                     <tr>
-                      {['运营商', '状态', '延迟', '最后更新', '来源', '备注'].map((label) => (
+                      {['网络环境', '状态', '延迟', '最后更新', '来源', '备注'].map((label) => (
                         <th key={label} style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #F3E8D0', color: '#9CA3AF', fontSize: 12 }}>{label}</th>
                       ))}
                     </tr>

@@ -62,21 +62,22 @@
 | 依赖工程 | ✅ Lab schema、徽章、Methodology Box 扩展、反向引用（1519082） |
 | 工作量 | 5-10 小时（含真实测试） |
 | 选题 | `Claude Code vs Cursor`（白皮书 §3.3 + sprint-2 I7 指定） |
-| 流程 | 1. 选评测集（白皮书示例：Codeforces Div.2 A-C 题，随机 30 题）<br>2. 在三种网络环境下分别跑测（电信 / 联通 / 移动 或 直连 / 代理）<br>3. 记录响应延迟、推理准确率、稳定性<br>4. （可选）整理测试脚本到独立 GitHub repo，填 `repo_url` 字段，置 `reproducible=true`<br>5. 写报告，**所有 Methodology Box 字段必须有真实值，不允许"待补充"** |
+| 流程 | 1. 选评测集（白皮书示例：Codeforces Div.2 A-C 题，随机 30 题）<br>2. 在一个真实、可说明的网络环境下跑测（记录直连 / 代理即可）<br>3. 记录响应延迟、推理准确率、稳定性<br>4. （可选）整理测试脚本到独立 GitHub repo，填 `repo_url` 字段，置 `reproducible=true`<br>5. 写报告，**所有 Methodology Box 字段必须有真实值，不允许"待补充"** |
 | 阻塞 | 测试者需要：<br>- 至少有一个能稳定连 Claude Code / Cursor 的网络环境<br>- 有一个具体的测试用例集（Codeforces 账号或本地题集）<br>- 时间专门做一次完整测试 |
 | 验证 | `/compare/lab-claude-code-vs-cursor-202501`（或类似 slug）页面渲染，标题旁有「AIBoxPro Lab」紫色徽章；Methodology Box 全部字段非空 |
 
-### M4：填充连通性地图初始数据（10 工具 × 3 运营商）
+### M4：填充连通性地图初始数据（10 个核心工具）
 
 对应 sprint-2 I9。I9-A 工程链路已完成：`tool_connectivity` 表、工具详情页展示、`scripts/seed-connectivity.ts` 导入脚本均已就绪。M4 只覆盖真人实测与数据录入。
 
 | 维度 | 内容 |
 |---|---|
 | 依赖工程 | ✅ I9-A 工程链路已完成（ede3dd7） |
-| 工作量 | 30-60 分钟（30 条数据手工录入） |
-| 范围 | 10 个核心工具 × 电信 / 联通 / 移动 = 30 条记录 |
+| 工作量 | 30-60 分钟（10 条数据手工录入） |
+| 范围 | 10 个核心工具，每个工具录入 1 条真实网络环境实测；不再按运营商拆分 |
 | 工具清单 | claude / cursor / chatgpt / doubao / kimi / deepseek / wenxin / tongyi / trae / github-copilot |
-| 输出 | `tool_connectivity` 表写入 30 条数据，`source='editor'`，`reportedAt` 为实测日期 |
+| 填写模板 | `docs/connectivity-measurement-template.md` |
+| 输出 | `tool_connectivity` 表写入 10 条基线数据，`carrier='general'`，`source='editor'`，`reportedAt` 为实测日期 |
 | 验证 | `/tools/[slug]` 页面有连通性表格 |
 
 ### M5：注册并完善小红书账号 `AIBoxPro`

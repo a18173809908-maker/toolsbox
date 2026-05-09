@@ -1,0 +1,62 @@
+[
+  {
+    "toolId": "trae",
+    "carrier": "general",
+    "region": "中国大陆",
+    "status": "direct",
+    "source": "editor",
+    "reportedAt": "2026-05-09",
+    "reportedBy": "admin",
+    "note": "用户确认国内可用，按通用网络基线录入"
+  },
+  {
+    "toolId": "cursor",
+    "carrier": "general",
+    "region": "中国大陆",
+    "status": "direct",
+    "source": "editor",
+    "reportedAt": "2026-05-09",
+    "reportedBy": "admin",
+    "note": "用户确认国内可用，按通用网络基线录入"
+  },
+  {
+    "toolId": "tongyi-qianwen",
+    "carrier": "general",
+    "region": "中国大陆",
+    "status": "direct",
+    "source": "editor",
+    "reportedAt": "2026-05-09",
+    "reportedBy": "admin",
+    "note": "用户确认国内可用，按通用网络基线录入"
+  },
+  {
+    "toolId": "kimi",
+    "carrier": "general",
+    "region": "中国大陆",
+    "status": "direct",
+    "source": "editor",
+    "reportedAt": "2026-05-09",
+    "reportedBy": "admin",
+    "note": "用户确认国内可用，按通用网络基线录入"
+  },
+  {
+    "toolId": "doubao",
+    "carrier": "general",
+    "region": "中国大陆",
+    "status": "direct",
+    "source": "editor",
+    "reportedAt": "2026-05-09",
+    "reportedBy": "admin",
+    "note": "用户确认国内可用，按通用网络基线录入"
+  },
+  {
+    "toolId": "deepseek",
+    "carrier": "general",
+    "region": "中国大陆",
+    "status": "direct",
+    "source": "editor",
+    "reportedAt": "2026-05-09",
+    "reportedBy": "admin",
+    "note": "用户确认国内可用，按通用网络基线录入"
+  }
+]

@@ -473,7 +473,7 @@ export async function loadConnectivityByToolId(toolId: string) {
     if (!latestByCarrier.has(row.carrier)) latestByCarrier.set(row.carrier, row);
   }
 
-  return ['telecom', 'unicom', 'mobile']
+  return ['general', 'telecom', 'unicom', 'mobile']
     .map((carrier) => latestByCarrier.get(carrier))
     .filter((row): row is NonNullable<typeof row> => Boolean(row));
 }

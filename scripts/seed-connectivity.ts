@@ -5,7 +5,7 @@ config({ path: '.env.local' });
 
 type ConnectivityInput = {
   toolId: string;
-  carrier: 'telecom' | 'unicom' | 'mobile';
+  carrier: 'general' | 'telecom' | 'unicom' | 'mobile';
   region?: string;
   status: 'direct' | 'proxy-needed' | 'blocked' | 'unknown';
   latencyMs?: number;
@@ -18,7 +18,7 @@ type ValidConnectivityInput = Omit<ConnectivityInput, 'source'> & {
   source: 'editor' | 'user-report';
 };
 
-const CARRIERS = new Set(['telecom', 'unicom', 'mobile']);
+const CARRIERS = new Set(['general', 'telecom', 'unicom', 'mobile']);
 const STATUSES = new Set(['direct', 'proxy-needed', 'blocked', 'unknown']);
 const SOURCES = new Set(['editor', 'user-report']);
 
@@ -30,7 +30,7 @@ JSON 格式:
 [
   {
     "toolId": "cursor",
-    "carrier": "telecom",
+    "carrier": "general",
     "region": "上海",
     "status": "proxy-needed",
     "source": "editor",

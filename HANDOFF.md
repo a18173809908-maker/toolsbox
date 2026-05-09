@@ -129,7 +129,7 @@ Do not commit `.env.local`; it is ignored.
   - `tool_candidates`
   - `comparisons`
   - `tool_connectivity`
-- I9-B is still a manual data task: 30 real connectivity measurements are not filled yet.
+- I9-B is still a manual data task: real connectivity measurements are not filled yet. Carrier-specific coverage is no longer required; use `carrier: "general"` for the current single-network baseline.
 
 ## Useful Commands
 
@@ -155,7 +155,7 @@ It clears and re-inserts seed rows.
 
 ## Recommended Next Steps
 
-1. Fill I9-B real connectivity data using `npm run seed:connectivity -- <measurements.json>`.
+1. Fill I9-B real connectivity data using `npm run seed:connectivity -- <measurements.json>` with one real baseline measurement per core tool. Use `carrier: "general"` unless carrier-specific data is intentionally collected later.
 2. Produce the first I7 Lab report with real Methodology Box values.
 3. Use I10 for comparison-page social distribution drafts; GitHub Trending tutorial drafts are intentionally out of scope.
 4. Keep docs synchronized:
