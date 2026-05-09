@@ -1611,6 +1611,65 @@ export const toolConnectivity = pgTable('tool_connectivity', {
 
 ---
 
+## Sprint 3（K 系列）：AI 视频品类扩展
+
+> 定稿文档：`docs/sprint-3.md`
+> P0 品类：AI 视频。AI 写作暂不作为 Sprint 3 主线。
+> 核心原则：先用 doc-based 视频对比页抢收录，再用至少 1 篇视频 Lab 报告补可信度；无实测不写画质、速度、稳定性强结论。
+
+### K1：补齐 AI 视频工具池
+
+补录 Luma AI、Vidu AI、Higgsfield、Hedra，并核对 Runway / Sora / 可灵版本口径。
+
+验证：
+- `/tools?cat=video` 至少 8 个可用工具
+- 每个视频工具有国内访问、价格、注册、支付说明
+- `npm run build` 通过
+
+### K2：视频对比页起草脚手架
+
+复用 `draft:comparison`，增加视频品类约束：doc-based 页面不凭空写画质/速度/稳定性；Lab 页面必须有实测样本、提示词、生成设置、截图或产出链接。
+
+验证：
+- 能生成 `kling-vs-runway` / `jimeng-vs-kling` 草稿 prompt
+- 草稿明确区分 doc-based 与 Lab
+
+### K3：发布首批 4 篇 doc-based 视频对比页
+
+优先顺序：
+1. `jimeng-vs-kling`
+2. `sora-vs-kling`
+3. `hailuo-vs-pika`
+4. `runway-vs-sora-cinematic`
+
+验证：
+- 4 篇 `status='published'`
+- 每篇正文 4500-6000 字符
+- 每篇至少 5 个官方来源链接
+- `reviewed_by='admin'`
+
+### K4：首篇视频 Lab 报告
+
+推荐选题：`kling-vs-runway`。
+
+最低实测要求：3 个固定 prompt，每个工具每个 prompt 至少生成 2 次；记录测试日期、网络环境、账号套餐、模型版本、生成设置、失败次数、等待时间、人工筛选规则。
+
+验证：
+- `is_lab_report=true`
+- Methodology Box 所有字段有真实值
+- 不出现“待补充”
+
+### K5：视频替代品专题
+
+新增或扩展 `/alternatives/runway`，覆盖可灵、海螺、即梦、Pika、Luma / Vidu。
+
+验证：
+- `/alternatives/runway` 可访问
+- 有视频工具卡片和相关对比页反向链接
+- sitemap 收录
+
+---
+
 ## Codex review 2026-05-07 (J 系列)：首页 V2Pro.tsx 问题修复
 
 > Claude review `components/V2Pro.tsx` 后发现的问题，按优先级由高到低排列。**每个任务独立 commit。**
