@@ -172,6 +172,14 @@ export const articles = pgTable(
     url: text('url').notNull().unique(),
     summary: text('summary'),
     summaryZh: text('summary_zh'),
+    aiInsights: jsonb('ai_insights').$type<{
+      oneSentenceSummary?: string;
+      keyPoints?: string[];
+      whyItMatters?: string;
+      chinaImpact?: string;
+      whoShouldCare?: string[];
+      relatedTools?: { id?: string; name: string; reason?: string }[];
+    }>(),
     tag: text('tag'),
     publishedAt: timestamp('published_at'),
     fetchedAt: timestamp('fetched_at').notNull().defaultNow(),

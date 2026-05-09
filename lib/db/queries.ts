@@ -187,6 +187,7 @@ export async function upsertArticles(items: {
   sourceId: number;
   title: string;
   url: string;
+  summary?: string;
   tag?: string;
   publishedAt?: Date;
 }[]): Promise<number> {
@@ -197,6 +198,7 @@ export async function upsertArticles(items: {
       sourceId: item.sourceId,
       title: item.title,
       url: item.url,
+      summary: item.summary,
       tag: item.tag,
       publishedAt: item.publishedAt,
     }).onConflictDoNothing();
@@ -495,6 +497,7 @@ export async function loadArticlesPage(page = 1, pageSize = 30, tag?: string) {
       url: articles.url,
       summary: articles.summary,
       summaryZh: articles.summaryZh,
+      aiInsights: articles.aiInsights,
       tag: articles.tag,
       publishedAt: articles.publishedAt,
       sourceName: sources.name,
@@ -591,6 +594,7 @@ export async function loadArticleById(id: number) {
     .select({
       id: articles.id, title: articles.title, titleZh: articles.titleZh,
       url: articles.url, summary: articles.summary, summaryZh: articles.summaryZh,
+      aiInsights: articles.aiInsights,
       tag: articles.tag, publishedAt: articles.publishedAt,
       sourceName: sources.name, sourceUrl: sources.url,
     })
@@ -641,6 +645,7 @@ export async function updateArticleAi(id: number, data: {
   titleZh?: string;
   summary?: string;
   summaryZh?: string;
+  aiInsights?: typeof articles.$inferInsert['aiInsights'];
   tag?: string;
 }) {
   await db.update(articles).set(data).where(eq(articles.id, id));
@@ -886,6 +891,7 @@ export async function loadAdminArticleById(id: number) {
       url: articles.url,
       summary: articles.summary,
       summaryZh: articles.summaryZh,
+      aiInsights: articles.aiInsights,
       tag: articles.tag,
       status: articles.status,
       publishedAt: articles.publishedAt,

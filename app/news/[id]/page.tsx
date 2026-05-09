@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const art = await loadArticleById(Number(id));
   if (!art) return { title: 'Not Found' };
   const title = art.titleZh || art.title;
-  const desc = art.summaryZh || art.summary || art.title;
+  const desc = art.aiInsights?.oneSentenceSummary || art.summaryZh || art.summary || art.title;
   return {
     title,
     description: desc,
@@ -42,16 +42,29 @@ function fmt(iso: Date | null) {
   return new Date(iso).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section style={{ borderTop: `1px solid ${C.ruleSoft}`, paddingTop: 24, marginTop: 24 }}>
+      <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 16, fontWeight: 600, color: C.inkSoft, margin: '0 0 14px' }}>
+        {title}
+      </h2>
+      {children}
+    </section>
+  );
+}
+
 export default async function NewsDetailPage({ params }: Props) {
   const { id } = await params;
   const art = await loadArticleById(Number(id));
   if (!art) notFound();
+  const insights = art.aiInsights;
+  const description = insights?.oneSentenceSummary || art.summaryZh || art.summary || art.title;
 
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
     headline: art.titleZh || art.title,
-    description: art.summaryZh || art.summary,
+    description,
     url: art.url,
     datePublished: art.publishedAt?.toISOString(),
     publisher: { '@type': 'Organization', name: art.sourceName ?? 'AIBoxPro' },
@@ -101,19 +114,80 @@ export default async function NewsDetailPage({ params }: Props) {
               {art.title}
             </p>
 
-            {/* Summary */}
-            {(art.summaryZh || art.summary) && (
-              <div style={{ borderTop: `1px solid ${C.ruleSoft}`, paddingTop: 24, marginBottom: 28 }}>
-                <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 16, fontWeight: 600, color: C.inkSoft, margin: '0 0 14px' }}>摘要 · Summary</h2>
-                {art.summaryZh && (
-                  <div style={{ background: C.bg, borderRadius: 10, padding: 'clamp(14px, 4vw, 16px) clamp(16px, 5vw, 20px)', borderLeft: `3px solid ${C.primary}`, marginBottom: 14 }}>
-                    <p style={{ fontSize: 15, color: C.inkSoft, lineHeight: 1.75, margin: 0 }}>{art.summaryZh}</p>
-                  </div>
-                )}
-                {art.summary && (
-                  <p style={{ fontSize: 14, color: C.inkMuted, lineHeight: 1.7, margin: 0 }}>{art.summary}</p>
-                )}
-              </div>
+            {/* AI reading brief */}
+            {(description || insights) && (
+              <Section title="一句话摘要">
+                <div style={{ background: C.bg, borderRadius: 10, padding: 'clamp(14px, 4vw, 16px) clamp(16px, 5vw, 20px)', borderLeft: `3px solid ${C.primary}` }}>
+                  <p style={{ fontSize: 17, color: C.ink, lineHeight: 1.75, margin: 0, fontWeight: 650 }}>{description}</p>
+                </div>
+              </Section>
+            )}
+
+            {insights?.keyPoints && insights.keyPoints.length > 0 && (
+              <Section title="关键信息">
+                <ul style={{ display: 'grid', gap: 10, margin: 0, padding: 0, listStyle: 'none' }}>
+                  {insights.keyPoints.slice(0, 4).map((item) => (
+                    <li key={item} style={{ display: 'flex', gap: 10, fontSize: 15, color: C.inkSoft, lineHeight: 1.7 }}>
+                      <span style={{ width: 6, height: 6, borderRadius: 3, background: C.primary, marginTop: 10, flex: '0 0 auto' }} />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Section>
+            )}
+
+            {insights?.whyItMatters && (
+              <Section title="为什么重要">
+                <p style={{ fontSize: 15, color: C.inkSoft, lineHeight: 1.8, margin: 0 }}>{insights.whyItMatters}</p>
+              </Section>
+            )}
+
+            {insights?.chinaImpact && (
+              <Section title="对中文用户的影响">
+                <p style={{ fontSize: 15, color: C.inkSoft, lineHeight: 1.8, margin: 0 }}>{insights.chinaImpact}</p>
+              </Section>
+            )}
+
+            {insights?.whoShouldCare && insights.whoShouldCare.length > 0 && (
+              <Section title="适合谁关注">
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {insights.whoShouldCare.map((item) => (
+                    <span key={item} style={{ padding: '6px 10px', borderRadius: 6, background: C.primaryBg, color: C.accent, fontSize: 12, fontWeight: 700 }}>
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </Section>
+            )}
+
+            {insights?.relatedTools && insights.relatedTools.length > 0 && (
+              <Section title="相关工具">
+                <div style={{ display: 'grid', gap: 10 }}>
+                  {insights.relatedTools.slice(0, 5).map((tool) => {
+                    const content = (
+                      <>
+                        <span style={{ fontWeight: 750, color: C.ink }}>{tool.name}</span>
+                        {tool.reason && <span style={{ color: C.inkMuted }}>{tool.reason}</span>}
+                      </>
+                    );
+                    return tool.id ? (
+                      <Link key={`${tool.id}-${tool.name}`} href={`/tools/${tool.id}`} style={{ display: 'flex', flexDirection: 'column', gap: 3, padding: 12, borderRadius: 8, border: `1px solid ${C.ruleSoft}`, background: C.bg, textDecoration: 'none', fontSize: 13, lineHeight: 1.55 }}>
+                        {content}
+                      </Link>
+                    ) : (
+                      <div key={tool.name} style={{ display: 'flex', flexDirection: 'column', gap: 3, padding: 12, borderRadius: 8, border: `1px solid ${C.ruleSoft}`, background: C.bg, fontSize: 13, lineHeight: 1.55 }}>
+                        {content}
+                      </div>
+                    );
+                  })}
+                </div>
+              </Section>
+            )}
+
+            {art.summary && (
+              <Section title="原始摘要">
+                <p style={{ fontSize: 14, color: C.inkMuted, lineHeight: 1.7, margin: 0 }}>{art.summary}</p>
+              </Section>
             )}
 
             {/* CTA to original */}

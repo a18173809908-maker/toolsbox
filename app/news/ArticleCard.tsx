@@ -26,12 +26,23 @@ export type ArticleRow = {
   url: string;
   summary: string | null;
   summaryZh: string | null;
+  aiInsights: {
+    oneSentenceSummary?: string;
+    keyPoints?: string[];
+    whyItMatters?: string;
+    chinaImpact?: string;
+    whoShouldCare?: string[];
+    relatedTools?: { id?: string; name: string; reason?: string }[];
+  } | null;
   tag: string | null;
   publishedAt: Date | null;
   sourceName: string | null;
 };
 
 export function ArticleCard({ art }: { art: ArticleRow }) {
+  const oneLine = art.aiInsights?.oneSentenceSummary || art.summaryZh || art.summary;
+  const keyPoint = art.aiInsights?.keyPoints?.[0];
+
   return (
     <Link href={`/news/${art.id}`} style={{
       display: 'flex', flexDirection: 'column', gap: 12,
@@ -60,10 +71,27 @@ export function ArticleCard({ art }: { art: ArticleRow }) {
       </div>
 
       {/* Summary */}
-      {(art.summaryZh || art.summary) && (
-        <p style={{ fontSize: 13, color: C.inkSoft, margin: 0, lineHeight: 1.6, borderTop: `1px solid ${C.ruleSoft}`, paddingTop: 12 }}>
-          {art.summaryZh || art.summary}
-        </p>
+      {oneLine && (
+        <div style={{ borderTop: `1px solid ${C.ruleSoft}`, paddingTop: 12 }}>
+          <p style={{ fontSize: 14, color: C.ink, margin: '0 0 8px', lineHeight: 1.6, fontWeight: 650 }}>
+            {oneLine}
+          </p>
+          {keyPoint && (
+            <p style={{ fontSize: 12, color: C.inkSoft, margin: 0, lineHeight: 1.6 }}>
+              要点：{keyPoint}
+            </p>
+          )}
+        </div>
+      )}
+
+      {art.aiInsights?.whoShouldCare && art.aiInsights.whoShouldCare.length > 0 && (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {art.aiInsights.whoShouldCare.slice(0, 3).map((item) => (
+            <span key={item} style={{ padding: '3px 7px', borderRadius: 5, background: C.ruleSoft, color: C.inkSoft, fontSize: 11, fontWeight: 600 }}>
+              {item}
+            </span>
+          ))}
+        </div>
       )}
 
       {/* Source */}

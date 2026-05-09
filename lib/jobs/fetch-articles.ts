@@ -104,6 +104,7 @@ export async function fetchAllArticles(): Promise<{ source: string; fetched: num
           sourceId: src.id,
           title: it.title,
           url: it.url,
+          summary: it.description,
           tag: src.name,
           publishedAt: it.publishedAt,
         })),

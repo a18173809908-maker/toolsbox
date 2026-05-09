@@ -1,5 +1,63 @@
 # CLAUDE.md
 
+## Project Context For Claude Code
+
+This repository is shared by Codex and Claude Code. Treat this file as the first local orientation note before making changes.
+
+### Current Position
+
+AIBoxPro is no longer just an "AI tools directory".
+
+Current positioning:
+
+> A Chinese-language AI tool selection, comparison, and usage-decision platform.
+
+The main product value is helping Chinese users decide which AI tool to use for a real task. The tool database is the base layer, but the strategic differentiator is comparison, China-specific usability, scenarios, and practical decision support.
+
+Read these docs first:
+
+1. `docs/aiboxpro_详细版竞品分析与发展路线方案.md` - long-term strategic direction and product structure.
+2. `docs/phased-roadmap.md` - multi-phase execution plan derived from the detailed roadmap.
+3. `HANDOFF.md` - current engineering status, environment, completed work, and commands.
+4. `docs/current-position.md` - compressed current positioning and what not to do.
+5. `docs/sprint-3.md` - active AI video category plan.
+6. `docs/manual-tasks.md` - future manual work pool; currently paused.
+7. `docs/README.md` - active docs index.
+
+Archived documents under `docs/archive/2026-05-09-doc-reset/` are historical reference only. Do not treat them as current instructions unless the user explicitly asks to revive something from the archive.
+
+### Current Active Track
+
+The long-term direction follows `docs/aiboxpro_详细版竞品分析与发展路线方案.md`: tool database + news + GitHub trends + tutorials + rankings + comparisons + scenario solutions + later monetization.
+
+The current product/content track is the AI video category. Treat AI video as the first wedge to prove the broader strategy, not as the final scope of the project.
+
+Near-term priorities:
+
+- Strengthen video alternative pages, especially Runway alternatives for Chinese users.
+- Build doc-based video scenario pages that do not require manual testing.
+- Improve automatic internal linking across tools, comparisons, alternatives, and scenarios.
+- Keep comparison pages tied to official sources.
+- Mark untested claims clearly; do not publish quality/speed/stability rankings without real tests.
+
+Avoid for now:
+
+- Competing mainly on the number of tools collected.
+- Generating thin tool summaries at scale.
+- Any work that requires manual participation for now: real Lab testing, human review as a release blocker, manual social distribution, vendor outreach, community operations, or business development.
+- Adding login, comments, community scoring, or membership features.
+- Expanding into many new categories before the video track is credible.
+
+### Collaboration Rules
+
+- Codex and Claude Code may both edit this repository. Before editing, check `git status --short` and avoid overwriting changes you did not make.
+- Keep changes surgical. If you archive or delete docs, update `docs/README.md`, `HANDOFF.md`, and this file when relevant.
+- Prefer the current docs listed above over older strategy drafts. The detailed competitive roadmap is now an active strategic source, not an archived note.
+- For code changes, verify with `npm run lint` and `npm run build` unless the change is documentation-only.
+- Do not run `npm run db:seed` casually; it clears and re-inserts seed rows.
+
+---
+
 Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
 
 **Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
