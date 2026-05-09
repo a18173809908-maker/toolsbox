@@ -55,6 +55,10 @@ function decodeFeed(buffer: ArrayBuffer, contentType: string | null) {
   const xmlDeclared = firstPass.match(/<\?xml[^>]+encoding=["']([^"']+)["']/i)?.[1]?.toLowerCase();
   const charset = xmlDeclared || declared;
 
+  if (charset === 'utf-8' || charset === 'utf8') {
+    return firstPass;
+  }
+
   if (charset && charset !== 'utf-8' && charset !== 'utf8') {
     try {
       return new TextDecoder(charset).decode(bytes);
