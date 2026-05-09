@@ -33,11 +33,11 @@
     "toolId": "cursor",
     "carrier": "general",
     "region": "中国大陆",
-    "status": "proxy-needed",
+    "status": "direct",
     "source": "editor",
-    "reportedAt": "2026-05-09T12:00:00+08:00",
+    "reportedAt": "2026-05-09T13:00:00+08:00",
     "reportedBy": "admin",
-    "note": "用户确认 Cursor 可用；如使用 Claude、GPT 等海外模型则需 VPN"
+    "note": "用户确认 Cursor 国内可用；如使用 Claude、GPT 等海外模型，可能需要 VPN 或稳定代理"
   },
   {
     "toolId": "wenxin-yiyan",
