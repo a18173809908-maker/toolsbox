@@ -121,6 +121,40 @@ export const sources = pgTable('sources', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 
+export const sourceCandidates = pgTable(
+  'source_candidates',
+  {
+    id: serial('id').primaryKey(),
+    name: text('name').notNull(),
+    url: text('url').notNull().unique(),
+    feedUrl: text('feed_url'),
+    sourceCategory: text('source_category').notNull(),
+    lang: text('lang').notNull().default('zh'),
+    status: text('status').notNull().default('candidate'),
+    discoverySource: text('discovery_source').notNull().default('curated'),
+    qualityScore: integer('quality_score').notNull().default(0),
+    aiRelevanceScore: integer('ai_relevance_score').notNull().default(0),
+    toolRelevanceScore: integer('tool_relevance_score').notNull().default(0),
+    updateFrequency: text('update_frequency'),
+    evidence: jsonb('evidence').$type<{
+      recentTitles?: string[];
+      aiRelatedCount?: number;
+      toolRelatedCount?: number;
+      notes?: string[];
+    }>(),
+    reviewedBy: text('reviewed_by'),
+    reviewedAt: timestamp('reviewed_at'),
+    rejectReason: text('reject_reason'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    statusIdx: index('source_candidates_status_idx').on(t.status),
+    categoryIdx: index('source_candidates_category_idx').on(t.sourceCategory),
+    scoreIdx: index('source_candidates_score_idx').on(t.qualityScore),
+  }),
+);
+
 export const toolCandidates = pgTable(
   'tool_candidates',
   {
@@ -248,6 +282,7 @@ export type Tool = typeof tools.$inferSelect;
 export type RepoItem = typeof githubTrending.$inferSelect;
 export type ToolConnectivity = typeof toolConnectivity.$inferSelect;
 export type Source = typeof sources.$inferSelect;
+export type SourceCandidate = typeof sourceCandidates.$inferSelect;
 export type ToolCandidate = typeof toolCandidates.$inferSelect;
 export type Article = typeof articles.$inferSelect;
 export type Comparison = typeof comparisons.$inferSelect;

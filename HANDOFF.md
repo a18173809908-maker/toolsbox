@@ -128,6 +128,11 @@ Do not commit `.env.local`; it is ignored.
    - Added `articles.ai_insights` JSONB field.
    - `process:articles` now generates structured insights for news/resources.
    - `/news` cards and `/news/[id]` detail pages render richer reading aids.
+15. Added source candidate discovery/review workflow:
+   - Added `source_candidates` table for candidate information sources.
+   - Added `npm run discover:sources` to collect formal candidate sources and sample RSS titles.
+   - Added `/admin/sources` and `/admin/sources/[id]` for source review.
+   - Approving a source adds it to `sources`; rejected candidates stay out of the active fetch pool.
 
 ## Known Notes / Caveats
 
@@ -158,6 +163,11 @@ npm run db:push
 npm run db:seed
 npm run fetch:trending
 npm run translate:trending
+npm run enhance:trending -- today
+npm run fetch:articles
+npm run process:articles
+npm run discover:sources
+npm run update:article-hotness -- 300
 npm run seed:connectivity -- <measurements.json>
 npm run draft:social -- <comparison-slug>
 ```

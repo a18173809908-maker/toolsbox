@@ -45,7 +45,7 @@ export function ArticleCard({ art }: { art: ArticleRow }) {
 
   return (
     <Link href={`/news/${art.id}`} style={{
-      display: 'flex', flexDirection: 'column', gap: 14,
+      display: 'flex', flexDirection: 'column', gap: 12,
       background: C.panel, borderRadius: 12, padding: 22,
       border: `1px solid ${C.rule}`, textDecoration: 'none',
       boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
@@ -57,25 +57,23 @@ export function ArticleCard({ art }: { art: ArticleRow }) {
       {/* Title */}
       <div>
         {art.titleZh && (
-          <h2 style={{ fontWeight: 750, fontSize: 18, margin: '0 0 5px', color: C.ink, lineHeight: 1.45 }}>{art.titleZh}</h2>
+          <h2 style={{ fontWeight: 750, fontSize: 18, margin: '0 0 6px', color: C.ink, lineHeight: 1.45 }}>{art.titleZh}</h2>
         )}
-        <p style={{ fontSize: 13, color: art.titleZh ? C.inkMuted : C.ink, margin: 0, lineHeight: 1.5, fontWeight: art.titleZh ? 400 : 600 }}>{art.title}</p>
+        <p style={{ fontSize: 13, color: art.titleZh ? C.inkMuted : C.ink, margin: 0, lineHeight: 1.5, fontWeight: art.titleZh ? 400 : 600, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>{art.title}</p>
       </div>
 
       {/* Summary */}
       {oneLine && (
-        <div style={{ display: 'grid', gap: 6, color: C.inkSoft, fontSize: 14, lineHeight: 1.7 }}>
-          <p style={{ margin: 0 }}>
-            <span style={{ marginRight: 6 }}>📌</span>
-            <span style={{ color: C.inkMuted }}>一句话摘要</span>
-            <span style={{ margin: '0 6px', color: C.rule }}>·</span>
+        <div style={{ display: 'grid', gap: 5, color: C.inkSoft, fontSize: 14, lineHeight: 1.65 }}>
+          <p style={{ margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
+            <span style={{ color: C.inkMuted, fontWeight: 650 }}>摘要</span>
+            <span style={{ margin: '0 7px', color: C.rule }}>·</span>
             <span>{oneLine}</span>
           </p>
-          {keyPoint && (
+          {keyPoint && keyPoint !== oneLine && (
             <p style={{ margin: 0 }}>
-              <span style={{ marginRight: 6 }}>📝</span>
-              <span style={{ color: C.inkMuted }}>详细摘要</span>
-              <span style={{ margin: '0 6px', color: C.rule }}>·</span>
+              <span style={{ color: C.inkMuted, fontWeight: 650 }}>要点</span>
+              <span style={{ margin: '0 7px', color: C.rule }}>·</span>
               <span>{keyPoint}</span>
             </p>
           )}
@@ -86,7 +84,7 @@ export function ArticleCard({ art }: { art: ArticleRow }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: 12, color: C.inkMuted, marginTop: 'auto', paddingTop: 4 }}>
         <span>{relTime(art.publishedAt)}</span>
         {art.sourceName && <span style={{ padding: '4px 8px', borderRadius: 6, background: '#F8FAFC', fontWeight: 650 }}>来源 · {art.sourceName}</span>}
-        <span style={{ padding: '4px 8px', borderRadius: 6, background: '#F8FAFC' }}>⏱ 1 分钟</span>
+        <span style={{ padding: '4px 8px', borderRadius: 6, background: '#F8FAFC' }}>约 1 分钟</span>
         {art.tag && <span style={{ padding: '4px 8px', borderRadius: 999, background: C.primaryBg, color: C.accent, fontWeight: 700 }}>{art.tag}</span>}
         {art.aiInsights?.whoShouldCare?.slice(0, 2).map((item) => (
           <span key={item} style={{ padding: '4px 8px', borderRadius: 999, background: C.ruleSoft, color: C.inkSoft, fontWeight: 650 }}>{item}</span>

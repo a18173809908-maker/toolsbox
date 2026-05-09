@@ -63,6 +63,7 @@
 - P1-1：工具库字段标准化，重点保留国内用户决策字段：`chinaAccess`、`chineseUi`、`priceCny`、`registerMethod`、`needsOverseasPhone`、`overseasPaymentOnly`。
 - P1-2：工具详情页补齐“适合谁、怎么用、价格/权益、FAQ、替代品、相关对比”。
 - P1-3：AI 资讯页保持来源、摘要、影响、适合关注人群和相关工具链接。
+- P1-3a：信息源采用候选池机制；自动发现/整理候选源，用户审核通过后才加入正式抓取。
 - P1-4：GitHub Trending 保持自动刷新和中文摘要。
 - P1-5：对比页支持 JSON-LD、FAQ、官方来源、审核状态和 sitemap 收录。
 - P1-6：替代品页具备专题能力，比如 `/alternatives/runway`。
@@ -74,6 +75,7 @@
 - 首页、工具库、工具详情、资讯、趋势、对比、替代品页面可访问。
 - 新增内容能被 sitemap 收录。
 - AI 资讯列表和详情页不再只有单调摘要；支持一句话摘要、关键信息、为什么重要、国内用户影响、适合人群和相关工具。
+- 信息源候选可以在 `/admin/sources` 审核，通过后才进入正式 `sources`。
 
 不做：
 

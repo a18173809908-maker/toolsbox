@@ -17,6 +17,7 @@
     "translate:readmes": "tsx --env-file=.env.local scripts/translate-all-readmes.ts",
     "seed:sources": "tsx --env-file=.env.local scripts/seed-sources.ts",
     "seed:cn-news-sources": "tsx --env-file=.env.local scripts/seed-cn-news-sources.ts",
+    "discover:sources": "tsx --env-file=.env.local scripts/discover-sources.ts",
     "fetch:articles": "tsx --env-file=.env.local scripts/fetch-articles.ts",
     "process:articles": "tsx --env-file=.env.local scripts/process-articles.ts",
     "update:article-hotness": "tsx --env-file=.env.local scripts/update-article-hotness.ts",

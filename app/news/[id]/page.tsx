@@ -116,7 +116,7 @@ export default async function NewsDetailPage({ params }: Props) {
 
             {/* AI reading brief */}
             {(description || insights) && (
-              <Section title="一句话摘要">
+              <Section title="摘要">
                 <div style={{ background: C.bg, borderRadius: 10, padding: 'clamp(14px, 4vw, 16px) clamp(16px, 5vw, 20px)', borderLeft: `3px solid ${C.primary}` }}>
                   <p style={{ fontSize: 17, color: C.ink, lineHeight: 1.75, margin: 0, fontWeight: 650 }}>{description}</p>
                 </div>

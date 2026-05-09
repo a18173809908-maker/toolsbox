@@ -18,6 +18,7 @@ export default async function AdminPage() {
   const badges = [
     { label: '待审核工具候选', value: counts.pendingTools, href: '/admin/tools' },
     { label: '待审核对比页', value: counts.pendingComparisons, href: '/admin/comparisons' },
+    { label: '待审核信息源', value: counts.pendingSources, href: '/admin/sources' },
     { label: '近 30 天资讯', value: counts.recentArticles, href: '/admin/articles' },
     { label: '编辑推荐管理', value: '★', href: '/admin/featured' },
   ];

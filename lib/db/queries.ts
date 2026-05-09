@@ -1,5 +1,5 @@
 import { db } from './index';
-import { categories, tools, githubTrending, articles, sources, toolCandidates, comparisons, toolConnectivity } from './schema';
+import { categories, tools, githubTrending, articles, sources, sourceCandidates, toolCandidates, comparisons, toolConnectivity } from './schema';
 import { desc, asc, eq, ilike, or, isNull, count, max, and, inArray, gt } from 'drizzle-orm';
 import type { TrendingPeriod, Tool, Category, RepoItem, HomepageStats } from '@/lib/data';
 import type { Comparison, Tool as DbTool } from './schema';
@@ -789,13 +789,15 @@ export async function loadAdminCounts() {
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
-  const [toolCount, compCount, artCount, toolRev, compRev, artRev] = await Promise.all([
+  const [toolCount, compCount, artCount, sourceCount, toolRev, compRev, artRev] = await Promise.all([
     db.select({ value: count() }).from(toolCandidates)
       .where(inArray(toolCandidates.status, ['ai_drafted', 'processed'])),
     db.select({ value: count() }).from(comparisons)
       .where(eq(comparisons.status, 'draft')),
     db.select({ value: count() }).from(articles)
       .where(and(eq(articles.status, 'published'), gt(articles.publishedAt, thirtyDaysAgo))),
+    db.select({ value: count() }).from(sourceCandidates)
+      .where(eq(sourceCandidates.status, 'candidate')),
     db.select({ value: count() }).from(toolCandidates)
       .where(gt(toolCandidates.reviewedAt, todayStart)),
     db.select({ value: count() }).from(comparisons)
@@ -808,9 +810,29 @@ export async function loadAdminCounts() {
     pendingTools: toolCount[0]?.value ?? 0,
     pendingComparisons: compCount[0]?.value ?? 0,
     recentArticles: artCount[0]?.value ?? 0,
+    pendingSources: sourceCount[0]?.value ?? 0,
     todayReviewed:
       (toolRev[0]?.value ?? 0) + (compRev[0]?.value ?? 0) + (artRev[0]?.value ?? 0),
   };
+}
+
+export async function loadAdminSourceCandidates(limit = 50, offset = 0) {
+  const [items, totalRows] = await Promise.all([
+    db.select()
+      .from(sourceCandidates)
+      .where(eq(sourceCandidates.status, 'candidate'))
+      .orderBy(desc(sourceCandidates.qualityScore), desc(sourceCandidates.aiRelevanceScore), desc(sourceCandidates.createdAt))
+      .limit(limit)
+      .offset(offset),
+    db.select({ value: count() }).from(sourceCandidates)
+      .where(eq(sourceCandidates.status, 'candidate')),
+  ]);
+  return { items, total: totalRows[0]?.value ?? 0 };
+}
+
+export async function loadAdminSourceCandidateById(id: number) {
+  const rows = await db.select().from(sourceCandidates).where(eq(sourceCandidates.id, id));
+  return rows[0] ?? null;
 }
 
 export async function loadAdminPendingTools(limit = 20, offset = 0) {

@@ -8,10 +8,10 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'AI 资讯 News',
-  description: '每日精选中文 AI 行业动态，来自机器之心、量子位、36氪、InfoQ 中文、虎嗅、品玩、钛媒体等中文权威来源。',
+  description: '按热度优先整理 AI 工具、模型与开源动态。',
   openGraph: {
     title: 'AI 工具动态 | AIBoxPro',
-    description: '每日精选中文 AI 行业动态',
+    description: '按热度优先整理 AI 工具、模型与开源动态',
   },
   alternates: { canonical: '/news' },
 };
@@ -37,7 +37,7 @@ export default async function NewsPage({ searchParams }: Props) {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: 'AI 工具动态 | AIBoxPro',
-    description: '每日精选中文 AI 行业动态',
+    description: '按热度优先整理 AI 工具、模型与开源动态',
     url: 'https://www.aiboxpro.cn/news',
   };
 
@@ -49,16 +49,16 @@ export default async function NewsPage({ searchParams }: Props) {
         <SiteHeader />
 
         <section style={{ background: C.bg, borderBottom: `1px solid ${C.rule}` }}>
-          <div style={{ maxWidth: 1100, margin: '0 auto', padding: 'clamp(28px, 6vw, 40px) clamp(16px, 5vw, 24px) 30px' }}>
-            <p style={{ display: 'inline-flex', alignItems: 'center', gap: 8, margin: '0 0 14px', color: C.accent, fontSize: 12, fontWeight: 800 }}>
+          <div style={{ maxWidth: 1100, margin: '0 auto', padding: 'clamp(22px, 5vw, 32px) clamp(16px, 5vw, 24px) 24px' }}>
+            <p style={{ display: 'inline-flex', alignItems: 'center', gap: 8, margin: '0 0 10px', color: C.accent, fontSize: 12, fontWeight: 800 }}>
               <span style={{ width: 6, height: 6, borderRadius: 3, background: C.primary, display: 'inline-block' }} />
-              工具动态 · 每日更新
+              AI 资讯
             </p>
-            <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 'clamp(30px, 8vw, 38px)', lineHeight: 1.12, margin: '0 0 10px', color: C.ink, letterSpacing: '-0.02em' }}>
+            <h1 style={{ fontWeight: 800, fontSize: 'clamp(28px, 7vw, 36px)', lineHeight: 1.18, margin: '0 0 8px', color: C.ink }}>
               AI 工具动态
             </h1>
             <p style={{ fontSize: 15, color: C.inkSoft, margin: 0, lineHeight: 1.7, maxWidth: 760 }}>
-              聚合机器之心、量子位、36氪、InfoQ 中文、虎嗅、品玩、钛媒体等中文权威来源的 AI 行业更新，每日整理。
+              按热度优先展示 AI 工具、模型与开源动态。
             </p>
           </div>
         </section>

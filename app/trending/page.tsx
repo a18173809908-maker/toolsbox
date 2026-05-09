@@ -78,8 +78,8 @@ export default async function TrendingPage({ searchParams }: Props) {
       <main style={{ maxWidth: 900, margin: 'clamp(28px, 6vw, 40px) auto', padding: '0 clamp(16px, 5vw, 24px) 64px' }}>
 
         {/* Page hero */}
-        <div style={{ marginBottom: 28 }}>
-          <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 'clamp(30px, 8vw, 38px)', color: C.ink, margin: '0 0 10px', letterSpacing: '-0.02em' }}>
+        <div style={{ marginBottom: 24 }}>
+          <h1 style={{ fontWeight: 800, fontSize: 'clamp(28px, 7vw, 36px)', color: C.ink, margin: '0 0 8px' }}>
             GitHub 趋势
           </h1>
           <p style={{ fontSize: 15, color: C.inkSoft, margin: 0 }}>{meta.desc}</p>
@@ -160,16 +160,14 @@ export default async function TrendingPage({ searchParams }: Props) {
                       {/* Summary */}
                       <div style={{ display: 'grid', gap: 5, color: C.inkSoft, fontSize: 13, lineHeight: 1.65, marginBottom: 10 }}>
                         <p style={{ margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
-                          <span style={{ marginRight: 6 }}>📌</span>
-                          <span style={{ color: C.inkMuted }}>一句话摘要</span>
+                          <span style={{ color: C.inkMuted, fontWeight: 650 }}>摘要</span>
                           <span style={{ margin: '0 6px', color: C.rule }}>·</span>
                           <span style={{ color: C.ink, fontWeight: insights ? 650 : 400 }}>{summary}</span>
                         </p>
 
                         {insights?.useCase && (
                           <p style={{ margin: 0 }}>
-                            <span style={{ marginRight: 6 }}>🧭</span>
-                            <span style={{ color: C.inkMuted }}>适用场景</span>
+                            <span style={{ color: C.inkMuted, fontWeight: 650 }}>场景</span>
                             <span style={{ margin: '0 6px', color: C.rule }}>·</span>
                             <span>{insights.useCase}</span>
                           </p>
@@ -177,8 +175,7 @@ export default async function TrendingPage({ searchParams }: Props) {
 
                         {keyPoints.length > 0 && (
                           <p style={{ margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' as const }}>
-                            <span style={{ marginRight: 6 }}>📝</span>
-                            <span style={{ color: C.inkMuted }}>亮点</span>
+                            <span style={{ color: C.inkMuted, fontWeight: 650 }}>亮点</span>
                             <span style={{ margin: '0 6px', color: C.rule }}>·</span>
                             <span>{keyPoints.join(' / ')}</span>
                           </p>
@@ -186,8 +183,7 @@ export default async function TrendingPage({ searchParams }: Props) {
 
                         {insights?.whyTrending && (
                           <p style={{ margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' as const }}>
-                            <span style={{ marginRight: 6 }}>🔥</span>
-                            <span style={{ color: C.inkMuted }}>上榜原因</span>
+                            <span style={{ color: C.inkMuted, fontWeight: 650 }}>上榜</span>
                             <span style={{ margin: '0 6px', color: C.rule }}>·</span>
                             <span>{insights.whyTrending}</span>
                           </p>
