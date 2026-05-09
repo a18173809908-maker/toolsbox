@@ -33,6 +33,7 @@
     "seed:cn-tools": "tsx --env-file=.env.local scripts/seed-cn-tools.ts",
     "seed:domestic-categories": "tsx --env-file=.env.local scripts/seed-domestic-categories.ts",
     "seed:connectivity": "tsx --env-file=.env.local scripts/seed-connectivity.ts",
+    "seed:video-tools": "tsx --env-file=.env.local scripts/seed-video-tools.ts",
     "draft:social": "tsx --env-file=.env.local scripts/draft-social.ts",
     "audit:comparisons": "tsx --env-file=.env.local scripts/audit-comparisons.ts"
   },

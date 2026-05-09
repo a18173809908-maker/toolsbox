@@ -1619,6 +1619,8 @@ export const toolConnectivity = pgTable('tool_connectivity', {
 
 ### K1：补齐 AI 视频工具池
 
+**状态（2026-05-09）**：✅ 已完成。新增 `scripts/seed-video-tools.ts` / `npm run seed:video-tools`；`/tools?cat=video` 当前 11 个工具，视频工具国内访问、价格、注册、支付字段缺口为 0。
+
 补录 Luma AI、Vidu AI、Higgsfield、Hedra，并核对 Runway / Sora / 可灵版本口径。
 
 验证：
