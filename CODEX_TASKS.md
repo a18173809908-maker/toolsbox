@@ -1621,11 +1621,14 @@ export const toolConnectivity = pgTable('tool_connectivity', {
 
 **状态（2026-05-09）**：✅ 已完成。新增 `scripts/seed-video-tools.ts` / `npm run seed:video-tools`；`/tools?cat=video` 当前 11 个工具，视频工具国内访问、价格、注册、支付字段缺口为 0。
 
+**详情页补强（2026-05-09）**：✅ 已完成。新增 `scripts/enhance-video-tool-details.ts` / `npm run enhance:video-details`；已为 12 个视频相关工具补齐 4 步使用流程、3 条 FAQ、定价 / 权益说明。覆盖即梦、可灵、海螺、Runway、Sora、Pika、Luma、Vidu、Higgsfield、Hedra、Descript、Pixelle-Video。
+
 补录 Luma AI、Vidu AI、Higgsfield、Hedra，并核对 Runway / Sora / 可灵版本口径。
 
 验证：
 - `/tools?cat=video` 至少 8 个可用工具
 - 每个视频工具有国内访问、价格、注册、支付说明
+- 12 个视频相关工具详情页均有 `howToUse`、`faqs`、`pricingDetail`
 - `npm run build` 通过
 
 ### K2：视频对比页起草脚手架

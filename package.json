@@ -35,6 +35,7 @@
     "seed:domestic-categories": "tsx --env-file=.env.local scripts/seed-domestic-categories.ts",
     "seed:connectivity": "tsx --env-file=.env.local scripts/seed-connectivity.ts",
     "seed:video-tools": "tsx --env-file=.env.local scripts/seed-video-tools.ts",
+    "enhance:video-details": "tsx --env-file=.env.local scripts/enhance-video-tool-details.ts",
     "seed:video-comparisons": "tsx --env-file=.env.local scripts/seed-video-comparisons.ts",
     "draft:social": "tsx --env-file=.env.local scripts/draft-social.ts",
     "audit:comparisons": "tsx --env-file=.env.local scripts/audit-comparisons.ts"
