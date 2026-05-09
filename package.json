@@ -30,6 +30,7 @@
     "cleanup:tool-data": "tsx --env-file=.env.local scripts/cleanup-tool-data.ts",
     "cleanup:articles": "tsx --env-file=.env.local scripts/cleanup-articles.ts",
     "repair:36kr": "tsx --env-file=.env.local scripts/repair-36kr-articles.ts",
+    "repair:producthunt-urls": "tsx --env-file=.env.local scripts/repair-producthunt-urls.ts",
     "seed:cn-tools": "tsx --env-file=.env.local scripts/seed-cn-tools.ts",
     "seed:domestic-categories": "tsx --env-file=.env.local scripts/seed-domestic-categories.ts",
     "seed:connectivity": "tsx --env-file=.env.local scripts/seed-connectivity.ts",
