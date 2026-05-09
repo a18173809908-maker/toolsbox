@@ -9,7 +9,7 @@ This project is an AI tools aggregation site built as a Next.js single app.
 - Repository: https://github.com/a18173809908-maker/toolsbox
 - Production URL: https://toolsbox-six.vercel.app
 - Main branch: `main`
-- Latest local/remote commit at handoff: `ede3dd7 feat(I9): add connectivity data layer`
+- Latest verified code commit before this handoff update: `917e555 fix: refine news layout and hot events`
 - Build status locally: `npm run build` passes
 - Lint status locally: `npm run lint` passes
 
@@ -139,10 +139,16 @@ Do not commit `.env.local`; it is ignored.
    - Tool detail pages show “适合谁 / 需要谨慎” based on existing structured fields.
    - Tool detail pages now link regular related comparisons in addition to Lab reports, related articles, alternatives, and same-category tools.
 17. Advanced Phase 1 news/trending reading flow:
-   - News list now prioritizes burst/hot items first, then recency, then hotness as a tie-breaker.
-   - `/news` includes a recent 3-day hot topics sidebar based on article tags.
-   - News cards/details and GitHub Trending cards/details include lightweight share/copy actions.
+   - News list prioritizes burst/hot items first, then recency, then hotness as a tie-breaker.
+   - `/news` now uses a single clear `AI 资讯` page heading and no longer shows the old category filter pill row.
+   - `/news` includes a recent 3-day hot events sidebar based on concrete high-hotness article titles, with lightweight event de-duplication for obvious repeats such as `文心 5.1`.
+   - News cards are now full-width reading cards with title, one-sentence summary, optional detail summary, source/time/tag cues, and share/copy actions.
+   - GitHub Trending cards/details include lightweight share/copy actions and richer metadata across today/week/month.
    - Deferred: login-based favorites, subscriptions, RSS management UI, AI deep-analysis key configuration, and a personal center are not part of current P1.
+18. Current end-of-day UI cleanup for `/news`:
+   - Removed production-facing roadmap copy such as "稍后会补".
+   - Replaced generic hot-topic labels with concrete event headlines.
+   - Kept the current public scope focused on readable content flow, hot events, and sharing.
 
 ## Known Notes / Caveats
 
@@ -193,23 +199,28 @@ It clears and re-inserts seed rows.
 ## Recommended Next Steps
 
 1. Prioritize automated/productized work only; manual participation is paused for now.
-2. Finish Phase 1 data quality cleanup for existing tools: `howToUse`, `faqs`, `priceCny`, `registerMethod`, `cnAlternatives`, and tutorial links.
-3. Strengthen video alternative pages, especially Runway alternatives for Chinese users.
-4. Add doc-based video scenario pages that do not require real manual testing.
-5. Improve internal links across tool detail, comparison, alternative, and scenario pages.
-6. Keep comparison content tied to official sources and mark untested claims clearly.
-6. Keep docs synchronized:
+2. Continue P1 with tool library and tool detail page quality: richer decision cues, better internal links, and cleaner copy.
+3. Re-check `/news` and `/trending` visual density after the next production deploy; keep the layout human-readable and avoid RadarAI icon copying.
+4. Improve article hotness inputs when real source engagement signals become available. Current hot events are title-based and deterministic, not a true cross-web popularity index.
+5. Strengthen video alternative pages, especially Runway alternatives for Chinese users.
+6. Add doc-based video scenario pages that do not require real manual testing.
+7. Improve internal links across tool detail, comparison, alternative, and scenario pages.
+8. Keep comparison content tied to official sources and mark untested claims clearly.
+9. Keep docs synchronized:
    - `docs/current-position.md`
    - `docs/manual-tasks.md`
    - `docs/sprint-3.md`
    - `CODEX_TASKS.md`
-7. Consider adding a `jobs` table before expanding automation, so cron history is visible in the app.
+10. Consider adding a `jobs` table before expanding automation, so cron history is visible in the app.
 
 Manual work is currently deferred, including real connectivity measurement, Lab reports, manual review, social distribution, vendor outreach, community operations, and business development.
 
 ## Coordination Notes For Claude Code
 
 - Follow `AGENTS.md` / `CLAUDE.md`: keep changes surgical and verify with `lint` + `build`.
+- Current branch is `main`. The latest work focused on P1 public content flow, especially `/news`, tool library/detail cues, source discovery, and share actions.
+- Do not revive the removed `/news` filter pill row unless the user explicitly asks for a new filtering model.
+- Treat `/news` hot events as an MVP: concrete and readable, but still limited by available article metadata. Avoid presenting it as a full web-wide popularity ranking.
 - Do not refactor `components/V2Pro.tsx` broadly unless the task is specifically UI cleanup.
 - Prefer adding small DB-backed features end-to-end over large speculative architecture changes.
 - Before schema changes, inspect `lib/db/schema.ts`, `lib/db/queries.ts`, and scripts that insert rows.

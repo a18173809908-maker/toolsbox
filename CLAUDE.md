@@ -34,6 +34,9 @@ The current product/content track is the AI video category. Treat AI video as th
 
 Near-term priorities:
 
+- Continue P1 public content flow polish: tool library, tool detail pages, `/news`, and `/trending` should help users decide what is worth opening, not just display generated summaries.
+- `/news` currently uses a single `AI 资讯` heading, no category filter pill row, wide reading cards, share/copy actions, and a right-side "最近 3 天热门事件" list based on concrete high-hotness article titles.
+- Keep `/news` hot events concrete. Avoid generic labels such as "模型发布" or "行业动态" as the main hot-topic output.
 - Strengthen video alternative pages, especially Runway alternatives for Chinese users.
 - Build doc-based video scenario pages that do not require manual testing.
 - Improve automatic internal linking across tools, comparisons, alternatives, and scenarios.
@@ -46,6 +49,7 @@ Avoid for now:
 - Generating thin tool summaries at scale.
 - Any work that requires manual participation for now: real Lab testing, human review as a release blocker, manual social distribution, vendor outreach, community operations, or business development.
 - Adding login, comments, community scoring, or membership features.
+- Shipping visible roadmap/status copy such as "稍后会补" in production pages.
 - Expanding into many new categories before the video track is credible.
 
 ### Collaboration Rules
