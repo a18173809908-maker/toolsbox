@@ -1,5 +1,6 @@
 import { loadAllToolIds, loadPendingToolCandidates, markToolCandidateRejected, draftToolCandidate } from '@/lib/db/queries';
 import { chat } from '@/lib/llm';
+import { looksLikeToolNoise } from '@/lib/tool-noise';
 
 const BATCH = 6;
 const CATEGORY_IDS = [
@@ -30,18 +31,6 @@ interface ToolAiResult {
   publicAccount?: string;
   cnAlternatives?: string[];
   tutorialLinks?: { platform: string; url: string; title: string }[];
-}
-
-const NEWS_PATTERNS = [
-  /digest/i, /newsletter/i, /\bdaily\b/i, /\bweekly\b/i, /\bmonthly\b/i,
-  /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i,
-  /issue\s*#?\d+/i,
-  /vol\.?\s*\d+/i,
-  /roundup/i, /recap/i, /\bwrap[\s-]?up\b/i,
-];
-
-function looksLikeNews(name: string): boolean {
-  return NEWS_PATTERNS.some((p) => p.test(name));
 }
 
 function slugify(name: string) {
@@ -148,7 +137,7 @@ export async function processToolCandidates(): Promise<{ processed: number; reje
       continue;
     }
 
-    if (looksLikeNews(candidate.name)) {
+    if (looksLikeToolNoise(candidate)) {
       await markToolCandidateRejected(candidate.id);
       rejected++;
       continue;

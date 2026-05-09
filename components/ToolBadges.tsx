@@ -98,11 +98,11 @@ export function ToolIcon({ name, mono, brand, url, size = 44 }: ToolIconProps) {
 
 export function AccessBadge({ chinaAccess, chineseUi, compact = false }: AccessBadgeProps) {
   const access = ACCESS_STYLE[chinaAccess ?? 'unknown'];
-  const domestic = chineseUi || chinaAccess === 'accessible';
-  const bg = domestic ? '#DCFCE7' : access.bg;
-  const color = domestic ? '#166534' : access.color;
-  const label = domestic ? (compact ? '国产/直连' : '国产友好 · 国内直连') : access.label;
-  const icon = domestic ? 'CN' : chinaAccess === 'vpn-required' ? 'VPN' : chinaAccess === 'blocked' ? '!' : '?';
+  const direct = chinaAccess === 'accessible';
+  const bg = direct ? '#DCFCE7' : access.bg;
+  const color = direct ? '#166534' : access.color;
+  const label = direct ? (compact ? '国内直连' : '国内可直连') : access.label;
+  const icon = direct ? (chineseUi ? 'CN' : 'OK') : chinaAccess === 'vpn-required' ? 'VPN' : chinaAccess === 'blocked' ? '!' : '?';
 
   if (!chinaAccess || chinaAccess === 'unknown') return null;
 
@@ -125,6 +125,6 @@ export function AccessBadge({ chinaAccess, chineseUi, compact = false }: AccessB
   );
 }
 
-export function isDomesticTool(url?: string | null, chineseUi?: boolean, chinaAccess?: string | null) {
-  return Boolean(chineseUi || chinaAccess === 'accessible' || isChineseTool(url));
+export function isDomesticTool(url?: string | null, chineseUi?: boolean) {
+  return Boolean(chineseUi || isChineseTool(url));
 }

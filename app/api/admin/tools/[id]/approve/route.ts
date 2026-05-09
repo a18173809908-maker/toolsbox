@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { db } from '@/lib/db';
 import { toolCandidates, tools } from '@/lib/db/schema';
+import { looksLikeToolNoise } from '@/lib/tool-noise';
 import { eq } from 'drizzle-orm';
 
 export async function POST(
@@ -35,6 +36,9 @@ export async function POST(
   }
   if (!candidate.catId) {
     return NextResponse.json({ ok: false, error: '缺少分类，无法 approve' }, { status: 400 });
+  }
+  if (looksLikeToolNoise(candidate)) {
+    return NextResponse.json({ ok: false, error: '疑似新闻/文章链接，不能作为工具发布' }, { status: 400 });
   }
 
   const zh = body.zh?.trim() || candidate.zh || candidate.description || candidate.name;
