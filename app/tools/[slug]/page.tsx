@@ -192,7 +192,6 @@ export default async function ToolDetailPage({ params }: Props) {
   const officialUrl = tool.url ?? fallbackToolUrl(tool.name);
   const registerText = tool.registerMethod?.length ? tool.registerMethod.join(' / ') : '未确认';
   const priceText = tool.priceCny ?? tool.pricingDetail ?? (tool.pricing === 'Free' ? '免费' : tool.pricing);
-  const pricingNotice = formatFreshnessWarning(tool.pricingUpdatedAt, 30, '价格信息');
   const accessNotice = formatFreshnessWarning(tool.accessUpdatedAt, 14, '国内访问状态');
   const complianceNotice = formatFreshnessWarning(tool.complianceUpdatedAt, 90, '合规状态');
   const fitNotes = buildFitNotes(tool);
@@ -284,10 +283,10 @@ export default async function ToolDetailPage({ params }: Props) {
           {/* ── Description ── */}
           <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(22px, 4vw, 32px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
             <h2 style={{ fontSize: 20, fontWeight: 850, color: '#1F2937', margin: '0 0 16px' }}>工具简介</h2>
-            <p style={{ fontSize: 16, color: '#4B5563', lineHeight: 1.8, margin: '0 0 20px' }}>{tool.en}</p>
-            <div style={{ background: '#FFF7ED', borderRadius: 12, padding: 'clamp(14px, 4vw, 18px) clamp(16px, 5vw, 22px)', borderLeft: '4px solid #F97316' }}>
-              <p style={{ fontSize: 15, color: '#4B5563', lineHeight: 1.75, margin: 0 }}>{tool.zh}</p>
-            </div>
+            <p style={{ fontSize: 16, color: '#374151', lineHeight: 1.8, margin: 0 }}>{tool.zh}</p>
+            {tool.en && tool.en !== tool.zh && (
+              <p style={{ fontSize: 13, color: '#9CA3AF', lineHeight: 1.7, margin: '14px 0 0' }}>{tool.en}</p>
+            )}
           </div>
 
           <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(22px, 4vw, 30px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
@@ -315,7 +314,7 @@ export default async function ToolDetailPage({ params }: Props) {
           {/* ── 使用教程 ── */}
           {tool.howToUse && tool.howToUse.length > 0 && (
             <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(22px, 4vw, 32px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
-              <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 20px', letterSpacing: '-0.01em' }}>🚀 如何开始使用</h2>
+              <h2 style={{ fontSize: 20, fontWeight: 850, color: '#1F2937', margin: '0 0 20px' }}>如何开始使用</h2>
               <ol style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {tool.howToUse.map((step, i) => (
                   <li key={i} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
@@ -343,7 +342,7 @@ export default async function ToolDetailPage({ params }: Props) {
 
           {/* ── 国内用户须知 card ── */}
           <div style={{ background: '#fff', borderRadius: 16, border: '2px solid #FED7AA', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(20px, 4vw, 28px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
-            <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 18px', letterSpacing: '-0.01em' }}>🇨🇳 国内用户须知</h2>
+            <h2 style={{ fontSize: 20, fontWeight: 850, color: '#1F2937', margin: '0 0 18px' }}>国内用户须知</h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14 }}>
               <div style={{ background: access.bg, borderRadius: 12, padding: '16px 18px' }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: access.color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>访问方式</div>
@@ -436,9 +435,6 @@ export default async function ToolDetailPage({ params }: Props) {
           {alternativeTools.length > 0 && (
             <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #BBF7D0', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(20px, 4vw, 28px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
               <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 14px', letterSpacing: '-0.01em' }}>国产替代方案</h2>
-              <p style={{ fontSize: 14, color: '#4B5563', lineHeight: 1.7, margin: '0 0 16px' }}>
-                如果当前工具访问或支付不方便，国内用户可以优先试试这些替代品。
-              </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
                 {alternativeTools.map((alt) => (
                   <Link key={alt.id} href={`/tools/${alt.id}`} style={{ display: 'block', padding: '14px 16px', borderRadius: 12, background: '#F0FDF4', border: '1px solid #BBF7D0', textDecoration: 'none' }}>
@@ -464,28 +460,10 @@ export default async function ToolDetailPage({ params }: Props) {
             </div>
           )}
 
-          {/* ── Info grid ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 24 }}>
-            {[
-              { label: '定价模式', value: tool.pricing, badge: true },
-              { label: '所属分类', value: `${tool.catIcon} ${tool.catZh} · ${tool.catEn}` },
-              { label: '收录日期', value: tool.date },
-              { label: '编辑推荐', value: tool.featured ? '✅ Editor\'s Pick' : '—' },
-            ].map(({ label, value, badge }) => (
-              <div key={label} style={{ background: '#fff', borderRadius: 12, border: '1px solid #E8D5B7', padding: '18px 22px' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{label}</div>
-                {badge
-                  ? <><span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 13, fontWeight: 600, background: ps.bg, color: ps.color }}>{value}</span><FreshnessNotice warning={!tool.pricingUpdatedAt || !pricingNotice.startsWith('最后更新')}>{pricingNotice}</FreshnessNotice></>
-                  : <div style={{ fontSize: 15, fontWeight: 600, color: '#1F2937' }}>{value}</div>
-                }
-              </div>
-            ))}
-          </div>
-
           {/* ── FAQ ── */}
           {tool.faqs && tool.faqs.length > 0 && (
             <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(22px, 4vw, 32px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
-              <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 18px', letterSpacing: '-0.01em' }}>💬 常见问答</h2>
+              <h2 style={{ fontSize: 20, fontWeight: 850, color: '#1F2937', margin: '0 0 18px' }}>常见问答</h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
                 {tool.faqs.map((faq, i) => (
                   <div key={i} style={{ padding: '16px 0', borderBottom: i < tool.faqs!.length - 1 ? '1px solid #F3E8D0' : 'none' }}>
@@ -535,15 +513,13 @@ export default async function ToolDetailPage({ params }: Props) {
           {/* ── Related articles ── */}
           {relatedArticles.length > 0 && (
             <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(22px, 4vw, 32px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
-              <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 18px', letterSpacing: '-0.01em' }}>
-                📰 相关资讯
-              </h2>
+              <h2 style={{ fontSize: 20, fontWeight: 850, color: '#1F2937', margin: '0 0 18px' }}>相关资讯</h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {relatedArticles.map((a) => {
                   const dateStr = a.publishedAt ? new Date(a.publishedAt).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }) : '';
                   const displayTitle = a.titleZh || a.title;
                   return (
-                    <a key={a.id} href={a.url} target="_blank" rel="noopener noreferrer"
+                    <Link key={a.id} href={`/news/${a.id}`}
                       style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, padding: '11px 4px', borderBottom: '1px solid #F3E8D0', textDecoration: 'none', flexWrap: 'wrap' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, maxWidth: '100%' }}>
                         {a.tag && (
@@ -552,7 +528,7 @@ export default async function ToolDetailPage({ params }: Props) {
                         <span style={{ fontSize: 14, color: '#374151', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{displayTitle}</span>
                       </div>
                       {dateStr && <span style={{ flexShrink: 0, fontSize: 12, color: '#9CA3AF' }}>{dateStr}</span>}
-                    </a>
+                    </Link>
                   );
                 })}
               </div>
