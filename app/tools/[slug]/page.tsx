@@ -5,6 +5,7 @@ import type React from 'react';
 import { SiteHeader } from '@/components/SiteHeader';
 import { AccessBadge, ToolIcon } from '@/components/ToolBadges';
 import { loadToolById, loadAllToolIds, loadToolsByCategory, loadRelatedArticles, loadToolsByIds, loadLabReportsByToolId, loadConnectivityByToolId, loadComparisonsByToolId } from '@/lib/db/queries';
+import { normalizeArticleCategory } from '@/lib/article-categories';
 
 export const revalidate = 3600; // ISR — regenerate hourly
 export const dynamic = 'force-dynamic';
@@ -59,7 +60,7 @@ const ACCESS_BADGE: Record<string, { label: string; bg: string; color: string }>
 };
 
 function fallbackToolUrl(name: string) {
-  return `https://www.google.com/search?q=${encodeURIComponent(name + ' AI tool')}`;
+  return `https://www.bing.com/search?q=${encodeURIComponent(name + ' AI tool 官方')}`;
 }
 
 function formatFreshnessWarning(iso: string | undefined, days: number, label: string) {
@@ -214,7 +215,7 @@ export default async function ToolDetailPage({ params }: Props) {
 
         <main style={{ maxWidth: 860, margin: '40px auto', padding: '0 clamp(16px, 5vw, 24px) 64px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#9CA3AF', fontSize: 13, marginBottom: 18 }}>
-            <Link href="/" style={{ color: '#9CA3AF', textDecoration: 'none' }}>工具库</Link>
+            <Link href="/tools" style={{ color: '#9CA3AF', textDecoration: 'none' }}>工具库</Link>
             <span>/</span>
             <span style={{ color: '#1F2937', fontWeight: 600 }}>{tool.name}</span>
           </div>
@@ -546,7 +547,7 @@ export default async function ToolDetailPage({ params }: Props) {
                       style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, padding: '11px 4px', borderBottom: '1px solid #F3E8D0', textDecoration: 'none', flexWrap: 'wrap' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, maxWidth: '100%' }}>
                         {a.tag && (
-                          <span style={{ flexShrink: 0, padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 700, background: '#FFEDD5', color: '#C2410C' }}>{a.tag}</span>
+                          <span style={{ flexShrink: 0, padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 700, background: '#FFEDD5', color: '#C2410C' }}>{normalizeArticleCategory(a.tag)}</span>
                         )}
                         <span style={{ fontSize: 14, color: '#374151', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{displayTitle}</span>
                       </div>
@@ -565,20 +566,21 @@ export default async function ToolDetailPage({ params }: Props) {
           {related.length > 0 && (
             <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(22px, 4vw, 32px) clamp(18px, 5vw, 40px)' }}>
               <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 20px' }}>
-                同类工具 · More {tool.catEn}
+                同类工具
               </h2>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))', gap: 14 }}>
                 {related.map((r) => {
                   const rps = PRICING_STYLE[r.pricing] ?? PRICING_STYLE['Paid'];
                   return (
                     <Link key={r.id} href={`/tools/${r.id}`} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: '14px 16px', borderRadius: 12, border: '1px solid #F3E8D0', textDecoration: 'none', background: '#FDFAF7' }}>
-                      <div style={{ width: 40, height: 40, borderRadius: 10, background: r.brand, color: '#fff', display: 'grid', placeItems: 'center', fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: r.mono.length === 1 ? 20 : 13, flexShrink: 0 }}>{r.mono}</div>
+                      <ToolIcon name={r.name} mono={r.mono} brand={r.brand} url={r.url} size={40} />
                       <div style={{ minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
                           <span style={{ fontWeight: 700, fontSize: 14, color: '#1F2937', fontFamily: 'Georgia, serif' }}>{r.name}</span>
                           <span style={{ padding: '1px 6px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: rps.bg, color: rps.color }}>{r.pricing}</span>
+                          <AccessBadge chinaAccess={r.chinaAccess} compact />
                         </div>
-                        <p style={{ fontSize: 12, color: '#6B7280', margin: 0, lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>{r.en}</p>
+                        <p style={{ fontSize: 12, color: '#6B7280', margin: 0, lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>{r.zh || r.en}</p>
                       </div>
                     </Link>
                   );
