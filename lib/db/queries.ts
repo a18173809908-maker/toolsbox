@@ -771,6 +771,8 @@ export async function loadToolsPage(opts: {
       catId: tools.catId, en: tools.en, zh: tools.zh,
       pricing: tools.pricing, url: tools.url, chinaAccess: tools.chinaAccess,
       chineseUi: tools.chineseUi, freeQuota: tools.freeQuota,
+      priceCny: tools.priceCny, pricingDetail: tools.pricingDetail,
+      cnAlternatives: tools.cnAlternatives,
       apiAvailable: tools.apiAvailable, openSource: tools.openSource,
       features: tools.features, featured: tools.featured,
       upvotes: tools.upvotes, downvotes: tools.downvotes,

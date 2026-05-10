@@ -142,6 +142,10 @@ function buildFitNotes(tool: Awaited<ReturnType<typeof loadToolById>>) {
   };
 }
 
+function yesNo(value: boolean, yes: string, no: string) {
+  return value ? yes : no;
+}
+
 export default async function ToolDetailPage({ params }: Props) {
   const { slug } = await params;
   const tool = await loadToolById(slug);
@@ -191,6 +195,9 @@ export default async function ToolDetailPage({ params }: Props) {
   const accessNotice = formatFreshnessWarning(tool.accessUpdatedAt, 14, '国内访问状态');
   const complianceNotice = formatFreshnessWarning(tool.complianceUpdatedAt, 90, '合规状态');
   const fitNotes = buildFitNotes(tool);
+  const replacementText = alternativeTools.length > 0
+    ? alternativeTools.slice(0, 3).map((item) => item.name).join('、')
+    : '暂无明确替代';
 
   return (
     <>
@@ -254,9 +261,28 @@ export default async function ToolDetailPage({ params }: Props) {
             </div>
           </div>
 
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(20px, 4vw, 28px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
+            <h2 style={{ fontSize: 20, fontWeight: 850, color: '#1F2937', margin: '0 0 16px' }}>选择判断</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+              {[
+                { label: '价格', value: priceText },
+                { label: '国内访问', value: access.label },
+                { label: '中文支持', value: yesNo(Boolean(tool.chineseUi), '支持中文', '英文为主') },
+                { label: '注册门槛', value: registerText },
+                { label: '适合场景', value: fitNotes.goodFor[0] },
+                { label: '替代方案', value: replacementText },
+              ].map((item) => (
+                <div key={item.label} style={{ background: '#FFFDF9', borderRadius: 12, border: '1px solid #F3E8D0', padding: '14px 16px', minWidth: 0 }}>
+                  <div style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 800, marginBottom: 7 }}>{item.label}</div>
+                  <div style={{ fontSize: 14, color: '#1F2937', fontWeight: 800, lineHeight: 1.5 }}>{item.value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* ── Description ── */}
           <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(22px, 4vw, 32px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
-            <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 16px', letterSpacing: '-0.01em' }}>About · 工具简介</h2>
+            <h2 style={{ fontSize: 20, fontWeight: 850, color: '#1F2937', margin: '0 0 16px' }}>工具简介</h2>
             <p style={{ fontSize: 16, color: '#4B5563', lineHeight: 1.8, margin: '0 0 20px' }}>{tool.en}</p>
             <div style={{ background: '#FFF7ED', borderRadius: 12, padding: 'clamp(14px, 4vw, 18px) clamp(16px, 5vw, 22px)', borderLeft: '4px solid #F97316' }}>
               <p style={{ fontSize: 15, color: '#4B5563', lineHeight: 1.75, margin: 0 }}>{tool.zh}</p>

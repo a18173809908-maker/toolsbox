@@ -54,6 +54,25 @@ function heatText(tool: { featured: boolean; upvotes: number; downvotes: number 
   return '新近收录';
 }
 
+function priceText(tool: { pricing: string; priceCny?: string | null; pricingDetail?: string | null }) {
+  if (tool.priceCny) return tool.priceCny;
+  if (tool.pricingDetail) return tool.pricingDetail;
+  if (tool.pricing === 'Free') return '免费';
+  if (tool.pricing === 'Freemium') return '免费试用';
+  return '付费';
+}
+
+function accessText(value: string) {
+  if (value === 'accessible') return '国内直连';
+  if (value === 'vpn-required') return '需代理';
+  if (value === 'blocked') return '受限';
+  return '待确认';
+}
+
+function chineseText(value: boolean) {
+  return value ? '支持中文' : '英文为主';
+}
+
 type SearchParams = { cat?: string; pricing?: string; china?: string; q?: string; page?: string };
 type Props = { searchParams: Promise<SearchParams> };
 
@@ -99,6 +118,7 @@ export default async function ToolsPage({ searchParams }: Props) {
   const totalPages = Math.ceil(total / pageSize);
   // 「全部」徽章 = 应用其他筛选后跨所有分类的总数（cats 已按 pricing/china/q 过滤，求和即可）
   const allCatsTotal = cats.reduce((sum, c) => sum + c.count, 0);
+  const categoryById = new Map(cats.map((c) => [c.id, c]));
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -267,18 +287,36 @@ export default async function ToolsPage({ searchParams }: Props) {
                         {tool.zh || tool.en}
                       </p>
 
-                      <div style={{ marginTop: 14, display: 'grid', gap: 8 }}>
-                        <p style={{
-                          fontSize: 12, color: C.inkSoft, margin: 0, lineHeight: 1.5,
-                          display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' as const,
-                          overflow: 'hidden',
-                        }}>
+                      <div style={{ marginTop: 14, display: 'grid', gap: 10 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
+                          {[
+                            ['价格', priceText(tool)],
+                            ['国内', accessText(tool.chinaAccess)],
+                            ['中文', chineseText(tool.chineseUi)],
+                          ].map(([label, value]) => (
+                            <div key={label} style={{ border: `1px solid ${C.ruleSoft}`, borderRadius: 8, padding: '8px 9px', background: '#FFFDF9', minWidth: 0 }}>
+                              <div style={{ color: C.inkMuted, fontSize: 10, fontWeight: 800, marginBottom: 4 }}>{label}</div>
+                              <div style={{ color: C.ink, fontSize: 12, fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <p style={{ fontSize: 12, color: C.inkSoft, margin: 0, lineHeight: 1.55 }}>
                           {fitLine(tool)}
                         </p>
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                           <span style={{ padding: '3px 8px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: C.ruleSoft, color: C.inkSoft }}>
                             {heatText(tool)}
                           </span>
+                          {categoryById.get(tool.catId) && (
+                            <span style={{ padding: '3px 8px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: '#F8FAFC', color: C.inkMuted }}>
+                              {categoryById.get(tool.catId)?.zh}
+                            </span>
+                          )}
+                          {tool.cnAlternatives && tool.cnAlternatives.length > 0 && (
+                            <span style={{ padding: '3px 8px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: C.greenBg, color: C.green }}>
+                              有替代
+                            </span>
+                          )}
                           {tool.freeQuota && (
                             <span style={{ padding: '3px 8px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: '#F8FAFC', color: C.inkMuted }}>
                               {tool.freeQuota}
