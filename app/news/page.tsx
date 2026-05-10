@@ -10,10 +10,8 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'AI 资讯 News',
-  description: '每天整理值得关注的 AI 产品、模型、开源项目和行业变化。',
   openGraph: {
     title: 'AI 资讯 | AIBoxPro',
-    description: '每天整理值得关注的 AI 产品、模型、开源项目和行业变化。',
   },
   alternates: { canonical: '/news' },
 };
@@ -40,7 +38,6 @@ export default async function NewsPage({ searchParams }: Props) {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: 'AI 资讯 | AIBoxPro',
-    description: '每天整理值得关注的 AI 产品、模型、开源项目和行业变化。',
     url: 'https://www.aiboxpro.cn/news',
   };
 
@@ -56,9 +53,6 @@ export default async function NewsPage({ searchParams }: Props) {
             <h1 style={{ fontWeight: 800, fontSize: 'clamp(30px, 7vw, 40px)', lineHeight: 1.18, margin: '0 0 10px', color: C.ink }}>
               AI 资讯
             </h1>
-            <p style={{ fontSize: 15, color: C.inkSoft, margin: 0, lineHeight: 1.7, maxWidth: 760 }}>
-              每天整理值得关注的 AI 产品、模型、开源项目和行业变化。
-            </p>
           </div>
         </section>
 

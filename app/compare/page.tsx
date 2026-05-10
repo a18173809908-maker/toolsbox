@@ -58,9 +58,6 @@ export default async function ComparePage() {
             <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 'clamp(34px, 8vw, 54px)', lineHeight: 1.05, color: C.ink, margin: '0 0 12px' }}>
               AI 工具对比
             </h1>
-            <p style={{ fontSize: 16, color: C.inkSoft, lineHeight: 1.7, margin: 0, maxWidth: 680 }}>
-              把价格、国内访问、中文体验和适用场景放在一张表里，少一点来回查资料。
-            </p>
           </section>
 
           {comparisons.length === 0 ? (

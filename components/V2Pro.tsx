@@ -122,7 +122,7 @@ function SectionTitle({
   actionHref,
 }: {
   title: string;
-  description: string;
+  description?: string;
   actionLabel?: string;
   actionHref?: string;
 }) {
@@ -149,7 +149,7 @@ function SectionTitle({
         >
           {title}
         </h2>
-        <p style={{ margin: 0, color: T.inkSoft, fontSize: 14, lineHeight: 1.65 }}>{description}</p>
+        {description && <p style={{ margin: 0, color: T.inkSoft, fontSize: 14, lineHeight: 1.65 }}>{description}</p>}
       </div>
       {actionLabel && actionHref ? (
         <Link href={actionHref} style={{ color: T.accent, fontWeight: 700, fontSize: 14 }}>
@@ -270,18 +270,6 @@ function Hero({
             <br />
             先看 AIBoxPro
           </h1>
-
-          <p
-            style={{
-              margin: '0 0 26px',
-              maxWidth: 720,
-              fontSize: mobile ? 16 : 18,
-              color: T.inkSoft,
-              lineHeight: 1.75,
-            }}
-          >
-            把价格、国内访问、中文体验和替代选择放在一起看。少翻几轮资料，更快找到顺手的工具。
-          </p>
 
           <div
             style={{
@@ -804,7 +792,6 @@ export default function V2ProHomepage({ tools, categories, trending, stats }: Ho
           <div style={shellStyle}>
             <SectionTitle
               title="热门对比"
-              description="容易纠结的选择题，先把差异看明白。"
               actionLabel="查看全部对比"
               actionHref="/compare"
             />
@@ -816,7 +803,6 @@ export default function V2ProHomepage({ tools, categories, trending, stats }: Ho
           <div style={shellStyle}>
             <SectionTitle
               title="编辑推荐"
-              description="一些值得优先试的工具，以及它们更适合的用法。"
               actionLabel="进入工具库"
               actionHref="/tools"
             />
@@ -832,7 +818,6 @@ export default function V2ProHomepage({ tools, categories, trending, stats }: Ho
           <div style={shellStyle}>
             <SectionTitle
               title="📈 开发者趋势"
-              description="看看最近开发者都在关注哪些 AI 开源项目。"
               actionLabel="完整榜单"
               actionHref="/trending"
             />

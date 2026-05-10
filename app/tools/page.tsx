@@ -122,9 +122,6 @@ export default async function ToolsPage({ searchParams }: Props) {
             <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 'clamp(30px, 8vw, 38px)', color: C.ink, margin: '0 0 8px', letterSpacing: '-0.02em' }}>
               AI 工具库
             </h1>
-            <p style={{ fontSize: 15, color: C.inkSoft, margin: 0 }}>
-              现在有 {total} 个工具可查，先看能不能用、贵不贵、适不适合你。
-            </p>
           </div>
 
           {/* Category pills */}
