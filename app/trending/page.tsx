@@ -62,20 +62,21 @@ function Pill({ children, tone = 'neutral' }: { children: React.ReactNode; tone?
   );
 }
 
-function InsightLabel({ children, tone = 'accent' }: { children: React.ReactNode; tone?: 'accent' | 'soft' }) {
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: C.inkMuted, fontWeight: 650, whiteSpace: 'nowrap' }}>
-      <span style={{
-        width: 7,
-        height: 7,
-        borderRadius: 2,
-        background: tone === 'accent' ? C.primary : C.rule,
-        display: 'inline-block',
-        transform: 'rotate(45deg)',
-      }} />
-      {children}
-    </span>
-  );
+function normalizeText(text: string) {
+  return text.toLowerCase().replace(/\s+/g, '').replace(/[，。；：、,.!?！？"'“”‘’()[\]【】《》「」]/g, '');
+}
+
+function isSamePoint(a?: string | null, b?: string | null) {
+  if (!a || !b) return false;
+  const left = normalizeText(a);
+  const right = normalizeText(b);
+  if (!left || !right) return false;
+  return left === right || left.includes(right) || right.includes(left);
+}
+
+function buildNaturalSummary(summary: string, useCase: string) {
+  if (isSamePoint(summary, useCase)) return summary;
+  return `${summary} 适合关注 ${useCase.replace(/[。.]$/, '')}。`;
 }
 
 export default async function TrendingPage({ searchParams }: Props) {
@@ -149,6 +150,7 @@ export default async function TrendingPage({ searchParams }: Props) {
                     r.lang ? `主要使用 ${r.lang}` : '建议查看 README 进一步评估',
                   ];
               const whyTrending = insights?.whyTrending || `${periodLabel} Star 增长 ${r.gained.toLocaleString()}，开发者关注度正在上升。`;
+              const visiblePoints = keyPoints.filter((point) => !isSamePoint(point, summary)).slice(0, 2);
               return (
                 <div key={r.id}>
                   <div style={{
@@ -180,31 +182,25 @@ export default async function TrendingPage({ searchParams }: Props) {
                       </div>
 
                       {/* Summary */}
-                      <div style={{ display: 'grid', gap: 5, color: C.inkSoft, fontSize: 13, lineHeight: 1.65, marginBottom: 10 }}>
+                      <div style={{ display: 'grid', gap: 8, color: C.inkSoft, fontSize: 13, lineHeight: 1.7, marginBottom: 10 }}>
                         <p style={{ margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
-                          <InsightLabel>一句话摘要</InsightLabel>
-                          <span style={{ margin: '0 6px', color: C.rule }}>·</span>
-                          <span style={{ color: C.ink, fontWeight: insights ? 650 : 400 }}>{summary}</span>
+                          <span style={{ color: C.ink, fontWeight: insights ? 650 : 400 }}>
+                            {buildNaturalSummary(summary, useCase)}
+                          </span>
                         </p>
 
-                        <p style={{ margin: 0 }}>
-                          <InsightLabel tone="soft">适用场景</InsightLabel>
-                          <span style={{ margin: '0 6px', color: C.rule }}>·</span>
-                          <span>{useCase}</span>
-                        </p>
-
-                        {keyPoints.length > 0 && (
-                          <p style={{ margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' as const }}>
-                            <InsightLabel tone="soft">亮点</InsightLabel>
-                            <span style={{ margin: '0 6px', color: C.rule }}>·</span>
-                            <span>{keyPoints.join(' / ')}</span>
-                          </p>
+                        {visiblePoints.length > 0 && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                            {visiblePoints.map((point) => (
+                              <span key={point} style={{ padding: '4px 8px', borderRadius: 6, background: '#F8FAFC', color: C.inkSoft, fontWeight: 600 }}>
+                                {point}
+                              </span>
+                            ))}
+                          </div>
                         )}
 
-                        <p style={{ margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' as const }}>
-                          <InsightLabel tone="soft">上榜原因</InsightLabel>
-                          <span style={{ margin: '0 6px', color: C.rule }}>·</span>
-                          <span>{whyTrending}</span>
+                        <p style={{ margin: 0, color: C.inkMuted, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' as const }}>
+                          {whyTrending}
                         </p>
                       </div>
 

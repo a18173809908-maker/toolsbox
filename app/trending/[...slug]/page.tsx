@@ -55,6 +55,14 @@ const C = {
   green: '#16A34A', greenBg: '#DCFCE7',
 };
 
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 style={{ fontSize: 22, fontWeight: 850, color: C.ink, margin: '0 0 14px' }}>
+      {children}
+    </h2>
+  );
+}
+
 export default async function TrendingDetailPage({ params }: Props) {
   const { slug } = await params;
   const repo = slug.join('/');
@@ -76,6 +84,11 @@ export default async function TrendingDetailPage({ params }: Props) {
     if (readmeZh) await updateRepoReadmeZh(repo, readmeZh);
   }
   const pushedAt = repoInfo?.pushed_at ? new Date(repoInfo.pushed_at).toLocaleDateString('zh-CN') : null;
+  const insights = main.aiInsights;
+  const summary = insights?.oneSentenceSummary || main.descriptionZh || main.description;
+  const useCase = insights?.useCase;
+  const whyTrending = insights?.whyTrending;
+  const chinaValue = insights?.chinaValue;
 
   return (
     <div style={{ minHeight: '100vh', background: C.bg, fontFamily: 'Inter, ui-sans-serif, system-ui, "PingFang SC", "Microsoft YaHei", sans-serif' }}>
@@ -135,9 +148,46 @@ export default async function TrendingDetailPage({ params }: Props) {
           </div>
         </div>
 
+        {(summary || useCase || whyTrending || chinaValue) && (
+          <div style={{ background: C.panel, borderRadius: 16, border: `1px solid ${C.rule}`, padding: 'clamp(22px, 4vw, 28px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
+            <SectionTitle>先看结论</SectionTitle>
+            {summary && (
+              <p style={{ fontSize: 17, color: C.ink, lineHeight: 1.75, margin: '0 0 14px', fontWeight: 650 }}>
+                {summary}
+              </p>
+            )}
+            <div style={{ display: 'grid', gap: 12, color: C.inkSoft, fontSize: 15, lineHeight: 1.75 }}>
+              {useCase && (
+                <p style={{ margin: 0 }}>
+                  <strong style={{ color: C.ink }}>适合看它的人：</strong>{useCase}
+                </p>
+              )}
+              {whyTrending && (
+                <p style={{ margin: 0 }}>
+                  <strong style={{ color: C.ink }}>为什么上榜：</strong>{whyTrending}
+                </p>
+              )}
+              {chinaValue && (
+                <p style={{ margin: 0 }}>
+                  <strong style={{ color: C.ink }}>对中文开发者的价值：</strong>{chinaValue}
+                </p>
+              )}
+            </div>
+            {insights?.keyPoints?.length ? (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 16 }}>
+                {insights.keyPoints.slice(0, 3).map((point) => (
+                  <span key={point} style={{ padding: '6px 10px', borderRadius: 8, background: '#F8FAFC', color: C.inkSoft, fontSize: 13, fontWeight: 700 }}>
+                    {point}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        )}
+
         {/* Description */}
         <div style={{ background: C.panel, borderRadius: 16, border: `1px solid ${C.rule}`, padding: 'clamp(22px, 4vw, 28px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
-          <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: C.ink, margin: '0 0 14px' }}>项目简介</h2>
+          <SectionTitle>项目简介</SectionTitle>
           {main.descriptionZh && (
             <div style={{ background: C.bg, borderRadius: 12, padding: '16px 20px', borderLeft: `4px solid ${C.primary}`, marginBottom: 14 }}>
               <p style={{ fontSize: 16, color: C.inkSoft, lineHeight: 1.75, margin: 0 }}>{main.descriptionZh}</p>
@@ -187,7 +237,7 @@ export default async function TrendingDetailPage({ params }: Props) {
 
         {readmeHtml && (
           <div style={{ background: C.panel, borderRadius: 16, border: `1px solid ${C.rule}`, padding: 'clamp(22px, 4vw, 28px) clamp(18px, 5vw, 40px)', marginBottom: 24, overflow: 'hidden' }}>
-            <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: C.ink, margin: '0 0 18px' }}>README</h2>
+            <SectionTitle>README</SectionTitle>
             {readmeZh && (
               <div style={{ background: C.bg, borderRadius: 12, borderLeft: `4px solid ${C.primary}`, padding: '16px 20px', marginBottom: 20 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: C.accent, marginBottom: 8, letterSpacing: '0.04em' }}>百度翻译 · 中文速览</div>
@@ -203,7 +253,7 @@ export default async function TrendingDetailPage({ params }: Props) {
         )}
 
         {/* Back link */}
-        <Link href="/" style={{ fontSize: 13, color: C.inkSoft, textDecoration: 'none' }}>← 返回首页</Link>
+        <Link href="/trending" style={{ fontSize: 13, color: C.inkSoft, textDecoration: 'none' }}>← 返回 GitHub 趋势</Link>
       </main>
     </div>
   );

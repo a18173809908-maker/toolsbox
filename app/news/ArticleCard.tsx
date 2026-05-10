@@ -26,12 +26,24 @@ function normalizeText(text: string) {
   return text.toLowerCase().replace(/\s+/g, '').replace(/[，。；：、,.!?！？"'“”‘’()[\]【】《》「」]/g, '');
 }
 
+function tokenSet(text: string, pattern: RegExp) {
+  return new Set((text.match(pattern) ?? []).map((item) => item.toLowerCase()));
+}
+
 function isSamePoint(a?: string | null, b?: string | null) {
   if (!a || !b) return false;
   const left = normalizeText(a);
   const right = normalizeText(b);
   if (!left || !right) return false;
-  return left === right || left.includes(right) || right.includes(left);
+  if (left === right || left.includes(right) || right.includes(left)) return true;
+
+  const leftNumbers = tokenSet(a, /\d+(?:\.\d+)?(?:%|亿|万|元)?/g);
+  const rightNumbers = tokenSet(b, /\d+(?:\.\d+)?(?:%|亿|万|元)?/g);
+  const leftNames = tokenSet(a, /[A-Za-z][\w.-]{1,}|[\u4e00-\u9fa5]{2,8}/g);
+  const rightNames = tokenSet(b, /[A-Za-z][\w.-]{1,}|[\u4e00-\u9fa5]{2,8}/g);
+  const sharesNumber = [...leftNumbers].some((item) => rightNumbers.has(item));
+  const sharesName = [...leftNames].some((item) => rightNames.has(item));
+  return sharesNumber && sharesName;
 }
 
 export type ArticleRow = {
