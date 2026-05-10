@@ -10,12 +10,19 @@ const SOURCE_WEIGHTS: Record<string, number> = {
 
 const TAG_WEIGHTS: Record<string, number> = {
   模型发布: 22,
+  产品更新: 18,
+  AI公司动态: 14,
+  开源项目: 16,
+  行业政策: 13,
+  融资新闻: 18,
+  AI应用案例: 12,
+  AI工具更新: 18,
   工具更新: 18,
-  产品评测: 16,
-  技术研究: 14,
-  开发者: 13,
-  国内动态: 12,
-  行业动态: 10,
+  产品评测: 18,
+  技术研究: 16,
+  开发者: 14,
+  国内动态: 14,
+  行业动态: 14,
 };
 
 const KEYWORD_WEIGHTS: Array<[RegExp, number]> = [

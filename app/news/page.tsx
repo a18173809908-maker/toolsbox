@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
 import { ShareButton } from '@/components/ShareButton';
 import { loadArticleHotTopics, loadArticlesPage } from '@/lib/db/queries';
+import { ARTICLE_CATEGORIES, normalizeArticleCategory } from '@/lib/article-categories';
 import { ArticleCard } from './ArticleCard';
 
 export const dynamic = 'force-dynamic';
@@ -28,6 +30,7 @@ type Props = { searchParams: Promise<{ tag?: string }> };
 
 export default async function NewsPage({ searchParams }: Props) {
   const { tag } = await searchParams;
+  const activeCategory = tag ? normalizeArticleCategory(tag) : null;
   const [articles, hotTopics] = await Promise.all([
     loadArticlesPage(1, 60, tag),
     loadArticleHotTopics(5, 3),
@@ -74,6 +77,22 @@ export default async function NewsPage({ searchParams }: Props) {
                 ))}
               </div>
               <aside style={{ flex: '1 1 280px', maxWidth: 340, minWidth: 0, display: 'grid', gap: 16, position: 'sticky', top: 88 }}>
+                <div style={{ background: C.panel, border: `1px solid ${C.rule}`, borderRadius: 14, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                  <h2 style={{ margin: '0 0 12px', color: C.ink, fontSize: 18, fontWeight: 850 }}>资讯分类</h2>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <Link href="/news" style={{ padding: '6px 10px', borderRadius: 999, background: !activeCategory ? C.primaryBg : '#F8FAFC', color: !activeCategory ? C.accent : C.inkSoft, textDecoration: 'none', fontSize: 12, fontWeight: 750 }}>
+                      最新资讯
+                    </Link>
+                    {ARTICLE_CATEGORIES.map((category) => {
+                      const active = activeCategory === category;
+                      return (
+                        <Link key={category} href={`/news?tag=${encodeURIComponent(category)}`} style={{ padding: '6px 10px', borderRadius: 999, background: active ? C.primaryBg : '#F8FAFC', color: active ? C.accent : C.inkSoft, textDecoration: 'none', fontSize: 12, fontWeight: 750 }}>
+                          {category}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
                 <div style={{ background: C.panel, border: `1px solid ${C.rule}`, borderRadius: 14, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 10 }}>
                     <div>

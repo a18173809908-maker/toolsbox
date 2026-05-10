@@ -20,7 +20,7 @@ const productLinks: FooterLink[] = [
   { label: '工具库', href: '/tools' },
   { label: '工具对比', href: '/compare' },
   { label: '开发者趋势', href: '/trending' },
-  { label: '工具动态', href: '/news' },
+  { label: 'AI 资讯', href: '/news' },
 ];
 
 const legalLinks: FooterLink[] = [

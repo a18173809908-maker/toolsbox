@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import { ShareButton } from '@/components/ShareButton';
 import { SiteHeader } from '@/components/SiteHeader';
 import { loadArticleById } from '@/lib/db/queries';
+import { normalizeArticleCategory } from '@/lib/article-categories';
 
 export const revalidate = 3600;
 
@@ -43,10 +44,22 @@ function fmt(iso: Date | null) {
   return new Date(iso).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
+function normalizeText(text: string) {
+  return text.toLowerCase().replace(/\s+/g, '').replace(/[，。；：、,.!?！？"'“”‘’()[\]【】《》「」]/g, '');
+}
+
+function isSamePoint(a?: string | null, b?: string | null) {
+  if (!a || !b) return false;
+  const left = normalizeText(a);
+  const right = normalizeText(b);
+  if (!left || !right) return false;
+  return left === right || left.includes(right) || right.includes(left);
+}
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section style={{ borderTop: `1px solid ${C.ruleSoft}`, paddingTop: 24, marginTop: 24 }}>
-      <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 16, fontWeight: 600, color: C.inkSoft, margin: '0 0 14px' }}>
+    <section style={{ borderTop: `1px solid ${C.ruleSoft}`, paddingTop: 22, marginTop: 22 }}>
+      <h2 style={{ fontSize: 17, fontWeight: 800, color: C.ink, margin: '0 0 14px' }}>
         {title}
       </h2>
       {children}
@@ -59,12 +72,19 @@ export default async function NewsDetailPage({ params }: Props) {
   const art = await loadArticleById(Number(id));
   if (!art) notFound();
   const insights = art.aiInsights;
+  const title = art.titleZh || art.title;
+  const category = normalizeArticleCategory(art.tag);
   const description = insights?.oneSentenceSummary || art.summaryZh || art.summary || art.title;
+  const sourceTitle = art.titleZh && !isSamePoint(art.title, art.titleZh) ? art.title : null;
+  const eventBackground = [art.summaryZh, art.summary].find((item) => item && !isSamePoint(item, description) && !isSamePoint(item, title));
+  const keyPoints = (insights?.keyPoints ?? [])
+    .filter((item, index, arr) => !isSamePoint(item, description) && arr.findIndex((other) => isSamePoint(other, item)) === index)
+    .slice(0, 4);
 
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
-    headline: art.titleZh || art.title,
+    headline: title,
     description,
     url: art.url,
     datePublished: art.publishedAt?.toISOString(),
@@ -85,7 +105,7 @@ export default async function NewsDetailPage({ params }: Props) {
             <Link href="/news" style={{ color: C.inkMuted, textDecoration: 'none' }}>AI 资讯</Link>
             <span>/</span>
             <span style={{ color: C.ink, fontWeight: 600, maxWidth: 360, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {art.titleZh || art.title}
+              {title}
             </span>
           </div>
           <article style={{ background: C.panel, borderRadius: 16, border: `1px solid ${C.rule}`, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', padding: 'clamp(24px, 6vw, 40px) clamp(18px, 6vw, 48px)' }}>
@@ -93,7 +113,7 @@ export default async function NewsDetailPage({ params }: Props) {
             {/* Tag + meta */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
               {art.tag && (
-                <span style={{ padding: '3px 10px', borderRadius: 4, background: C.primaryBg, color: C.accent, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{art.tag}</span>
+                <span style={{ padding: '3px 10px', borderRadius: 4, background: C.primaryBg, color: C.accent, fontSize: 11, fontWeight: 700 }}>{category}</span>
               )}
               {art.publishedAt && (
                 <span style={{ fontSize: 13, color: C.inkMuted }}>{fmt(art.publishedAt)}</span>
@@ -101,34 +121,31 @@ export default async function NewsDetailPage({ params }: Props) {
               {art.sourceName && (
                 <span style={{ fontSize: 13, color: C.inkMuted, marginLeft: 'auto' }}>来源：{art.sourceName}</span>
               )}
-              <ShareButton title={art.titleZh || art.title} text={description} path={`/news/${art.id}`} compact />
+              <ShareButton title={title} text={description} path={`/news/${art.id}`} compact />
             </div>
 
-            {/* Chinese title */}
-            {art.titleZh && (
-              <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 'clamp(26px, 7vw, 32px)', lineHeight: 1.3, margin: '0 0 12px', color: C.ink, letterSpacing: '-0.02em' }}>
-                {art.titleZh}
-              </h1>
+            <h1 style={{ fontWeight: 850, fontSize: 'clamp(26px, 7vw, 34px)', lineHeight: 1.32, margin: '0 0 14px', color: C.ink, letterSpacing: '-0.01em' }}>
+              {title}
+            </h1>
+
+            {sourceTitle && (
+              <p style={{ fontSize: 14, color: C.inkMuted, margin: '0 0 18px', lineHeight: 1.6 }}>
+                原标题：{sourceTitle}
+              </p>
             )}
 
-            {/* Original title */}
-            <p style={{ fontSize: art.titleZh ? 15 : 24, color: art.titleZh ? C.inkMuted : C.ink, margin: '0 0 28px', fontWeight: art.titleZh ? 400 : 700, lineHeight: 1.5 }}>
-              {art.title}
-            </p>
-
-            {/* AI reading brief */}
-            {(description || insights) && (
-              <Section title="摘要">
-                <div style={{ background: C.bg, borderRadius: 10, padding: 'clamp(14px, 4vw, 16px) clamp(16px, 5vw, 20px)', borderLeft: `3px solid ${C.primary}` }}>
-                  <p style={{ fontSize: 17, color: C.ink, lineHeight: 1.75, margin: 0, fontWeight: 650 }}>{description}</p>
-                </div>
+            {description && !isSamePoint(description, title) && (
+              <Section title="一句话摘要">
+                <p style={{ fontSize: 17, color: C.inkSoft, lineHeight: 1.8, margin: 0, fontWeight: 500 }}>
+                  {description}
+                </p>
               </Section>
             )}
 
-            {insights?.keyPoints && insights.keyPoints.length > 0 && (
+            {keyPoints.length > 0 && (
               <Section title="关键信息">
                 <ul style={{ display: 'grid', gap: 10, margin: 0, padding: 0, listStyle: 'none' }}>
-                  {insights.keyPoints.slice(0, 4).map((item) => (
+                  {keyPoints.map((item) => (
                     <li key={item} style={{ display: 'flex', gap: 10, fontSize: 15, color: C.inkSoft, lineHeight: 1.7 }}>
                       <span style={{ width: 6, height: 6, borderRadius: 3, background: C.primary, marginTop: 10, flex: '0 0 auto' }} />
                       <span>{item}</span>
@@ -138,15 +155,18 @@ export default async function NewsDetailPage({ params }: Props) {
               </Section>
             )}
 
-            {insights?.whyItMatters && (
-              <Section title="为什么重要">
-                <p style={{ fontSize: 15, color: C.inkSoft, lineHeight: 1.8, margin: 0 }}>{insights.whyItMatters}</p>
+            {eventBackground && (
+              <Section title="事件背景">
+                <p style={{ fontSize: 15, color: C.inkSoft, lineHeight: 1.8, margin: 0 }}>{eventBackground}</p>
               </Section>
             )}
 
-            {insights?.chinaImpact && (
-              <Section title="对中文用户的影响">
-                <p style={{ fontSize: 15, color: C.inkSoft, lineHeight: 1.8, margin: 0 }}>{insights.chinaImpact}</p>
+            {insights?.whyItMatters && (
+              <Section title="影响分析">
+                <div style={{ display: 'grid', gap: 10, fontSize: 15, color: C.inkSoft, lineHeight: 1.8 }}>
+                  <p style={{ margin: 0 }}>{insights.whyItMatters}</p>
+                  {insights.chinaImpact && <p style={{ margin: 0 }}>{insights.chinaImpact}</p>}
+                </div>
               </Section>
             )}
 
@@ -186,11 +206,11 @@ export default async function NewsDetailPage({ params }: Props) {
               </Section>
             )}
 
-            {art.summary && (
-              <Section title="原始摘要">
-                <p style={{ fontSize: 14, color: C.inkMuted, lineHeight: 1.7, margin: 0 }}>{art.summary}</p>
-              </Section>
-            )}
+            <Section title="相关链接">
+              <a href={art.url} target="_blank" rel="noopener noreferrer" style={{ color: C.accent, fontSize: 15, fontWeight: 750, textDecoration: 'none' }}>
+                查看原文：{art.sourceName ?? '原始来源'} ↗
+              </a>
+            </Section>
 
             {/* CTA to original */}
             <div style={{ borderTop: `1px solid ${C.ruleSoft}`, paddingTop: 24, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -202,7 +222,7 @@ export default async function NewsDetailPage({ params }: Props) {
                 阅读原文 ↗
               </a>
               <Link href="/news" style={{ fontSize: 13, color: C.inkSoft, textDecoration: 'none' }}>← 返回资讯列表</Link>
-              <ShareButton title={art.titleZh || art.title} text={description} path={`/news/${art.id}`} />
+              <ShareButton title={title} text={description} path={`/news/${art.id}`} />
             </div>
           </article>
         </main>

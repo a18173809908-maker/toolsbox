@@ -3,11 +3,12 @@ import { articles, sources, tools } from '@/lib/db/schema';
 import { isNull, eq, and, or, desc } from 'drizzle-orm';
 import { chat } from '@/lib/llm';
 import { estimateArticleHotness } from '@/lib/article-hotness';
+import { ARTICLE_CATEGORIES, normalizeArticleCategory, type ArticleCategory } from '@/lib/article-categories';
 
 const BATCH = 10;
 
-const TAGS = ['模型发布', '工具更新', '行业动态', '技术研究', '开发者', '产品评测', '国内动态'] as const;
-type ArticleTag = (typeof TAGS)[number];
+const TAGS = ARTICLE_CATEGORIES;
+type ArticleTag = ArticleCategory;
 
 interface EnAiResult {
   titleZh: string;
@@ -50,7 +51,7 @@ function extractJson(s: string): string | null {
 }
 
 function normalizeTag(tag: string | undefined): ArticleTag {
-  return TAGS.includes(tag as ArticleTag) ? (tag as ArticleTag) : '行业动态';
+  return normalizeArticleCategory(tag);
 }
 
 function asStringArray(value: unknown, fallback: string[] = []) {

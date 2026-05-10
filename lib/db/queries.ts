@@ -3,6 +3,7 @@ import { categories, tools, githubTrending, articles, sources, sourceCandidates,
 import { desc, asc, eq, ilike, or, isNull, count, max, and, inArray, gt, sql } from 'drizzle-orm';
 import type { TrendingPeriod, Tool, Category, RepoItem, HomepageStats } from '@/lib/data';
 import type { Comparison, Tool as DbTool } from './schema';
+import { articleCategoryAliases } from '@/lib/article-categories';
 
 const toolHotnessScore = sql<number>`
   (case when ${tools.featured} then 1000 else 0 end)
@@ -514,7 +515,7 @@ export async function loadPendingArticles(limit = 20) {
 export async function loadArticlesPage(page = 1, pageSize = 30, tag?: string) {
   const offset = (page - 1) * pageSize;
   const where = tag
-    ? and(eq(articles.status, 'published'), eq(articles.tag, tag))
+    ? and(eq(articles.status, 'published'), inArray(articles.tag, articleCategoryAliases(tag)))
     : eq(articles.status, 'published');
 
   return db
