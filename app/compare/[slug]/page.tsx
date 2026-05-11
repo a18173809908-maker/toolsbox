@@ -6,6 +6,7 @@ import sanitizeHtml from 'sanitize-html';
 import { SiteHeader } from '@/components/SiteHeader';
 import { AccessBadge, ToolIcon } from '@/components/ToolBadges';
 import { loadAllComparisonIds, loadAllComparisons, loadComparisonById } from '@/lib/db/queries';
+import { scenes } from '@/lib/scenes';
 
 export const revalidate = 3600;
 
@@ -149,6 +150,10 @@ export default async function CompareDetailPage({ params }: Props) {
     .filter((item) => item.id !== comparison.id)
     .filter((item) => [item.toolAId, item.toolBId].some((id) => id === comparison.toolAId || id === comparison.toolBId))
     .slice(0, 3);
+
+  const relatedScenes = scenes.filter((s) =>
+    s.toolIds.includes(comparison.toolAId) || s.toolIds.includes(comparison.toolBId)
+  );
 
   const articleJsonLd = {
     '@context': 'https://schema.org',
@@ -301,12 +306,26 @@ export default async function CompareDetailPage({ params }: Props) {
           </section>
 
           {related.length > 0 && (
-            <section>
+            <section style={{ marginBottom: 20 }}>
               <h2 style={{ color: C.ink, fontSize: 20, margin: '0 0 14px' }}>相关对比</h2>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: 14 }}>
                 {related.map((item) => (
                   <Link key={item.id} href={`/compare/${item.id}`} style={{ background: C.panel, border: `1px solid ${C.rule}`, borderRadius: 12, padding: 18, color: C.ink, textDecoration: 'none', fontWeight: 800 }}>
                     {item.toolA.name} vs {item.toolB.name}
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {relatedScenes.length > 0 && (
+            <section>
+              <h2 style={{ color: C.ink, fontSize: 20, margin: '0 0 14px' }}>相关场景指南</h2>
+              <div style={{ display: 'grid', gap: 10 }}>
+                {relatedScenes.map((scene) => (
+                  <Link key={scene.slug} href={`/scenes/${scene.slug}`} style={{ display: 'block', padding: '14px 16px', borderRadius: 12, background: '#FFF7ED', border: `1px solid ${C.rule}`, color: C.ink, textDecoration: 'none' }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 4 }}>{scene.title}</div>
+                    <div style={{ color: '#6B7280', fontSize: 13, lineHeight: 1.6 }}>{scene.subtitle}</div>
                   </Link>
                 ))}
               </div>
