@@ -83,7 +83,7 @@ async function enrichCandidate(input: { name: string; description?: string }): P
 描述：${input.description || input.name}`;
 
   try {
-    const raw = await chat([{ role: 'user', content: prompt }], { temperature: 0.1, maxTokens: 900 });
+    const raw = await chat([{ role: 'user', content: prompt }], { temperature: 0.1, maxTokens: 1800 });
     const json = extractJson(raw);
     if (!json) return null;
     const parsed = JSON.parse(json) as ToolAiResult;
@@ -145,6 +145,9 @@ export async function processToolCandidates(): Promise<{ processed: number; reje
 
     const enriched = await enrichCandidate({ name: candidate.name, description: candidate.description ?? undefined });
     if (!enriched) {
+      // enrich 返回 null 意味着 LLM 判 isTool=false 或返回格式不可用。
+      // 必须标记为 rejected，否则候选保留 pending，下次还会被反复拉取处理（浪费 token）。
+      await markToolCandidateRejected(candidate.id);
       skipped++;
       continue;
     }
