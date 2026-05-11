@@ -1,6 +1,6 @@
 import { db } from './index';
 import { categories, tools, githubTrending, articles, sources, sourceCandidates, toolCandidates, comparisons, toolConnectivity } from './schema';
-import { desc, asc, eq, ilike, or, isNull, count, max, and, inArray, gt, sql } from 'drizzle-orm';
+import { desc, asc, eq, ilike, or, isNull, count, max, and, inArray, gt, sql, ne } from 'drizzle-orm';
 import type { TrendingPeriod, Tool, Category, RepoItem, HomepageStats } from '@/lib/data';
 import type { Comparison, Tool as DbTool } from './schema';
 import { articleCategoryAliases } from '@/lib/article-categories';
@@ -832,6 +832,53 @@ export async function loadRelatedArticles(toolName: string, limit = 5) {
       and(
         eq(articles.status, 'published'),
         or(ilike(articles.title, pattern), ilike(articles.titleZh, pattern))
+      )
+    )
+    .orderBy(desc(articles.publishedAt))
+    .limit(limit);
+}
+
+export async function loadRelatedArticlesByArticleId(articleId: number, limit = 5) {
+  const currentArticle = await loadArticleById(articleId);
+  if (!currentArticle) return [];
+
+  const tag = currentArticle.tag;
+  if (!tag) {
+    return db
+      .select({
+        id: articles.id,
+        title: articles.title,
+        titleZh: articles.titleZh,
+        url: articles.url,
+        tag: articles.tag,
+        publishedAt: articles.publishedAt,
+      })
+      .from(articles)
+      .where(
+        and(
+          eq(articles.status, 'published'),
+          ne(articles.id, articleId)
+        )
+      )
+      .orderBy(desc(articles.publishedAt))
+      .limit(limit);
+  }
+
+  return db
+    .select({
+      id: articles.id,
+      title: articles.title,
+      titleZh: articles.titleZh,
+      url: articles.url,
+      tag: articles.tag,
+      publishedAt: articles.publishedAt,
+    })
+    .from(articles)
+    .where(
+      and(
+        eq(articles.status, 'published'),
+        ne(articles.id, articleId),
+        inArray(articles.tag, articleCategoryAliases(tag))
       )
     )
     .orderBy(desc(articles.publishedAt))

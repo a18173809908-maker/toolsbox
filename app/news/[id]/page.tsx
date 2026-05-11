@@ -3,7 +3,8 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { ShareButton } from '@/components/ShareButton';
 import { SiteHeader } from '@/components/SiteHeader';
-import { loadArticleById } from '@/lib/db/queries';
+import { ScrollHandler } from '@/components/ScrollHandler';
+import { loadArticleById, loadRelatedArticlesByArticleId } from '@/lib/db/queries';
 import { normalizeArticleCategory } from '@/lib/article-categories';
 
 export const revalidate = 3600;
@@ -34,14 +35,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 const C = {
-  bg: '#FFF7ED', panel: '#FFFFFF', ink: '#1F2937', inkSoft: '#4B5563',
-  inkMuted: '#9CA3AF', rule: '#E8D5B7', ruleSoft: '#F3E8D0',
-  primary: '#F97316', primaryBg: '#FFEDD5', accent: '#C2410C',
+  bg: '#FFF7ED',
+  panel: '#FFFFFF',
+  ink: '#1F2937',
+  inkSoft: '#4B5563',
+  inkMuted: '#9CA3AF',
+  rule: '#E8D5B7',
+  ruleSoft: '#F3E8D0',
+  primary: '#F97316',
+  primaryBg: '#FFEDD5',
+  accent: '#C2410C',
+  success: '#10B981',
+  successBg: '#DCFCE7',
+  blue: '#3B82F6',
+  blueBg: '#EFF6FF',
 };
 
 function fmt(iso: Date | null) {
   if (!iso) return '';
-  return new Date(iso).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+  return new Date(iso).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 function normalizeText(text: string) {
@@ -68,10 +80,18 @@ function isSamePoint(a?: string | null, b?: string | null) {
   return sharesNumber && sharesName;
 }
 
+function TagBadge({ label }: { label: string }) {
+  return (
+    <span style={{ padding: '3px 10px', borderRadius: 6, background: C.primaryBg, color: C.accent, fontSize: 12, fontWeight: 700 }}>
+      {label}
+    </span>
+  );
+}
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section style={{ borderTop: `1px solid ${C.ruleSoft}`, paddingTop: 22, marginTop: 22 }}>
-      <h2 style={{ fontSize: 17, fontWeight: 800, color: C.ink, margin: '0 0 14px' }}>
+      <h2 style={{ fontSize: 18, fontWeight: 850, color: C.ink, margin: '0 0 14px' }}>
         {title}
       </h2>
       {children}
@@ -79,10 +99,80 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
+function ToolCard({ tool }: { tool: { id?: string; name: string; reason?: string } }) {
+  return tool.id ? (
+    <Link
+      href={`/tools/${tool.id}`}
+      className="news-tool-card-link"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        padding: 14,
+        borderRadius: 12,
+        border: `1px solid ${C.rule}`,
+        background: '#FFFDF9',
+        textDecoration: 'none',
+        transition: 'all .15s',
+      }}
+    >
+      <div style={{ width: 36, height: 36, borderRadius: 10, background: C.primaryBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <span style={{ fontSize: 14, fontWeight: 900, color: C.accent }}>{tool.name.slice(0, 2)}</span>
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 750, color: C.ink }}>{tool.name}</div>
+        {tool.reason && <div style={{ fontSize: 12, color: C.inkMuted }}>{tool.reason}</div>}
+      </div>
+      <svg style={{ width: 14, height: 14, color: C.inkMuted }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+      </svg>
+    </Link>
+  ) : (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, border: `1px solid ${C.rule}`, background: '#FFFDF9' }}>
+      <div style={{ width: 36, height: 36, borderRadius: 10, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <span style={{ fontSize: 14, fontWeight: 900, color: C.inkMuted }}>{tool.name.slice(0, 2)}</span>
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 750, color: C.ink }}>{tool.name}</div>
+        {tool.reason && <div style={{ fontSize: 12, color: C.inkMuted }}>{tool.reason}</div>}
+      </div>
+    </div>
+  );
+}
+
+function RelatedArticleCard({ article }: { article: { id: number; title: string; titleZh: string | null; tag: string | null; publishedAt: Date | null } }) {
+  return (
+    <Link
+      href={`/news/${article.id}`}
+      className="news-related-card-link"
+      style={{
+        display: 'block',
+        padding: 16,
+        borderRadius: 12,
+        border: `1px solid ${C.rule}`,
+        background: C.panel,
+        textDecoration: 'none',
+        transition: 'all .15s',
+      }}
+    >
+      <h3 style={{ fontSize: 14, fontWeight: 800, color: C.ink, lineHeight: 1.5, margin: '0 0 8px' }}>{article.titleZh || article.title}</h3>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {article.tag && <TagBadge label={normalizeArticleCategory(article.tag)} />}
+        <span style={{ fontSize: 12, color: C.inkMuted }}>{fmt(article.publishedAt)}</span>
+      </div>
+    </Link>
+  );
+}
+
 export default async function NewsDetailPage({ params }: Props) {
   const { id } = await params;
-  const art = await loadArticleById(Number(id));
+  const [art, relatedArticles] = await Promise.all([
+    loadArticleById(Number(id)),
+    loadRelatedArticlesByArticleId(Number(id), 5),
+  ]);
+  
   if (!art) notFound();
+  
   const insights = art.aiInsights;
   const title = art.titleZh || art.title;
   const category = normalizeArticleCategory(art.tag);
@@ -107,32 +197,23 @@ export default async function NewsDetailPage({ params }: Props) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      
       <div style={{ minHeight: '100vh', background: C.bg, fontFamily: 'Inter, ui-sans-serif, system-ui, "PingFang SC", "Microsoft YaHei", sans-serif' }}>
-
         <SiteHeader />
+        <ScrollHandler />
 
-        {/* Article */}
         <main style={{ maxWidth: 760, margin: 'clamp(28px, 7vw, 48px) auto', padding: '0 clamp(16px, 5vw, 24px) 64px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: C.inkMuted, fontSize: 13, marginBottom: 18, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: C.inkMuted, fontSize: 13, marginBottom: 18 }}>
             <Link href="/news" style={{ color: C.inkMuted, textDecoration: 'none' }}>AI 资讯</Link>
             <span>/</span>
-            <span style={{ color: C.ink, fontWeight: 600, maxWidth: 360, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {title}
-            </span>
+            <span style={{ color: C.ink, fontWeight: 600 }}>{title}</span>
           </div>
-          <article style={{ background: C.panel, borderRadius: 16, border: `1px solid ${C.rule}`, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', padding: 'clamp(24px, 6vw, 40px) clamp(18px, 6vw, 48px)' }}>
 
-            {/* Tag + meta */}
+          <article style={{ background: C.panel, borderRadius: 16, border: `1px solid ${C.rule}`, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', padding: 'clamp(24px, 6vw, 40px) clamp(18px, 6vw, 48px)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
-              {art.tag && (
-                <span style={{ padding: '3px 10px', borderRadius: 4, background: C.primaryBg, color: C.accent, fontSize: 11, fontWeight: 700 }}>{category}</span>
-              )}
-              {art.publishedAt && (
-                <span style={{ fontSize: 13, color: C.inkMuted }}>{fmt(art.publishedAt)}</span>
-              )}
-              {art.sourceName && (
-                <span style={{ fontSize: 13, color: C.inkMuted, marginLeft: 'auto' }}>来源：{art.sourceName}</span>
-              )}
+              {art.tag && <TagBadge label={category} />}
+              {art.publishedAt && <span style={{ fontSize: 13, color: C.inkMuted }}>{fmt(art.publishedAt)}</span>}
+              {art.sourceName && <span style={{ fontSize: 13, color: C.inkMuted, marginLeft: 'auto' }}>来源：{art.sourceName}</span>}
               <ShareButton title={title} text={description} path={`/news/${art.id}`} compact />
             </div>
 
@@ -147,47 +228,55 @@ export default async function NewsDetailPage({ params }: Props) {
             )}
 
             {description && !isSamePoint(description, title) && (
-              <Section title="一句话摘要">
-                <p style={{ fontSize: 17, color: C.inkSoft, lineHeight: 1.8, margin: 0, fontWeight: 500 }}>
-                  {description}
-                </p>
+              <div style={{ background: C.primaryBg, border: `1px solid ${C.rule}`, borderRadius: 12, padding: 20, marginBottom: 22 }}>
+                <div style={{ fontSize: 12, fontWeight: 800, color: C.accent, marginBottom: 8 }}>快速了解</div>
+                <p style={{ fontSize: 16, color: C.ink, lineHeight: 1.75, margin: 0 }}>{description}</p>
+              </div>
+            )}
+
+            {eventBackground && (
+              <Section title="📚 背景解读">
+                <p style={{ fontSize: 15, color: C.inkSoft, lineHeight: 1.8, margin: 0 }}>{eventBackground}</p>
               </Section>
             )}
 
             {keyPoints.length > 0 && (
-              <Section title="关键信息">
-                <ul style={{ display: 'grid', gap: 10, margin: 0, padding: 0, listStyle: 'none' }}>
-                  {keyPoints.map((item) => (
-                    <li key={item} style={{ display: 'flex', gap: 10, fontSize: 15, color: C.inkSoft, lineHeight: 1.7 }}>
-                      <span style={{ width: 6, height: 6, borderRadius: 3, background: C.primary, marginTop: 10, flex: '0 0 auto' }} />
-                      <span>{item}</span>
+              <Section title="🎯 核心要点">
+                <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: 12 }}>
+                  {keyPoints.map((item, index) => (
+                    <li key={index} style={{ display: 'flex', gap: 12 }}>
+                      <span style={{ width: 26, height: 26, borderRadius: 13, background: C.successBg, color: C.success, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 900, flexShrink: 0 }}>
+                        {index + 1}
+                      </span>
+                      <span style={{ fontSize: 15, color: C.inkSoft, lineHeight: 1.7 }}>{item}</span>
                     </li>
                   ))}
                 </ul>
               </Section>
             )}
 
-            {eventBackground && (
-              <Section title="事件背景">
-                <p style={{ fontSize: 15, color: C.inkSoft, lineHeight: 1.8, margin: 0 }}>{eventBackground}</p>
-              </Section>
-            )}
-
             {insights?.whyItMatters && (
-              <Section title="影响分析">
-                <div style={{ display: 'grid', gap: 10, fontSize: 15, color: C.inkSoft, lineHeight: 1.8 }}>
-                  <p style={{ margin: 0 }}>{insights.whyItMatters}</p>
-                  {insights.chinaImpact && <p style={{ margin: 0 }}>{insights.chinaImpact}</p>}
+              <Section title="💡 影响分析">
+                <div style={{ background: C.blueBg, border: '1px solid #DBEAFE', borderRadius: 12, padding: 20 }}>
+                  <p style={{ fontSize: 15, color: C.ink, lineHeight: 1.8, margin: '0 0 14px', fontWeight: 500 }}>{insights.whyItMatters}</p>
+                  {insights.chinaImpact && (
+                    <div style={{ paddingTop: 14, borderTop: '1px solid #DBEAFE' }}>
+                      <p style={{ fontSize: 14, color: C.inkSoft, lineHeight: 1.7 }}>
+                        <span style={{ fontWeight: 700, color: '#059669' }}>🇨🇳 对中国市场影响：</span>
+                        {insights.chinaImpact}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </Section>
             )}
 
             {insights?.whoShouldCare && insights.whoShouldCare.length > 0 && (
-              <Section title="适合谁关注">
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <Section title="👥 适合人群">
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {insights.whoShouldCare.map((item) => (
-                    <span key={item} style={{ padding: '6px 10px', borderRadius: 6, background: C.primaryBg, color: C.accent, fontSize: 12, fontWeight: 700 }}>
-                      {item}
+                    <span key={item} style={{ padding: '6px 12px', borderRadius: 999, background: '#F0FDF4', color: '#166534', fontSize: 13, fontWeight: 700 }}>
+                      ✓ {item}
                     </span>
                   ))}
                 </div>
@@ -195,50 +284,116 @@ export default async function NewsDetailPage({ params }: Props) {
             )}
 
             {insights?.relatedTools && insights.relatedTools.length > 0 && (
-              <Section title="相关工具">
+              <Section title="🔧 相关工具">
                 <div style={{ display: 'grid', gap: 10 }}>
-                  {insights.relatedTools.slice(0, 5).map((tool) => {
-                    const content = (
-                      <>
-                        <span style={{ fontWeight: 750, color: C.ink }}>{tool.name}</span>
-                        {tool.reason && <span style={{ color: C.inkMuted }}>{tool.reason}</span>}
-                      </>
-                    );
-                    return tool.id ? (
-                      <Link key={`${tool.id}-${tool.name}`} href={`/tools/${tool.id}`} style={{ display: 'flex', flexDirection: 'column', gap: 3, padding: 12, borderRadius: 8, border: `1px solid ${C.ruleSoft}`, background: C.bg, textDecoration: 'none', fontSize: 13, lineHeight: 1.55 }}>
-                        {content}
-                      </Link>
-                    ) : (
-                      <div key={tool.name} style={{ display: 'flex', flexDirection: 'column', gap: 3, padding: 12, borderRadius: 8, border: `1px solid ${C.ruleSoft}`, background: C.bg, fontSize: 13, lineHeight: 1.55 }}>
-                        {content}
-                      </div>
-                    );
-                  })}
+                  {insights.relatedTools.slice(0, 5).map((tool) => (
+                    <ToolCard key={tool.id ?? tool.name} tool={tool} />
+                  ))}
                 </div>
               </Section>
             )}
 
-            <Section title="相关链接">
-              <a href={art.url} target="_blank" rel="noopener noreferrer" style={{ color: C.accent, fontSize: 15, fontWeight: 750, textDecoration: 'none' }}>
-                查看原文：{art.sourceName ?? '原始来源'} ↗
+            <Section title="🔗 延伸阅读">
+              <a
+                href={art.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="news-read-original-link"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: 16,
+                  borderRadius: 12,
+                  border: `1px solid ${C.rule}`,
+                  background: '#FFFDF9',
+                  color: C.accent,
+                  textDecoration: 'none',
+                  transition: 'all .15s',
+                }}
+              >
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: C.panel, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg style={{ width: 18, height: 18, color: C.accent }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 15, fontWeight: 750 }}>阅读原文</div>
+                  <div style={{ fontSize: 13, color: C.inkMuted }}>{art.sourceName ?? '查看完整报道'}</div>
+                </div>
+                <svg style={{ width: 16, height: 16 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
               </a>
             </Section>
 
-            {/* CTA to original */}
-            <div style={{ borderTop: `1px solid ${C.ruleSoft}`, paddingTop: 24, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-              <a href={art.url} target="_blank" rel="noopener noreferrer" style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8, padding: '11px 24px',
-                borderRadius: 999, background: C.primary, color: '#fff',
-                fontSize: 14, fontWeight: 600, textDecoration: 'none',
-              }}>
-                阅读原文 ↗
-              </a>
-              <Link href="/news" style={{ fontSize: 13, color: C.inkSoft, textDecoration: 'none' }}>← 返回资讯列表</Link>
-              <ShareButton title={title} text={description} path={`/news/${art.id}`} />
+            <div style={{ borderTop: `1px solid ${C.ruleSoft}`, paddingTop: 24, marginTop: 22, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  className="news-collect-btn"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '10px 18px',
+                    borderRadius: 999,
+                    border: `1px solid ${C.rule}`,
+                    background: C.panel,
+                    color: C.inkSoft,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all .15s',
+                  }}
+                >
+                  <svg style={{ width: 16, height: 16 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                  收藏文章
+                </button>
+                <button
+                  className="news-like-btn"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '10px 18px',
+                    borderRadius: 999,
+                    border: `1px solid ${C.rule}`,
+                    background: C.panel,
+                    color: C.inkSoft,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all .15s',
+                  }}
+                >
+                  <svg style={{ width: 16, height: 16 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                  觉得有用
+                </button>
+              </div>
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ fontSize: 13, color: C.inkMuted }}>分享给朋友</span>
+                <ShareButton title={title} text={description} path={`/news/${art.id}`} />
+              </div>
             </div>
           </article>
+
+          {relatedArticles.length > 0 && (
+            <div style={{ background: C.panel, borderRadius: 16, border: `1px solid ${C.rule}`, boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(22px, 4vw, 28px)', marginTop: 24 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 850, color: C.ink, margin: '0 0 16px' }}>📰 你可能也感兴趣</h2>
+              <div style={{ display: 'grid', gap: 12 }}>
+                {relatedArticles.map((article) => (
+                  <RelatedArticleCard key={article.id} article={article} />
+                ))}
+              </div>
+            </div>
+          )}
         </main>
-      </div>
+
+        </div>
     </>
   );
 }

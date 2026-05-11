@@ -25,6 +25,7 @@
 
 - `community-distribution-sop.md`：社区分发流程
 - `vendor-outreach-sop.md`：厂商触达流程
+- `traffic-analysis-2026-05-09.md`：Vercel Analytics 快照、解读和增长动作
 
 ## 草稿与归档
 

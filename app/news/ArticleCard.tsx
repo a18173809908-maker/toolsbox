@@ -82,7 +82,7 @@ export function ArticleCard({ art }: { art: ArticleRow }) {
   const category = normalizeArticleCategory(art.tag);
 
   return (
-    <article style={{
+    <article className="news-article-card" style={{
       display: 'flex', flexDirection: 'column', gap: 14,
       background: C.panel, borderRadius: 10, padding: '22px 26px',
       border: `1px solid ${C.rule}`,
@@ -90,10 +90,8 @@ export function ArticleCard({ art }: { art: ArticleRow }) {
       textDecoration: 'none',
       boxShadow: '0 1px 2px rgba(0,0,0,0.035)',
       transition: 'box-shadow .15s, transform .15s',
-    }}
-    onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.boxShadow = '0 8px 24px -8px rgba(31,41,55,0.18)'; el.style.transform = 'translateY(-1px)'; }}
-    onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'; el.style.transform = 'translateY(0)'; }}
-    >
+      cursor: 'pointer',
+    }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
         <span style={{ width: 12, height: 12, borderRadius: 4, border: `2px solid ${C.accentSoft}`, marginTop: 8, flex: '0 0 auto', transform: 'rotate(45deg)' }} />
         <Link href={href} style={{ textDecoration: 'none', display: 'block', flex: 1, minWidth: 0 }}>

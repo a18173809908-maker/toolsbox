@@ -59,9 +59,17 @@ export default async function NewsPage({ searchParams }: Props) {
         {/* Articles grid */}
         <main style={{ maxWidth: 1180, margin: '0 auto', padding: 'clamp(28px, 6vw, 40px) clamp(16px, 5vw, 24px) 64px' }}>
           {articles.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '80px 0', color: C.inkMuted }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>📰</div>
-              <p style={{ fontSize: 16 }}>暂无资讯，稍后再来查看</p>
+            <div style={{ textAlign: 'center', padding: '100px 20px', color: C.inkMuted }}>
+              <div style={{ width: 80, height: 80, margin: '0 auto 24px', borderRadius: 20, background: C.primaryBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg style={{ width: 40, height: 40 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: C.ink, margin: '0 0 8px' }}>暂无相关资讯</h2>
+              <p style={{ fontSize: 14, lineHeight: 1.6 }}>当前分类下暂无内容，请尝试其他分类或稍后再来</p>
+              <Link href="/news" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 20, padding: '10px 20px', borderRadius: 999, background: C.primary, color: '#fff', textDecoration: 'none', fontSize: 14, fontWeight: 700 }}>
+                返回全部资讯
+              </Link>
             </div>
           ) : (
             <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
@@ -102,11 +110,16 @@ export default async function NewsPage({ searchParams }: Props) {
                       {hotTopics.map((topic, index) => {
                         const isBurst = Number(topic.maxHotness ?? 0) >= 70;
                         return (
-                          <div key={topic.topic ?? index} style={{ display: 'grid', gridTemplateColumns: '24px minmax(0,1fr) auto', alignItems: 'start', gap: 10, padding: '12px 0', borderTop: index === 0 ? 'none' : `1px solid ${C.ruleSoft}`, color: C.ink }}>
+                          <Link
+                            key={topic.topic ?? index}
+                            href={`/news?tag=${encodeURIComponent(topic.topic ?? '')}`}
+                            className="news-hot-topic-link"
+                            style={{ display: 'grid', gridTemplateColumns: '24px minmax(0,1fr) auto', alignItems: 'start', gap: 10, padding: '12px 0', borderTop: index === 0 ? 'none' : `1px solid ${C.ruleSoft}`, color: C.ink, textDecoration: 'none', transition: 'background .15s' }}
+                          >
                             <span style={{ color: C.accent, fontWeight: 900, fontSize: 14, lineHeight: 1.6 }}>{index + 1}.</span>
                             <span style={{ minWidth: 0, fontSize: 14, fontWeight: 800, lineHeight: 1.55, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }} title={topic.samples?.[0]}>{topic.topic}</span>
                             {isBurst && <span style={{ padding: '2px 7px', borderRadius: 999, background: C.primaryBg, color: C.accent, fontSize: 11, fontWeight: 900 }}>爆</span>}
-                          </div>
+                          </Link>
                         );
                       })}
                     </div>
