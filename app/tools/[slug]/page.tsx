@@ -6,6 +6,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { AccessBadge, ToolIcon } from '@/components/ToolBadges';
 import { loadToolById, loadAllToolIds, loadToolsByCategory, loadRelatedArticles, loadToolsByIds, loadLabReportsByToolId, loadConnectivityByToolId, loadComparisonsByToolId } from '@/lib/db/queries';
 import { normalizeArticleCategory } from '@/lib/article-categories';
+import { scenes } from '@/lib/scenes';
 
 export const revalidate = 3600; // ISR — regenerate hourly
 export const dynamic = 'force-dynamic';
@@ -160,6 +161,8 @@ export default async function ToolDetailPage({ params }: Props) {
     loadConnectivityByToolId(tool.id),
     loadComparisonsByToolId(tool.id, 5),
   ]);
+
+  const relatedScenes = scenes.filter((s) => s.toolIds.includes(tool.id));
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -504,6 +507,22 @@ export default async function ToolDetailPage({ params }: Props) {
                   <Link key={comparison.id} href={`/compare/${comparison.id}`} style={{ display: 'block', padding: '14px 16px', borderRadius: 12, background: '#FFF7ED', border: '1px solid #F3E8D0', color: '#1F2937', textDecoration: 'none' }}>
                     <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 6 }}>{comparison.title}</div>
                     <div style={{ color: '#6B7280', fontSize: 13, lineHeight: 1.6 }}>{comparison.summary ?? comparison.verdict ?? `${comparison.toolA.name} 与 ${comparison.toolB.name} 的工具选择对比。`}</div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {relatedScenes.length > 0 && (
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(22px, 4vw, 32px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20, fontWeight: 700, color: '#1F2937', margin: '0 0 16px' }}>
+                相关场景指南
+              </h2>
+              <div style={{ display: 'grid', gap: 10 }}>
+                {relatedScenes.map((scene) => (
+                  <Link key={scene.slug} href={`/scenes/${scene.slug}`} style={{ display: 'block', padding: '14px 16px', borderRadius: 12, background: '#FFF7ED', border: '1px solid #F3E8D0', color: '#1F2937', textDecoration: 'none' }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 4 }}>{scene.title}</div>
+                    <div style={{ color: '#6B7280', fontSize: 13, lineHeight: 1.6 }}>{scene.subtitle}</div>
                   </Link>
                 ))}
               </div>
