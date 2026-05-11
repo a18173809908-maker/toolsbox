@@ -41,7 +41,8 @@
     "enhance:video-details": "tsx --env-file=.env.local scripts/enhance-video-tool-details.ts",
     "seed:video-comparisons": "tsx --env-file=.env.local scripts/seed-video-comparisons.ts",
     "draft:social": "tsx --env-file=.env.local scripts/draft-social.ts",
-    "audit:comparisons": "tsx --env-file=.env.local scripts/audit-comparisons.ts"
+    "audit:comparisons": "tsx --env-file=.env.local scripts/audit-comparisons.ts",
+    "eval:prompt": "tsx --env-file=.env.local scripts/eval-prompt.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

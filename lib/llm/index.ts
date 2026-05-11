@@ -1,9 +1,16 @@
 // Provider-agnostic LLM client. Swap provider via LLM_PROVIDER env var.
 // Currently: deepseek (OpenAI-compatible). Anthropic adapter can be added here.
+//
+// Model tiers (see docs/dev-plan-2026-05.md Q12):
+//   - standard: 客观字段起草、翻译、轻量任务 → 用 LLM_MODEL
+//   - premium:  立场字段起草、反套话审计、需要判断的任务 → 用 LLM_MODEL_PREMIUM
+// 当前 standard 和 premium 都指向 DeepSeek（LLM_MODEL_PREMIUM 缺省 fallback 到 LLM_MODEL）。
+// 未来要升 Claude Sonnet 时只需在 .env 设 LLM_MODEL_PREMIUM=claude-sonnet-... 并加 anthropic adapter。
 
 import OpenAI from 'openai';
 
 type Provider = 'deepseek' | 'openai' | 'anthropic';
+export type ModelTier = 'standard' | 'premium';
 
 const PROVIDER_DEFAULTS: Record<Provider, { baseURL?: string; defaultModel: string; envKey: string }> = {
   deepseek: { baseURL: 'https://api.deepseek.com/v1', defaultModel: 'deepseek-chat', envKey: 'DEEPSEEK_API_KEY' },
@@ -11,7 +18,7 @@ const PROVIDER_DEFAULTS: Record<Provider, { baseURL?: string; defaultModel: stri
   anthropic: { defaultModel: 'claude-haiku-4-5-20251001', envKey: 'ANTHROPIC_API_KEY' },
 };
 
-function getClient() {
+function getClient(tier: ModelTier = 'standard') {
   const provider = (process.env.LLM_PROVIDER || 'deepseek') as Provider;
   if (provider === 'anthropic') {
     throw new Error('anthropic adapter not implemented yet — set LLM_PROVIDER=deepseek');
@@ -19,15 +26,21 @@ function getClient() {
   const cfg = PROVIDER_DEFAULTS[provider];
   const apiKey = process.env[cfg.envKey];
   if (!apiKey) throw new Error(`${cfg.envKey} not set`);
-  const model = process.env.LLM_MODEL || cfg.defaultModel;
+  const model =
+    tier === 'premium'
+      ? process.env.LLM_MODEL_PREMIUM || process.env.LLM_MODEL || cfg.defaultModel
+      : process.env.LLM_MODEL || cfg.defaultModel;
   const client = new OpenAI({ apiKey, baseURL: cfg.baseURL });
-  return { client, model, provider };
+  return { client, model, provider, tier };
 }
 
 export type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string };
 
-export async function chat(messages: ChatMessage[], opts?: { temperature?: number; maxTokens?: number }) {
-  const { client, model } = getClient();
+export async function chat(
+  messages: ChatMessage[],
+  opts?: { temperature?: number; maxTokens?: number; tier?: ModelTier },
+): Promise<string> {
+  const { client, model } = getClient(opts?.tier);
   const res = await client.chat.completions.create({
     model,
     messages,
@@ -35,6 +48,12 @@ export async function chat(messages: ChatMessage[], opts?: { temperature?: numbe
     max_tokens: opts?.maxTokens ?? 1024,
   });
   return res.choices[0]?.message?.content?.trim() ?? '';
+}
+
+// Returns the actual model name resolved for the given tier (for logging into draft rows).
+export function resolveModelName(tier: ModelTier = 'standard'): string {
+  const { model } = getClient(tier);
+  return model;
 }
 
 // Translate a batch of strings EN → ZH-CN. Returns same-length array.
