@@ -327,57 +327,9 @@ export default async function NewsDetailPage({ params }: Props) {
               </a>
             </Section>
 
-            <div style={{ borderTop: `1px solid ${C.ruleSoft}`, paddingTop: 24, marginTop: 22, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button
-                  className="news-collect-btn"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '10px 18px',
-                    borderRadius: 999,
-                    border: `1px solid ${C.rule}`,
-                    background: C.panel,
-                    color: C.inkSoft,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    transition: 'all .15s',
-                  }}
-                >
-                  <svg style={{ width: 16, height: 16 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                  收藏文章
-                </button>
-                <button
-                  className="news-like-btn"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '10px 18px',
-                    borderRadius: 999,
-                    border: `1px solid ${C.rule}`,
-                    background: C.panel,
-                    color: C.inkSoft,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    transition: 'all .15s',
-                  }}
-                >
-                  <svg style={{ width: 16, height: 16 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                  觉得有用
-                </button>
-              </div>
-              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{ fontSize: 13, color: C.inkMuted }}>分享给朋友</span>
-                <ShareButton title={title} text={description} path={`/news/${art.id}`} />
-              </div>
+            <div style={{ borderTop: `1px solid ${C.ruleSoft}`, paddingTop: 24, marginTop: 22, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
+              <span style={{ fontSize: 13, color: C.inkMuted }}>分享给朋友</span>
+              <ShareButton title={title} text={description} path={`/news/${art.id}`} />
             </div>
           </article>
 
