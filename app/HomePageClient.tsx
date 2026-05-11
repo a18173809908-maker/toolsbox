@@ -25,12 +25,12 @@ type HomePageClientProps = {
 };
 
 const sceneSolutions = [
-  { title: '做小红书内容', icon: '📝', desc: '文案+图片+视频一站式', search: '小红书 文案 图片 视频' },
-  { title: '写代码', icon: '💻', desc: 'AI编程助手推荐', search: '编程 AI助手 代码' },
-  { title: '做PPT', icon: '📊', desc: 'AI生成演示文稿', search: 'PPT 演示文稿 幻灯片' },
-  { title: '做视频', icon: '🎬', desc: 'AI视频生成工具', search: '视频生成 AI视频' },
-  { title: '做设计', icon: '🎨', desc: 'AI绘图+设计工具', search: '绘图 设计 AI图像' },
-  { title: '写文案', icon: '✍️', desc: 'AI写作工具合集', search: '写作 文案 AI写作' },
+  { title: '做小红书内容', icon: '📝', desc: '文案+图片+视频一站式', cat: 'social' },
+  { title: '写代码', icon: '💻', desc: 'AI编程助手推荐', cat: 'code' },
+  { title: '做PPT', icon: '📊', desc: 'AI生成演示文稿', cat: 'ppt' },
+  { title: '做视频', icon: '🎬', desc: 'AI视频生成工具', cat: 'video' },
+  { title: '做设计', icon: '🎨', desc: 'AI绘图+设计工具', cat: 'design' },
+  { title: '写文案', icon: '✍️', desc: 'AI写作工具合集', cat: 'writing' },
 ];
 
 const quickTags = ['免费工具', '国内可用', 'AI写作', 'AI绘图', '编程助手', '视频创作', '办公效率'];
@@ -417,7 +417,7 @@ export function HomePageClient({ tools, categories, trending, articles }: HomePa
             {sceneSolutions.map((scene) => (
               <Link
                 key={scene.title}
-                href={`/tools?q=${encodeURIComponent(scene.search)}`}
+                href={`/tools?cat=${scene.cat}`}
                 style={{
                   background: '#fff',
                   borderRadius: 16,
