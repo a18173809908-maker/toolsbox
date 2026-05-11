@@ -606,6 +606,56 @@ const PERIOD_LABELS: { value: TrendingPeriod; label: string }[] = [
   { value: 'month', label: '本月' },
 ];
 
+function repoName(repo: string) {
+  return repo.split('/').pop() || repo;
+}
+
+function escapeRegExp(text: string) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function cleanRepoDescription(text: string, name: string) {
+  return text
+    .replace(new RegExp(`^${escapeRegExp(name)}\\s*[:：-]\\s*`, 'i'), '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/[。.]$/, '');
+}
+
+function inferRepoUseCase(repo: RepoItem) {
+  const haystack = `${repo.repo} ${repo.desc} ${repo.descZh ?? ''}`.toLowerCase();
+  const langPart = repo.lang ? `${repo.lang} 生态、` : '';
+
+  if (/trading|finance|financial|金融|交易/.test(haystack)) {
+    return `${langPart}金融 AI、交易智能体或量化研究实现参考`;
+  }
+  if (/agent|智能体|multi-?agents?/.test(haystack)) {
+    return `${langPart}AI Agent 架构、自动化工作流或多智能体协作参考`;
+  }
+  if (/rag|retrieval|vector|检索|知识库|向量/.test(haystack)) {
+    return `${langPart}RAG、知识库检索或企业数据问答方案参考`;
+  }
+  if (/ui|dashboard|interface|界面/.test(haystack)) {
+    return `${langPart}AI 应用界面、控制台或产品原型参考`;
+  }
+  if (/model|llm|inference|推理|模型/.test(haystack)) {
+    return `${langPart}模型部署、推理优化或模型能力评估参考`;
+  }
+  if (/dev|code|cli|开发|代码|命令行/.test(haystack)) {
+    return `${langPart}开发工具、工程效率或自动化脚本参考`;
+  }
+
+  return `${langPart}技术选型、方案调研或同类项目实现参考`;
+}
+
+function buildRepoCardSummary(repo: RepoItem) {
+  const name = repoName(repo.repo);
+  const raw = repo.descZh || repo.desc || `${name} 是近期 Star 增长较快的开源项目`;
+  const desc = cleanRepoDescription(raw, name);
+  const useCase = inferRepoUseCase(repo).replace(/参考$/, '');
+  return `${name}：${desc}，可作为${useCase}参考。`;
+}
+
 function TrendingRail({ trending, mobile }: { trending: Record<TrendingPeriod, RepoItem[]>; mobile: boolean }) {
   const [period, setPeriod] = React.useState<TrendingPeriod>('today');
   const repos = trending[period].slice(0, 6);
@@ -667,6 +717,7 @@ function TrendingRail({ trending, mobile }: { trending: Record<TrendingPeriod, R
         >
           {repos.map((repo, index) => {
             const langColor = LANG_COLOR[repo.lang] ?? '#9CA3AF';
+            const summary = buildRepoCardSummary(repo);
             return (
               <Link
                 key={repo.repo}
@@ -724,7 +775,7 @@ function TrendingRail({ trending, mobile }: { trending: Record<TrendingPeriod, R
                   WebkitBoxOrient: 'vertical' as const,
                   flex: 1,
                 }}>
-                  {repo.descZh || repo.desc}
+                  {summary}
                 </p>
                 <div style={{
                   display: 'flex',
