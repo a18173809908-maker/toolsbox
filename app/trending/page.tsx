@@ -79,6 +79,89 @@ function buildNaturalSummary(summary: string, useCase: string) {
   return `${summary} 适合关注 ${useCase.replace(/[。.]$/, '')}。`;
 }
 
+type RepoCardCopyInput = {
+  repo: string;
+  description: string;
+  descriptionZh?: string | null;
+  lang: string;
+  gained: number;
+};
+
+function repoName(repo: string) {
+  return repo.split('/').pop() || repo;
+}
+
+function escapeRegExp(text: string) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function tidyDescription(text: string, name: string) {
+  return text
+    .replace(new RegExp(`^${escapeRegExp(name)}\\s*[:：-]\\s*`, 'i'), '')
+    .replace(/\bLLM\b/g, 'LLM')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/[。.]$/, '');
+}
+
+function inferProjectType(text: string) {
+  const lower = text.toLowerCase();
+  if (/agent|智能体|multi-?agents?/.test(lower)) return 'AI Agent';
+  if (/framework|框架|sdk|toolkit|工具包/.test(lower)) return '开发框架';
+  if (/model|llm|inference|推理|模型/.test(lower)) return '模型/推理';
+  if (/ui|dashboard|app|interface|界面|应用/.test(lower)) return '应用/UI';
+  if (/data|database|vector|rag|数据|向量/.test(lower)) return '数据/基础设施';
+  return '开源项目';
+}
+
+function inferUseCase(text: string, lang: string) {
+  const lower = text.toLowerCase();
+  const langPart = lang ? `${lang} 生态、` : '';
+  if (/trading|finance|financial|金融|交易/.test(lower)) {
+    return `${langPart}金融 AI、交易智能体或量化研究实现参考`;
+  }
+  if (/agent|智能体|multi-?agents?/.test(lower)) {
+    return `${langPart}AI Agent 架构、自动化工作流或多智能体协作参考`;
+  }
+  if (/rag|retrieval|vector|检索|知识库|向量/.test(lower)) {
+    return `${langPart}RAG、知识库检索或企业数据问答方案参考`;
+  }
+  if (/ui|dashboard|interface|界面/.test(lower)) {
+    return `${langPart}AI 应用界面、控制台或产品原型参考`;
+  }
+  if (/model|llm|inference|推理|模型/.test(lower)) {
+    return `${langPart}模型部署、推理优化或模型能力评估参考`;
+  }
+  if (/dev|code|cli|开发|代码|命令行/.test(lower)) {
+    return `${langPart}开发工具、工程效率或自动化脚本参考`;
+  }
+  return `${langPart}技术选型、方案调研或同类项目实现参考`;
+}
+
+function buildFallbackCardCopy(repo: RepoCardCopyInput, periodLabel: string) {
+  const name = repoName(repo.repo);
+  const raw = repo.descriptionZh || repo.description || `${name} 是近期 Star 增长较快的开源项目`;
+  const desc = tidyDescription(raw, name);
+  const haystack = `${repo.repo} ${repo.description} ${repo.descriptionZh ?? ''}`;
+  const projectType = inferProjectType(haystack);
+  const useCase = inferUseCase(haystack, repo.lang);
+  const summary = `${name}：${desc}，可作为${useCase.replace(/参考$/, '')}参考。`;
+
+  return {
+    summary,
+    useCase,
+    keyPoints: [
+      `${periodLabel}新增 ${repo.gained.toLocaleString()} stars`,
+      repo.lang ? `主要使用 ${repo.lang}` : '建议查看 README 进一步评估',
+      projectType,
+    ],
+    whyTrending: `${periodLabel} Star 增长 ${repo.gained.toLocaleString()}，说明开发者关注度正在上升。`,
+    projectType,
+    maturity: '可试用',
+    audience: ['开发者', '技术选型'],
+  };
+}
+
 export default async function TrendingPage({ searchParams }: Props) {
   const { period = 'today' } = await searchParams;
   const safe = (['today', 'week', 'month'] as const).includes(period as 'today')
@@ -139,17 +222,14 @@ export default async function TrendingPage({ searchParams }: Props) {
               const [owner, name] = r.repo.split('/');
               const langColor = LANG_COLOR[r.lang] || '#888';
               const insights = r.aiInsights;
-              const summary = insights?.oneSentenceSummary || r.descriptionZh || r.description || `${name} 是近期 Star 增长较快的开源项目。`;
               const periodLabel = safe === 'today' ? '今日' : safe === 'week' ? '本周' : '本月';
-              const useCase = insights?.useCase || `${r.lang || '开源'} 生态相关项目，可作为技术选型或实现参考。`;
+              const fallback = buildFallbackCardCopy(r, periodLabel);
+              const summary = insights?.oneSentenceSummary || fallback.summary;
+              const useCase = insights?.useCase || fallback.useCase;
               const keyPoints = insights?.keyPoints?.length
                 ? insights.keyPoints.slice(0, 3)
-                : [
-                    r.descriptionZh || r.description || '近期关注度增长明显',
-                    `${periodLabel}新增 ${r.gained.toLocaleString()} stars`,
-                    r.lang ? `主要使用 ${r.lang}` : '建议查看 README 进一步评估',
-                  ];
-              const whyTrending = insights?.whyTrending || `${periodLabel} Star 增长 ${r.gained.toLocaleString()}，开发者关注度正在上升。`;
+                : fallback.keyPoints;
+              const whyTrending = insights?.whyTrending || fallback.whyTrending;
               const visiblePoints = keyPoints.filter((point) => !isSamePoint(point, summary)).slice(0, 2);
               return (
                 <div key={r.id}>
@@ -213,9 +293,9 @@ export default async function TrendingPage({ searchParams }: Props) {
                             {periodLabel}
                           </span>
                         </span>
-                        {insights?.projectType && <Pill tone="accent">{insights.projectType}</Pill>}
-                        {insights?.maturity && <Pill tone="green">{insights.maturity}</Pill>}
-                        {insights?.audience?.slice(0, 2).map((item) => <Pill key={item}>{item}</Pill>)}
+                        <Pill tone="accent">{insights?.projectType || fallback.projectType}</Pill>
+                        <Pill tone="green">{insights?.maturity || fallback.maturity}</Pill>
+                        {(insights?.audience?.length ? insights.audience : fallback.audience).slice(0, 2).map((item) => <Pill key={item}>{item}</Pill>)}
                       </div>
                     </div>
 
