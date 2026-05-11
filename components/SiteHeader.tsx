@@ -10,11 +10,13 @@ type SiteHeaderProps = {
   onOpenPalette?: () => void;
 };
 
-const navItems: Array<{ label: string; href: string }> = [
+const navItems: Array<{ label: string; href: string; comingSoon?: boolean }> = [
   { label: '首页', href: '/' },
-  { label: '工具库', href: '/tools' },
+  { label: 'AI工具', href: '/tools' },
+  { label: '工具榜单', href: '/best', comingSoon: true },
   { label: '对比', href: '/compare' },
-  { label: '开发者趋势', href: '/trending' },
+  { label: 'GitHub趋势', href: '/trending' },
+  { label: '使用教程', href: '/tutorials', comingSoon: true },
   { label: 'AI 资讯', href: '/news' },
 ];
 
@@ -52,22 +54,62 @@ export function SiteHeader({ onOpenPalette }: SiteHeaderProps) {
       >
         {navItems.map((item) => {
           const active = isActive(item.href);
+          const isDisabled = item.comingSoon;
+          
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              style={{
-                padding: '7px 14px',
-                borderRadius: 6,
-                color: active ? T.ink : T.inkSoft,
-                fontWeight: active ? 700 : 500,
-                background: active ? T.primaryBg : 'transparent',
-                textDecoration: 'none',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {item.label}
-            </Link>
+            <div key={item.href} style={{ position: 'relative' }}>
+              {isDisabled ? (
+                <span
+                  style={{
+                    padding: '7px 14px',
+                    borderRadius: 6,
+                    color: T.inkMuted,
+                    fontWeight: 500,
+                    background: 'transparent',
+                    textDecoration: 'none',
+                    whiteSpace: 'nowrap',
+                    cursor: 'not-allowed',
+                    opacity: 0.7,
+                  }}
+                >
+                  {item.label}
+                </span>
+              ) : (
+                <Link
+                  href={item.href}
+                  style={{
+                    padding: '7px 14px',
+                    borderRadius: 6,
+                    color: active ? T.ink : T.inkSoft,
+                    fontWeight: active ? 700 : 500,
+                    background: active ? T.primaryBg : 'transparent',
+                    textDecoration: 'none',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {item.label}
+                </Link>
+              )}
+              {isDisabled && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: -8,
+                    right: -8,
+                    padding: '2px 6px',
+                    background: '#F59E0B',
+                    color: '#fff',
+                    borderRadius: 10,
+                    fontSize: 10,
+                    fontWeight: 600,
+                    whiteSpace: 'nowrap',
+                  }}
+                  title="正在开发中"
+                >
+                  开发中
+                </span>
+              )}
+            </div>
           );
         })}
       </nav>

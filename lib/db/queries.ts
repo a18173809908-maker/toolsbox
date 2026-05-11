@@ -4,6 +4,15 @@ import { desc, asc, eq, ilike, or, isNull, count, max, and, inArray, gt, sql, ne
 import type { TrendingPeriod, Tool, Category, RepoItem, HomepageStats } from '@/lib/data';
 import type { Comparison, Tool as DbTool } from './schema';
 import { articleCategoryAliases } from '@/lib/article-categories';
+import { AI_TOOLS, CATEGORIES, GITHUB_TRENDING, NEWS } from '@/lib/data';
+
+async function withFallback<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await fn();
+  } catch {
+    return fallback;
+  }
+}
 
 const toolHotnessScore = sql<number>`
   (case when ${tools.featured} then 1000 else 0 end)
@@ -19,147 +28,231 @@ export async function loadHomepageData(): Promise<{
   trending: Record<TrendingPeriod, RepoItem[]>;
   stats: HomepageStats;
 }> {
-  const [cats, ts, gh] = await Promise.all([
-    db.select().from(categories),
-    db.select().from(tools).orderBy(desc(toolHotnessScore), desc(tools.publishedAt)),
-    db.select().from(githubTrending).orderBy(asc(githubTrending.period), desc(githubTrending.gained)),
-  ]);
+  const fallbackResult = () => {
+    const tools2 = AI_TOOLS.map((t) => ({
+      ...t,
+      cat: t.cat,
+      pricing: t.pricing as Tool['pricing'],
+      chinaAccess: t.chinaAccess as Tool['chinaAccess'] ?? 'unknown',
+      chineseUi: t.chineseUi ?? false,
+      apiAvailable: t.apiAvailable ?? false,
+      openSource: t.openSource ?? false,
+      upvotes: t.upvotes ?? 0,
+      downvotes: t.downvotes ?? 0,
+      featured: t.featured ?? false,
+    }));
 
-  const tools2: Tool[] = ts.map((t) => ({
-    id: t.id, name: t.name, mono: t.mono, brand: t.brand,
-    cat: t.catId,
-    en: t.en, zh: t.zh,
-    pricing: t.pricing as Tool['pricing'],
-    url: t.url ?? undefined,
-    chinaAccess: t.chinaAccess as Tool['chinaAccess'],
-    chineseUi: t.chineseUi,
-    freeQuota: t.freeQuota ?? undefined,
-    apiAvailable: t.apiAvailable,
-    openSource: t.openSource,
-    githubRepo: t.githubRepo ?? undefined,
-    features: t.features ?? undefined,
-    pricingDetail: t.pricingDetail ?? undefined,
-    pricingUpdatedAt: t.pricingUpdatedAt?.toISOString(),
-    accessUpdatedAt: t.accessUpdatedAt?.toISOString(),
-    featuresUpdatedAt: t.featuresUpdatedAt?.toISOString(),
-    complianceUpdatedAt: t.complianceUpdatedAt?.toISOString(),
-    alternatives: t.alternatives ?? undefined,
-    upvotes: t.upvotes,
-    downvotes: t.downvotes,
-    featured: t.featured,
-    date: t.publishedAt,
-  }));
+    const countByCat = new Map<string, number>();
+    for (const tool of tools2) {
+      countByCat.set(tool.cat, (countByCat.get(tool.cat) ?? 0) + 1);
+    }
 
-  const countByCat = new Map<string, number>();
-  for (const tool of tools2) {
-    countByCat.set(tool.cat, (countByCat.get(tool.cat) ?? 0) + 1);
-  }
+    const cs: Category[] = CATEGORIES
+      .map((c) => ({
+        id: c.id,
+        en: c.en,
+        zh: c.zh,
+        icon: c.icon,
+        count: countByCat.get(c.id) ?? 0,
+      }))
+      .sort((a, b) => b.count - a.count);
 
-  const cs: Category[] = cats
-    .map((c) => ({
-      id: c.id,
-      en: c.en,
-      zh: c.zh,
-      icon: c.icon,
-      count: countByCat.get(c.id) ?? 0,
-    }))
-    .sort((a, b) => b.count - a.count);
+    const trending: Record<TrendingPeriod, RepoItem[]> = { today: [], week: [], month: [] };
+    for (const [period, items] of Object.entries(GITHUB_TRENDING)) {
+      const p = period as TrendingPeriod;
+      if (!trending[p]) continue;
+      trending[p] = items.map((r) => ({
+        repo: r.repo, desc: r.desc, descZh: r.descZh,
+        lang: r.lang, stars: r.stars, gained: r.gained,
+      }));
+    }
 
-  const trending: Record<TrendingPeriod, RepoItem[]> = { today: [], week: [], month: [] };
-  for (const r of gh) {
-    const p = r.period as TrendingPeriod;
-    if (!trending[p]) continue;
-    trending[p].push({
-      repo: r.repo, desc: r.description, descZh: r.descriptionZh ?? undefined,
-      lang: r.lang, stars: r.stars, gained: r.gained,
-    });
-  }
+    const allRepos = [...GITHUB_TRENDING.today, ...GITHUB_TRENDING.week, ...GITHUB_TRENDING.month];
+    const uniqueRepos = new Set(allRepos.map((r) => r.repo));
+    const todayRows = GITHUB_TRENDING.today;
 
-  const uniqueRepos = new Set(gh.map((r) => r.repo));
-  const todayRows = gh.filter((r) => r.period === 'today');
-  const latestSnapshot = gh.reduce<Date | null>((latest, r) => {
-    if (!latest || r.snapshotDate > latest) return r.snapshotDate;
-    return latest;
-  }, null);
+    const stats: HomepageStats = {
+      toolsTotal: tools2.length,
+      featuredTools: tools2.filter((t) => t.featured).length,
+      categoriesTotal: cs.length,
+      reposTracked: uniqueRepos.size,
+      todayRepos: todayRows.length,
+      todayStarsGained: todayRows.reduce((sum, r) => sum + r.gained, 0),
+      lastUpdatedAt: new Date().toISOString(),
+    };
 
-  const stats: HomepageStats = {
-    toolsTotal: tools2.length,
-    featuredTools: tools2.filter((t) => t.featured).length,
-    categoriesTotal: cs.length,
-    reposTracked: uniqueRepos.size,
-    todayRepos: todayRows.length,
-    todayStarsGained: todayRows.reduce((sum, r) => sum + r.gained, 0),
-    lastUpdatedAt: latestSnapshot?.toISOString(),
+    return { categories: cs, tools: tools2, trending, stats };
   };
 
-  return { categories: cs, tools: tools2, trending, stats };
+  const dbFn = async () => {
+    const [cats, ts, gh] = await Promise.all([
+      db.select().from(categories),
+      db.select().from(tools).orderBy(desc(toolHotnessScore), desc(tools.publishedAt)),
+      db.select().from(githubTrending).orderBy(asc(githubTrending.period), desc(githubTrending.gained)),
+    ]);
+
+    const tools2: Tool[] = ts.map((t) => ({
+      id: t.id, name: t.name, mono: t.mono, brand: t.brand,
+      cat: t.catId,
+      en: t.en, zh: t.zh,
+      pricing: t.pricing as Tool['pricing'],
+      url: t.url ?? undefined,
+      chinaAccess: t.chinaAccess as Tool['chinaAccess'],
+      chineseUi: t.chineseUi,
+      freeQuota: t.freeQuota ?? undefined,
+      apiAvailable: t.apiAvailable,
+      openSource: t.openSource,
+      githubRepo: t.githubRepo ?? undefined,
+      features: t.features ?? undefined,
+      pricingDetail: t.pricingDetail ?? undefined,
+      pricingUpdatedAt: t.pricingUpdatedAt?.toISOString(),
+      accessUpdatedAt: t.accessUpdatedAt?.toISOString(),
+      featuresUpdatedAt: t.featuresUpdatedAt?.toISOString(),
+      complianceUpdatedAt: t.complianceUpdatedAt?.toISOString(),
+      alternatives: t.alternatives ?? undefined,
+      upvotes: t.upvotes,
+      downvotes: t.downvotes,
+      featured: t.featured,
+      date: t.publishedAt,
+    }));
+
+    const countByCat = new Map<string, number>();
+    for (const tool of tools2) {
+      countByCat.set(tool.cat, (countByCat.get(tool.cat) ?? 0) + 1);
+    }
+
+    const cs: Category[] = cats
+      .map((c) => ({
+        id: c.id,
+        en: c.en,
+        zh: c.zh,
+        icon: c.icon,
+        count: countByCat.get(c.id) ?? 0,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    const trending: Record<TrendingPeriod, RepoItem[]> = { today: [], week: [], month: [] };
+    for (const r of gh) {
+      const p = r.period as TrendingPeriod;
+      if (!trending[p]) continue;
+      trending[p].push({
+        repo: r.repo, desc: r.description, descZh: r.descriptionZh ?? undefined,
+        lang: r.lang, stars: r.stars, gained: r.gained,
+      });
+    }
+
+    const uniqueRepos = new Set(gh.map((r) => r.repo));
+    const todayRows = gh.filter((r) => r.period === 'today');
+    const latestSnapshot = gh.reduce<Date | null>((latest, r) => {
+      if (!latest || r.snapshotDate > latest) return r.snapshotDate;
+      return latest;
+    }, null);
+
+    const stats: HomepageStats = {
+      toolsTotal: tools2.length,
+      featuredTools: tools2.filter((t) => t.featured).length,
+      categoriesTotal: cs.length,
+      reposTracked: uniqueRepos.size,
+      todayRepos: todayRows.length,
+      todayStarsGained: todayRows.reduce((sum, r) => sum + r.gained, 0),
+      lastUpdatedAt: latestSnapshot?.toISOString(),
+    };
+
+    return { categories: cs, tools: tools2, trending, stats };
+  };
+
+  return withFallback(dbFn, fallbackResult());
 }
 
 // ── Tool detail ───────────────────────────────────────────────────────────────
 
 export async function loadToolById(id: string): Promise<(Tool & { catEn: string; catZh: string; catIcon: string }) | null> {
-  const rows = await db
-    .select({
-      id: tools.id, name: tools.name, mono: tools.mono, brand: tools.brand,
-      catId: tools.catId, en: tools.en, zh: tools.zh,
-      pricing: tools.pricing, url: tools.url, chinaAccess: tools.chinaAccess,
-      chineseUi: tools.chineseUi, freeQuota: tools.freeQuota, apiAvailable: tools.apiAvailable,
-      openSource: tools.openSource, githubRepo: tools.githubRepo, features: tools.features,
-      pricingDetail: tools.pricingDetail, alternatives: tools.alternatives,
-      pricingUpdatedAt: tools.pricingUpdatedAt, accessUpdatedAt: tools.accessUpdatedAt,
-      featuresUpdatedAt: tools.featuresUpdatedAt, complianceUpdatedAt: tools.complianceUpdatedAt,
-      registerMethod: tools.registerMethod, needsOverseasPhone: tools.needsOverseasPhone,
-      needsRealName: tools.needsRealName, overseasPaymentOnly: tools.overseasPaymentOnly,
-      priceCny: tools.priceCny, miniProgram: tools.miniProgram, appStoreCn: tools.appStoreCn,
-      publicAccount: tools.publicAccount, cnAlternatives: tools.cnAlternatives,
-      tutorialLinks: tools.tutorialLinks,
-      upvotes: tools.upvotes, downvotes: tools.downvotes,
-      featured: tools.featured, howToUse: tools.howToUse, faqs: tools.faqs,
-      publishedAt: tools.publishedAt,
-      catEn: categories.en, catZh: categories.zh, catIcon: categories.icon,
-    })
-    .from(tools)
-    .innerJoin(categories, eq(tools.catId, categories.id))
-    .where(eq(tools.id, id));
-
-  const row = rows[0];
-  if (!row) return null;
-  return {
-    id: row.id, name: row.name, mono: row.mono, brand: row.brand,
-    cat: row.catId, en: row.en, zh: row.zh,
-    pricing: row.pricing as Tool['pricing'],
-    url: row.url ?? undefined,
-    chinaAccess: row.chinaAccess as Tool['chinaAccess'],
-    chineseUi: row.chineseUi,
-    freeQuota: row.freeQuota ?? undefined,
-    apiAvailable: row.apiAvailable,
-    openSource: row.openSource,
-    githubRepo: row.githubRepo ?? undefined,
-    features: row.features ?? undefined,
-    pricingDetail: row.pricingDetail ?? undefined,
-    pricingUpdatedAt: row.pricingUpdatedAt?.toISOString(),
-    accessUpdatedAt: row.accessUpdatedAt?.toISOString(),
-    featuresUpdatedAt: row.featuresUpdatedAt?.toISOString(),
-    complianceUpdatedAt: row.complianceUpdatedAt?.toISOString(),
-    alternatives: row.alternatives ?? undefined,
-    registerMethod: row.registerMethod ?? undefined,
-    needsOverseasPhone: row.needsOverseasPhone,
-    needsRealName: row.needsRealName,
-    overseasPaymentOnly: row.overseasPaymentOnly,
-    priceCny: row.priceCny ?? undefined,
-    miniProgram: row.miniProgram ?? undefined,
-    appStoreCn: row.appStoreCn,
-    publicAccount: row.publicAccount ?? undefined,
-    cnAlternatives: row.cnAlternatives ?? undefined,
-    tutorialLinks: row.tutorialLinks ?? undefined,
-    upvotes: row.upvotes,
-    downvotes: row.downvotes,
-    featured: row.featured,
-    howToUse: row.howToUse ?? undefined,
-    faqs: row.faqs ?? undefined,
-    date: row.publishedAt,
-    catEn: row.catEn, catZh: row.catZh, catIcon: row.catIcon,
+  const fallbackResult = (): (Tool & { catEn: string; catZh: string; catIcon: string }) | null => {
+    const tool = AI_TOOLS.find((t) => t.id === id);
+    if (!tool) return null;
+    const cat = CATEGORIES.find((c) => c.id === tool.cat);
+    return {
+      ...tool,
+      pricing: tool.pricing as Tool['pricing'],
+      chinaAccess: (tool.chinaAccess as Tool['chinaAccess']) ?? 'unknown',
+      chineseUi: tool.chineseUi ?? false,
+      apiAvailable: tool.apiAvailable ?? false,
+      openSource: tool.openSource ?? false,
+      upvotes: tool.upvotes ?? 0,
+      downvotes: tool.downvotes ?? 0,
+      featured: tool.featured ?? false,
+      catEn: cat?.en ?? '',
+      catZh: cat?.zh ?? '',
+      catIcon: cat?.icon ?? '',
+    };
   };
+
+  const dbFn = async () => {
+    const rows = await db
+      .select({
+        id: tools.id, name: tools.name, mono: tools.mono, brand: tools.brand,
+        catId: tools.catId, en: tools.en, zh: tools.zh,
+        pricing: tools.pricing, url: tools.url, chinaAccess: tools.chinaAccess,
+        chineseUi: tools.chineseUi, freeQuota: tools.freeQuota, apiAvailable: tools.apiAvailable,
+        openSource: tools.openSource, githubRepo: tools.githubRepo, features: tools.features,
+        pricingDetail: tools.pricingDetail, alternatives: tools.alternatives,
+        pricingUpdatedAt: tools.pricingUpdatedAt, accessUpdatedAt: tools.accessUpdatedAt,
+        featuresUpdatedAt: tools.featuresUpdatedAt, complianceUpdatedAt: tools.complianceUpdatedAt,
+        registerMethod: tools.registerMethod, needsOverseasPhone: tools.needsOverseasPhone,
+        needsRealName: tools.needsRealName, overseasPaymentOnly: tools.overseasPaymentOnly,
+        priceCny: tools.priceCny, miniProgram: tools.miniProgram, appStoreCn: tools.appStoreCn,
+        publicAccount: tools.publicAccount, cnAlternatives: tools.cnAlternatives,
+        tutorialLinks: tools.tutorialLinks,
+        upvotes: tools.upvotes, downvotes: tools.downvotes,
+        featured: tools.featured, howToUse: tools.howToUse, faqs: tools.faqs,
+        publishedAt: tools.publishedAt,
+        catEn: categories.en, catZh: categories.zh, catIcon: categories.icon,
+      })
+      .from(tools)
+      .innerJoin(categories, eq(tools.catId, categories.id))
+      .where(eq(tools.id, id));
+
+    const row = rows[0];
+    if (!row) return null;
+    return {
+      id: row.id, name: row.name, mono: row.mono, brand: row.brand,
+      cat: row.catId, en: row.en, zh: row.zh,
+      pricing: row.pricing as Tool['pricing'],
+      url: row.url ?? undefined,
+      chinaAccess: row.chinaAccess as Tool['chinaAccess'],
+      chineseUi: row.chineseUi,
+      freeQuota: row.freeQuota ?? undefined,
+      apiAvailable: row.apiAvailable,
+      openSource: row.openSource,
+      githubRepo: row.githubRepo ?? undefined,
+      features: row.features ?? undefined,
+      pricingDetail: row.pricingDetail ?? undefined,
+      pricingUpdatedAt: row.pricingUpdatedAt?.toISOString(),
+      accessUpdatedAt: row.accessUpdatedAt?.toISOString(),
+      featuresUpdatedAt: row.featuresUpdatedAt?.toISOString(),
+      complianceUpdatedAt: row.complianceUpdatedAt?.toISOString(),
+      alternatives: row.alternatives ?? undefined,
+      registerMethod: row.registerMethod ?? undefined,
+      needsOverseasPhone: row.needsOverseasPhone,
+      needsRealName: row.needsRealName,
+      overseasPaymentOnly: row.overseasPaymentOnly,
+      priceCny: row.priceCny ?? undefined,
+      miniProgram: row.miniProgram ?? undefined,
+      appStoreCn: row.appStoreCn,
+      publicAccount: row.publicAccount ?? undefined,
+      cnAlternatives: row.cnAlternatives ?? undefined,
+      tutorialLinks: row.tutorialLinks ?? undefined,
+      upvotes: row.upvotes,
+      downvotes: row.downvotes,
+      featured: row.featured,
+      howToUse: row.howToUse ?? undefined,
+      faqs: row.faqs ?? undefined,
+      date: row.publishedAt,
+      catEn: row.catEn, catZh: row.catZh, catIcon: row.catIcon,
+    };
+  };
+
+  return withFallback(dbFn, fallbackResult());
 }
 
 // admin: 列出所有工具用于编辑推荐管理（按 featured DESC, name ASC）
@@ -545,6 +638,40 @@ export async function loadArticlesPage(page = 1, pageSize = 30, tag?: string) {
     .offset(offset);
 }
 
+export async function loadArticles(opts: { limit?: number } = {}) {
+  const { limit = 10 } = opts;
+
+  const fallbackResult = () => {
+    return NEWS.slice(0, limit).map((n, i) => ({
+      id: i,
+      title: n.en,
+      summary: n.zh as string | null,
+      publishedAt: (n.date ? new Date(n.date) : null) as Date | null,
+      sourceName: null as string | null,
+      category: n.tag as string | null,
+    }));
+  };
+
+  const dbFn = async () => {
+    return db
+      .select({
+        id: articles.id,
+        title: articles.title,
+        summary: articles.summary,
+        publishedAt: articles.publishedAt,
+        sourceName: sources.name,
+        category: articles.tag,
+      })
+      .from(articles)
+      .leftJoin(sources, eq(articles.sourceId, sources.id))
+      .where(eq(articles.status, 'published'))
+      .orderBy(desc(articles.publishedAt))
+      .limit(limit);
+  };
+
+  return withFallback(dbFn, fallbackResult());
+}
+
 export async function loadArticleHotTopics(limit = 5, days = 3) {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
   const rows = await db
@@ -755,6 +882,41 @@ export async function loadToolsPage(opts: {
   const { cat, pricing, china, q, page = 1, pageSize = 24 } = opts;
   const offset = (page - 1) * pageSize;
 
+  const fallbackResult = () => {
+    let filtered = [...AI_TOOLS];
+    if (cat && cat !== 'all') filtered = filtered.filter((t) => t.cat === cat);
+    if (pricing) filtered = filtered.filter((t) => t.pricing === pricing);
+    if (china) filtered = filtered.filter((t) => t.chinaAccess === china);
+    if (q) {
+      const query = q.toLowerCase();
+      filtered = filtered.filter((t) =>
+        t.name.toLowerCase().includes(query) ||
+        t.zh?.toLowerCase().includes(query) ||
+        t.en?.toLowerCase().includes(query)
+      );
+    }
+    filtered.sort((a, b) => {
+      const scoreA = (a.featured ? 1000 : 0) + (a.upvotes || 0) - (a.downvotes || 0);
+      const scoreB = (b.featured ? 1000 : 0) + (b.upvotes || 0) - (b.downvotes || 0);
+      if (scoreB !== scoreA) return scoreB - scoreA;
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    });
+    const total = filtered.length;
+    const items = filtered.slice(offset, offset + pageSize).map((t) => ({
+      id: t.id, name: t.name, mono: t.mono, brand: t.brand,
+      catId: t.cat, en: t.en, zh: t.zh,
+      pricing: t.pricing, url: t.url ?? null, chinaAccess: t.chinaAccess ?? 'unknown',
+      chineseUi: t.chineseUi ?? false, freeQuota: t.freeQuota ?? null,
+      priceCny: t.priceCny ?? null, pricingDetail: t.pricingDetail ?? null,
+      cnAlternatives: t.cnAlternatives ?? null,
+      apiAvailable: t.apiAvailable ?? false, openSource: t.openSource ?? false,
+      features: t.features ?? null, featured: t.featured ?? false,
+      upvotes: t.upvotes ?? 0, downvotes: t.downvotes ?? 0,
+      publishedAt: t.date,
+    }));
+    return { items, total };
+  };
+
   const conditions = [];
   if (cat && cat !== 'all') conditions.push(eq(tools.catId, cat));
   if (pricing) conditions.push(eq(tools.pricing, pricing));
@@ -765,28 +927,31 @@ export async function loadToolsPage(opts: {
   }
   const where = conditions.length > 0 ? and(...conditions) : undefined;
 
-  const [items, totalRows] = await Promise.all([
-    db.select({
-      id: tools.id, name: tools.name, mono: tools.mono, brand: tools.brand,
-      catId: tools.catId, en: tools.en, zh: tools.zh,
-      pricing: tools.pricing, url: tools.url, chinaAccess: tools.chinaAccess,
-      chineseUi: tools.chineseUi, freeQuota: tools.freeQuota,
-      priceCny: tools.priceCny, pricingDetail: tools.pricingDetail,
-      cnAlternatives: tools.cnAlternatives,
-      apiAvailable: tools.apiAvailable, openSource: tools.openSource,
-      features: tools.features, featured: tools.featured,
-      upvotes: tools.upvotes, downvotes: tools.downvotes,
-      publishedAt: tools.publishedAt,
-    })
-      .from(tools)
-      .where(where)
-      .orderBy(desc(toolHotnessScore), desc(tools.publishedAt))
-      .limit(pageSize)
-      .offset(offset),
-    db.select({ value: count() }).from(tools).where(where),
-  ]);
+  const dbFn = async () => {
+    const [items, totalRows] = await Promise.all([
+      db.select({
+        id: tools.id, name: tools.name, mono: tools.mono, brand: tools.brand,
+        catId: tools.catId, en: tools.en, zh: tools.zh,
+        pricing: tools.pricing, url: tools.url, chinaAccess: tools.chinaAccess,
+        chineseUi: tools.chineseUi, freeQuota: tools.freeQuota,
+        priceCny: tools.priceCny, pricingDetail: tools.pricingDetail,
+        cnAlternatives: tools.cnAlternatives,
+        apiAvailable: tools.apiAvailable, openSource: tools.openSource,
+        features: tools.features, featured: tools.featured,
+        upvotes: tools.upvotes, downvotes: tools.downvotes,
+        publishedAt: tools.publishedAt,
+      })
+        .from(tools)
+        .where(where)
+        .orderBy(desc(toolHotnessScore), desc(tools.publishedAt))
+        .limit(pageSize)
+        .offset(offset),
+      db.select({ value: count() }).from(tools).where(where),
+    ]);
+    return { items, total: totalRows[0]?.value ?? 0 };
+  };
 
-  return { items, total: totalRows[0]?.value ?? 0 };
+  return withFallback(dbFn, fallbackResult());
 }
 
 export async function loadAllCategories(opts: {
@@ -794,24 +959,46 @@ export async function loadAllCategories(opts: {
   china?: string;
   q?: string;
 } = {}) {
-  const cats = await db.select().from(categories);
+  const fallbackResult = () => {
+    let filtered = [...AI_TOOLS];
+    if (opts.pricing) filtered = filtered.filter((t) => t.pricing === opts.pricing);
+    if (opts.china) filtered = filtered.filter((t) => t.chinaAccess === opts.china);
+    if (opts.q) {
+      const query = opts.q.toLowerCase();
+      filtered = filtered.filter((t) =>
+        t.name.toLowerCase().includes(query) ||
+        t.zh?.toLowerCase().includes(query) ||
+        t.en?.toLowerCase().includes(query)
+      );
+    }
+    const countMap = new Map<string, number>();
+    for (const t of filtered) countMap.set(t.cat, (countMap.get(t.cat) ?? 0) + 1);
+    return CATEGORIES
+      .map((c) => ({ ...c, count: countMap.get(c.id) ?? 0 }))
+      .sort((a, b) => b.count - a.count);
+  };
 
-  // 计数时应用「其他已激活筛选」（不含分类本身），以反映点击该分类后的真实结果数
-  const conditions = [];
-  if (opts.pricing) conditions.push(eq(tools.pricing, opts.pricing));
-  if (opts.china) conditions.push(eq(tools.chinaAccess, opts.china));
-  if (opts.q) {
-    const pattern = `%${opts.q}%`;
-    conditions.push(or(ilike(tools.name, pattern), ilike(tools.zh, pattern), ilike(tools.en, pattern))!);
-  }
-  const where = conditions.length > 0 ? and(...conditions) : undefined;
+  const dbFn = async () => {
+    const cats = await db.select().from(categories);
 
-  const toolRows = await db.select({ catId: tools.catId }).from(tools).where(where);
-  const countMap = new Map<string, number>();
-  for (const t of toolRows) countMap.set(t.catId, (countMap.get(t.catId) ?? 0) + 1);
-  return cats
-    .map((c) => ({ ...c, count: countMap.get(c.id) ?? 0 }))
-    .sort((a, b) => b.count - a.count);
+    const conditions = [];
+    if (opts.pricing) conditions.push(eq(tools.pricing, opts.pricing));
+    if (opts.china) conditions.push(eq(tools.chinaAccess, opts.china));
+    if (opts.q) {
+      const pattern = `%${opts.q}%`;
+      conditions.push(or(ilike(tools.name, pattern), ilike(tools.zh, pattern), ilike(tools.en, pattern))!);
+    }
+    const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const toolRows = await db.select({ catId: tools.catId }).from(tools).where(where);
+    const countMap = new Map<string, number>();
+    for (const t of toolRows) countMap.set(t.catId, (countMap.get(t.catId) ?? 0) + 1);
+    return cats
+      .map((c) => ({ ...c, count: countMap.get(c.id) ?? 0 }))
+      .sort((a, b) => b.count - a.count);
+  };
+
+  return withFallback(dbFn, fallbackResult());
 }
 
 // ── Tool related articles ─────────────────────────────────────────────────────

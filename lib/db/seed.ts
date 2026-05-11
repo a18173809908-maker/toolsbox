@@ -3,7 +3,7 @@ config({ path: '.env.local' });
 
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { categories, tools, githubTrending } from './schema';
+import { categories, tools, githubTrending, toolConnectivity, toolCandidates } from './schema';
 import {
   CATEGORIES,
   AI_TOOLS,
@@ -54,6 +54,8 @@ async function main() {
 
   console.log('clearing existing rows…');
   await db.delete(githubTrending);
+  await db.delete(toolConnectivity);
+  await db.delete(toolCandidates);
   await db.delete(tools);
   await db.delete(categories);
 

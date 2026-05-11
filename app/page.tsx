@@ -1,12 +1,15 @@
-import V2ProHomepage from '@/components/V2Pro';
-import { loadHomepageData } from '@/lib/db/queries';
+import { loadHomepageData, loadArticles } from '@/lib/db/queries';
+import { HomePageClient } from './HomePageClient';
 
 export const dynamic = 'force-dynamic';
 
 const BASE = 'https://www.aiboxpro.cn';
 
 export default async function Home() {
-  const data = await loadHomepageData();
+  const [homeData, articles] = await Promise.all([
+    loadHomepageData(),
+    loadArticles({ limit: 3 }),
+  ]);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -14,7 +17,7 @@ export default async function Home() {
     name: 'AIBoxPro',
     url: BASE,
     description:
-      'AIBoxPro 帮中文用户比较 AI 工具的价格、中文支持、国内使用情况、适合场景和替代方案。',
+      '面向中文用户的AI工具选择与使用指南平台，帮你找到真正好用的AI工具',
     potentialAction: {
       '@type': 'SearchAction',
       target: `${BASE}/tools?q={search_term_string}`,
@@ -28,7 +31,12 @@ export default async function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <V2ProHomepage {...data} />
+      <HomePageClient
+        tools={homeData.tools}
+        categories={homeData.categories}
+        trending={homeData.trending}
+        articles={articles}
+      />
     </>
   );
 }
