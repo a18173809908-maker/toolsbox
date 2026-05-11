@@ -81,6 +81,18 @@ body {
   background: #FFF8F0 !important;
 }
 
+/* Tools page styles */
+.sidebar-filter-item:hover {
+  background: #FFF8F0 !important;
+  color: #C2410C !important;
+}
+
+.tool-card-link:hover div {
+  box-shadow: 0 8px 24px -8px rgba(31, 41, 55, 0.18) !important;
+  transform: translateY(-2px) !important;
+  border-color: #F97316 !important;
+}
+
 .readme-content pre code {
   background: transparent;
   padding: 0;
