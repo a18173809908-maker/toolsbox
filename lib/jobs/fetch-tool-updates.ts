@@ -87,7 +87,7 @@ async function searchYouTube(toolName: string, maxResults = 5): Promise<YTVideo[
   url.searchParams.set('maxResults', String(maxResults));
   url.searchParams.set('part', 'snippet');
   url.searchParams.set('relevanceLanguage', 'en');     // 英文视频为主，内容更丰富
-  url.searchParams.set('videoDuration', 'medium');     // 过滤掉 shorts（太短，字幕少）
+  url.searchParams.set('videoDuration', 'any');        // 不限时长，字幕抓取阶段再过滤
   url.searchParams.set('key', key);
 
   try {
@@ -114,16 +114,24 @@ async function searchYouTube(toolName: string, maxResults = 5): Promise<YTVideo[
 // ─── Transcript ───────────────────────────────────────────────────────────────
 
 async function fetchTranscript(videoId: string): Promise<string | null> {
-  try {
-    const items = await YoutubeTranscript.fetchTranscript(videoId, { lang: 'en' });
-    if (!items || items.length === 0) return null;
-    // 拼接文本，限制在 6000 字以内（避免 prompt 过长）
-    const text = items.map((i) => i.text).join(' ');
-    return text.slice(0, 6000);
-  } catch {
-    // 有些视频没有字幕（直播回放、短视频等），正常跳过
-    return null;
+  // 依次尝试：英文、自动字幕、无语言限制
+  const attempts = [
+    () => YoutubeTranscript.fetchTranscript(videoId, { lang: 'en' }),
+    () => YoutubeTranscript.fetchTranscript(videoId, { lang: 'en-US' }),
+    () => YoutubeTranscript.fetchTranscript(videoId),
+  ];
+  for (const attempt of attempts) {
+    try {
+      const items = await attempt();
+      if (items && items.length > 20) {
+        const text = items.map((i) => i.text).join(' ');
+        return text.slice(0, 6000);
+      }
+    } catch {
+      // 继续下一种
+    }
   }
+  return null;
 }
 
 // ─── LLM Synthesis ───────────────────────────────────────────────────────────
