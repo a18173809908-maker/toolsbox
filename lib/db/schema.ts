@@ -497,6 +497,31 @@ export const toolFieldDrafts = pgTable(
   }),
 );
 
+export const toolUpdates = pgTable(
+  'tool_updates',
+  {
+    id: serial('id').primaryKey(),
+    toolId: text('tool_id'),                          // 关联工具库，可为空（工具不在库里时）
+    toolName: text('tool_name').notNull(),             // 工具名（用于搜索和展示）
+    sourceType: text('source_type').notNull().default('youtube'), // youtube | bilibili | other
+    sourceUrl: text('source_url').notNull(),           // 原视频 URL
+    sourceTitle: text('source_title'),                 // 原视频标题
+    sourceChannel: text('source_channel'),             // 频道名
+    contentType: text('content_type').notNull().default('update'), // update | tutorial
+    titleZh: text('title_zh'),
+    body: text('body'),
+    snapshotWeek: text('snapshot_week').notNull(),     // 'YYYY-WW' 去重
+    status: text('status').notNull().default('ai_drafted'),
+    publishedAt: timestamp('published_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    weekToolIdx: index('tool_updates_week_tool_idx').on(t.snapshotWeek, t.toolName),
+    statusIdx: index('tool_updates_status_idx').on(t.status),
+    toolIdIdx: index('tool_updates_tool_id_idx').on(t.toolId),
+  }),
+);
+
 export const repoSpotlights = pgTable(
   'repo_spotlights',
   {
@@ -541,3 +566,4 @@ export type RankingDraft = typeof rankingDrafts.$inferSelect;
 export type AlternativeDraft = typeof alternativeDrafts.$inferSelect;
 export type ToolFieldDraft = typeof toolFieldDrafts.$inferSelect;
 export type RepoSpotlight = typeof repoSpotlights.$inferSelect;
+export type ToolUpdate = typeof toolUpdates.$inferSelect;
