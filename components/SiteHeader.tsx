@@ -11,15 +11,10 @@ type SiteHeaderProps = {
 };
 
 const navItems: Array<{ label: string; href: string; comingSoon?: boolean }> = [
-  { label: '首页', href: '/' },
-  { label: 'AI工具', href: '/tools' },
-  { label: '工具榜单', href: '/best' },
-  { label: '场景指南', href: '/scenes' },
-  { label: '对比', href: '/compare' },
-  { label: 'GitHub趋势', href: '/trending' },
-  { label: 'AI 事件', href: '/events' },
-  { label: '仓库精选', href: '/spotlight' },
+  { label: '工具', href: '/tools' },
   { label: 'AI 资讯', href: '/news' },
+  { label: 'GitHub', href: '/trending' },
+  { label: '动态', href: '/spotlight' },
 ];
 
 export function SiteHeader({ onOpenPalette }: SiteHeaderProps) {

@@ -33,15 +33,6 @@ type HomePageClientProps = {
   events: HomeEvent[];
 };
 
-const sceneSolutions = [
-  { title: '做小红书内容', icon: '📝', desc: '文案+图片+视频一站式', cat: 'social' },
-  { title: '写代码', icon: '💻', desc: 'AI编程助手推荐', cat: 'code' },
-  { title: '做PPT', icon: '📊', desc: 'AI生成演示文稿', cat: 'ppt' },
-  { title: '做视频', icon: '🎬', desc: 'AI视频生成工具', cat: 'video' },
-  { title: '做设计', icon: '🎨', desc: 'AI绘图+设计工具', cat: 'design' },
-  { title: '写文案', icon: '✍️', desc: 'AI写作工具合集', cat: 'writing' },
-];
-
 const quickTags: { label: string; href: string }[] = [
   { label: '免费工具',   href: '/tools?pricing=Free' },
   { label: '国内可用',   href: '/tools?china=accessible' },
@@ -125,7 +116,7 @@ export function HomePageClient({ tools, categories, trending, articles, events }
               lineHeight: 1.3,
             }}
           >
-            面向中文用户的 AI 工具选择与使用指南平台
+            AI 工具 · 资讯 · 动态，一站跟进
           </h1>
           <p
             style={{
@@ -134,7 +125,7 @@ export function HomePageClient({ tools, categories, trending, articles, events }
               marginBottom: 40,
             }}
           >
-            帮你找到真正好用的 AI 工具，并教会你如何使用
+            发现热门 AI 工具，跟进最新动态，快速学会怎么用
           </p>
 
           <div
@@ -426,75 +417,6 @@ export function HomePageClient({ tools, categories, trending, articles, events }
           </div>
         </section>
 
-        <section style={{ marginBottom: 60 }}>
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontSize: 24 }}>🎯</span>
-              <h2 style={{ fontSize: 24, fontWeight: 700, color: T.ink, margin: 0 }}>
-                场景解决方案
-              </h2>
-            </div>
-            <p style={{ fontSize: 14, color: T.inkMuted, margin: '8px 0 0 36px' }}>
-              按任务找工具，而不是按分类找工具
-            </p>
-          </div>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-              gap: 16,
-            }}
-          >
-            {sceneSolutions.map((scene) => (
-              <Link
-                key={scene.title}
-                href={`/tools?cat=${scene.cat}`}
-                style={{
-                  background: '#fff',
-                  borderRadius: 16,
-                  padding: 24,
-                  border: `1px solid ${T.rule}`,
-                  textDecoration: 'none',
-                  textAlign: 'center',
-                  transition: 'all 0.3s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-4px)';
-                  e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.1)';
-                  e.currentTarget.style.borderColor = T.accent;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
-                  e.currentTarget.style.borderColor = T.rule;
-                }}
-              >
-                <div style={{ fontSize: 40, marginBottom: 12 }}>{scene.icon}</div>
-                <h3
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 700,
-                    color: T.ink,
-                    margin: '0 0 8px',
-                  }}
-                >
-                  {scene.title}
-                </h3>
-                <p
-                  style={{
-                    fontSize: 13,
-                    color: T.inkMuted,
-                    margin: 0,
-                  }}
-                >
-                  {scene.desc}
-                </p>
-              </Link>
-            ))}
-          </div>
-        </section>
-
         <div
           style={{
             display: 'grid',
@@ -770,105 +692,6 @@ export function HomePageClient({ tools, categories, trending, articles, events }
           </section>
         </div>
 
-        {events.length > 0 && (
-          <section style={{ marginBottom: 60 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{ fontSize: 24 }}>⚡</span>
-                <h2 style={{ fontSize: 20, fontWeight: 700, color: T.ink, margin: 0 }}>最新 AI 事件</h2>
-              </div>
-              <Link href="/events" style={{ fontSize: 13, color: T.accent, textDecoration: 'none' }}>
-                查看全部 →
-              </Link>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 16 }}>
-              {events.map((ev) => (
-                <Link key={ev.id} href={`/events/${ev.slug}`} style={{ background: '#fff', border: `1px solid ${T.rule}`, borderRadius: 12, padding: 18, textDecoration: 'none', display: 'block', transition: 'border-color 0.2s' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = T.accent; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = T.rule; }}
-                >
-                  <div style={{ fontSize: 11, color: T.accent, fontWeight: 700, marginBottom: 6 }}>
-                    AI 事件 · {formatTimeAgo(ev.publishedAt)}
-                  </div>
-                  <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700, color: T.ink, lineHeight: 1.45 }}>
-                    {ev.title}
-                  </h3>
-                  {ev.summary && (
-                    <p style={{ margin: 0, fontSize: 13, color: T.inkSoft, lineHeight: 1.55, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' }}>
-                      {ev.summary}
-                    </p>
-                  )}
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <section style={{ marginBottom: 60 }}>
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontSize: 24 }}>🏆</span>
-              <h2 style={{ fontSize: 24, fontWeight: 700, color: T.ink, margin: 0 }}>
-                热门工具榜单
-              </h2>
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-              gap: 16,
-            }}
-          >
-            {[
-              { title: '免费AI工具推荐（全品类）', icon: '💰', href: '/best/free-ai-tools' },
-              { title: '国内可直连AI工具', icon: '🇨🇳', href: '/best/cn-accessible-tools' },
-              { title: 'AI写作工具推荐', icon: '✍️', href: '/best/ai-writing-tools' },
-              { title: 'AI编程工具推荐', icon: '💻', href: '/best/ai-coding-tools' },
-            ].map((rank) => (
-              <Link
-                key={rank.title}
-                href={rank.href}
-                style={{
-                  background: '#fff',
-                  borderRadius: 12,
-                  padding: 20,
-                  border: `1px solid ${T.rule}`,
-                  textDecoration: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 16,
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = T.accent;
-                  e.currentTarget.style.transform = 'translateX(4px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = T.rule;
-                  e.currentTarget.style.transform = 'translateX(0)';
-                }}
-              >
-                <span style={{ fontSize: 32 }}>{rank.icon}</span>
-                <div style={{ flex: 1 }}>
-                  <h3
-                    style={{
-                      fontSize: 15,
-                      fontWeight: 600,
-                      color: T.ink,
-                      margin: 0,
-                    }}
-                  >
-                    {rank.title}
-                  </h3>
-                </div>
-                <span style={{ fontSize: 20, color: T.inkMuted }}>→</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-
         <section
           style={{
             background: `linear-gradient(135deg, ${T.accent}, #EA580C)`,
@@ -879,14 +702,14 @@ export function HomePageClient({ tools, categories, trending, articles, events }
           }}
         >
           <h2 style={{ fontSize: 28, fontWeight: 700, margin: '0 0 12px' }}>
-            找不到合适的 AI 工具？
+            跟进热门工具的最新动态
           </h2>
           <p style={{ fontSize: 16, margin: '0 0 24px', opacity: 0.9 }}>
-            告诉我们你的需求，我们帮你推荐最适合的工具
+            YouTube 视频、GitHub 项目、行业资讯，提炼成中文，每周更新
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
             <Link
-              href="/submit-guide"
+              href="/spotlight"
               style={{
                 padding: '14px 28px',
                 background: '#fff',
@@ -897,10 +720,10 @@ export function HomePageClient({ tools, categories, trending, articles, events }
                 textDecoration: 'none',
               }}
             >
-              提交工具
+              查看动态 →
             </Link>
             <Link
-              href="/contact"
+              href="/tools"
               style={{
                 padding: '14px 28px',
                 background: 'rgba(255,255,255,0.2)',
@@ -911,7 +734,7 @@ export function HomePageClient({ tools, categories, trending, articles, events }
                 textDecoration: 'none',
               }}
             >
-              商务合作
+              浏览工具库
             </Link>
           </div>
         </section>
