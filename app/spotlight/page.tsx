@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { loadPublishedToolUpdates, loadPublishedSpotlights } from '@/lib/db/queries';
 import { SiteHeader } from '@/components/SiteHeader';
-import { SiteFooter } from '@/components/SiteFooter';
+
 import { v2Tokens as T } from '@/lib/tokens';
 import type { Metadata } from 'next';
 
@@ -143,7 +143,7 @@ export default function SpotlightIndexPage() {
           <UpdatesContent />
         </Suspense>
       </main>
-      <SiteFooter />
+
     </>
   );
 }

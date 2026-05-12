@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { marked } from 'marked';
 import sanitizeHtml from 'sanitize-html';
 import { SiteHeader } from '@/components/SiteHeader';
-import { SiteFooter } from '@/components/SiteFooter';
+
 import { v2Tokens as T } from '@/lib/tokens';
 import { loadToolUpdateById } from '@/lib/db/queries';
 import type { Metadata } from 'next';
@@ -107,7 +107,7 @@ export default async function UpdateDetailPage({ params }: Props) {
           )}
         </div>
       </main>
-      <SiteFooter />
+
 
       <style>{`
         .prose-update h2, .prose-update h3 { color: ${T.ink}; margin-top: 1.8em; margin-bottom: 0.5em; }

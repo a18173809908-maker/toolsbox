@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { marked } from 'marked';
 import sanitizeHtml from 'sanitize-html';
 import { SiteHeader } from '@/components/SiteHeader';
-import { SiteFooter } from '@/components/SiteFooter';
+
 import { v2Tokens as T } from '@/lib/tokens';
 import { loadSpotlightById, loadPublishedSpotlights } from '@/lib/db/queries';
 import type { Metadata } from 'next';
@@ -111,7 +111,7 @@ export default async function SpotlightDetailPage({ params }: Props) {
           </Link>
         </div>
       </main>
-      <SiteFooter />
+
 
       <style>{`
         .prose-spotlight h1,
