@@ -1,5 +1,5 @@
 import { db } from './index';
-import { categories, tools, githubTrending, articles, sources, sourceCandidates, toolCandidates, comparisons, toolConnectivity, toolVerdicts, events, eventVerdicts, comparisonDrafts, sceneDrafts, rankingDrafts, alternativeDrafts, toolFieldDrafts } from './schema';
+import { categories, tools, githubTrending, articles, sources, sourceCandidates, toolCandidates, comparisons, toolConnectivity, toolVerdicts, events, eventVerdicts, comparisonDrafts, sceneDrafts, rankingDrafts, alternativeDrafts, toolFieldDrafts, repoSpotlights } from './schema';
 import { desc, asc, eq, ilike, or, isNull, count, max, and, inArray, gt, sql, ne } from 'drizzle-orm';
 import type { TrendingPeriod, Tool, Category, RepoItem, HomepageStats } from '@/lib/data';
 import type { Comparison, Tool as DbTool } from './schema';
@@ -1623,6 +1623,65 @@ export async function rejectToolFieldDraft(id: string, reason: string) {
     .where(eq(toolFieldDrafts.id, id));
 }
 
+// ── Repo Spotlights ──────────────────────────────────────────────────────────
+
+export async function loadRepoSpotlights(limit = 20, offset = 0) {
+  return db
+    .select({
+      id: repoSpotlights.id,
+      repo: repoSpotlights.repo,
+      snapshotWeek: repoSpotlights.snapshotWeek,
+      rankInWeek: repoSpotlights.rankInWeek,
+      titleZh: repoSpotlights.titleZh,
+      status: repoSpotlights.status,
+      publishedAt: repoSpotlights.publishedAt,
+      createdAt: repoSpotlights.createdAt,
+    })
+    .from(repoSpotlights)
+    .orderBy(desc(repoSpotlights.createdAt))
+    .limit(limit)
+    .offset(offset);
+}
+
+export async function loadPublishedSpotlights(limit = 20) {
+  return db
+    .select({
+      id: repoSpotlights.id,
+      repo: repoSpotlights.repo,
+      snapshotWeek: repoSpotlights.snapshotWeek,
+      rankInWeek: repoSpotlights.rankInWeek,
+      titleZh: repoSpotlights.titleZh,
+      publishedAt: repoSpotlights.publishedAt,
+    })
+    .from(repoSpotlights)
+    .where(eq(repoSpotlights.status, 'published'))
+    .orderBy(desc(repoSpotlights.publishedAt))
+    .limit(limit);
+}
+
+export async function loadSpotlightById(id: number) {
+  const rows = await db
+    .select()
+    .from(repoSpotlights)
+    .where(eq(repoSpotlights.id, id))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function publishSpotlight(id: number) {
+  await db
+    .update(repoSpotlights)
+    .set({ status: 'published', publishedAt: new Date() })
+    .where(eq(repoSpotlights.id, id));
+}
+
+export async function rejectSpotlight(id: number, reason: string) {
+  await db
+    .update(repoSpotlights)
+    .set({ status: 'rejected', body: reason })
+    .where(eq(repoSpotlights.id, id));
+}
+
 // ── Jobs status (inferred from table activity) ────────────────────────────────
 
 export async function loadJobsStatus() {
@@ -1637,6 +1696,7 @@ export async function loadJobsStatus() {
     toolVerdictsTotal, toolVerdictsLatest,
     altDraftsTotal, altDraftsLatest,
     compDraftsTotal, compDraftsLatest,
+    spotlightTotal, spotlightLatest,
   ] = await Promise.all([
     db.select({ v: max(articles.fetchedAt) }).from(articles),
     db.select({ v: count() }).from(articles).where(gt(articles.fetchedAt, since24h)),
@@ -1652,6 +1712,8 @@ export async function loadJobsStatus() {
     db.select({ v: max(alternativeDrafts.createdAt) }).from(alternativeDrafts),
     db.select({ v: count() }).from(comparisonDrafts),
     db.select({ v: max(comparisonDrafts.createdAt) }).from(comparisonDrafts),
+    db.select({ v: count() }).from(repoSpotlights),
+    db.select({ v: max(repoSpotlights.createdAt) }).from(repoSpotlights),
   ]);
 
   return [
@@ -1662,5 +1724,6 @@ export async function loadJobsStatus() {
     { job: 'draft-tool-verdicts', desc: '工具立场起草', latestAt: toolVerdictsLatest[0]?.v ?? null, recentCount: toolVerdictsTotal[0]?.v ?? 0, recentLabel: '总条数' },
     { job: 'draft-alternatives', desc: '替代品起草', latestAt: altDraftsLatest[0]?.v ?? null, recentCount: altDraftsTotal[0]?.v ?? 0, recentLabel: '总条数' },
     { job: 'draft-comparisons', desc: '对比页起草', latestAt: compDraftsLatest[0]?.v ?? null, recentCount: compDraftsTotal[0]?.v ?? 0, recentLabel: '总条数' },
+    { job: 'repo-spotlight', desc: '仓库精选生成', latestAt: spotlightLatest[0]?.v ?? null, recentCount: spotlightTotal[0]?.v ?? 0, recentLabel: '总条数' },
   ];
 }

@@ -18,7 +18,7 @@ const navItems: Array<{ label: string; href: string; comingSoon?: boolean }> = [
   { label: '对比', href: '/compare' },
   { label: 'GitHub趋势', href: '/trending' },
   { label: 'AI 事件', href: '/events' },
-  { label: '使用教程', href: '/tutorials', comingSoon: true },
+  { label: '仓库精选', href: '/spotlight' },
   { label: 'AI 资讯', href: '/news' },
 ];
 

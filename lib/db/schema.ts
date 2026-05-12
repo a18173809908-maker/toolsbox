@@ -497,6 +497,32 @@ export const toolFieldDrafts = pgTable(
   }),
 );
 
+export const repoSpotlights = pgTable(
+  'repo_spotlights',
+  {
+    id: serial('id').primaryKey(),
+    trendingId: integer('trending_id').notNull().references(() => githubTrending.id),
+    repo: text('repo').notNull(),
+    snapshotWeek: text('snapshot_week').notNull(), // 'YYYY-WW' dedup key
+    rankInWeek: integer('rank_in_week').notNull().default(1),
+    youtubeResults: jsonb('youtube_results').$type<
+      { title: string; description: string; videoId: string }[]
+    >(),
+    searchResults: jsonb('search_results').$type<
+      { title: string; snippet: string; url: string }[]
+    >(),
+    titleZh: text('title_zh'),
+    body: text('body'),
+    status: text('status').notNull().default('ai_drafted'), // ai_drafted | published | rejected
+    publishedAt: timestamp('published_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    weekRepoIdx: index('repo_spotlights_week_repo_idx').on(t.snapshotWeek, t.repo),
+    statusIdx: index('repo_spotlights_status_idx').on(t.status),
+  }),
+);
+
 export type Category = typeof categories.$inferSelect;
 export type Tool = typeof tools.$inferSelect;
 export type RepoItem = typeof githubTrending.$inferSelect;
@@ -514,3 +540,4 @@ export type SceneDraft = typeof sceneDrafts.$inferSelect;
 export type RankingDraft = typeof rankingDrafts.$inferSelect;
 export type AlternativeDraft = typeof alternativeDrafts.$inferSelect;
 export type ToolFieldDraft = typeof toolFieldDrafts.$inferSelect;
+export type RepoSpotlight = typeof repoSpotlights.$inferSelect;
