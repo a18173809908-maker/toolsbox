@@ -92,7 +92,12 @@ async function searchYouTube(toolName: string, maxResults = 5): Promise<YTVideo[
 
   try {
     const res = await fetch(url.toString(), { signal: AbortSignal.timeout(10_000) });
-    if (!res.ok) return [];
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({})) as { error?: { reason?: string } };
+      const reason = errBody?.error?.reason ?? res.status;
+      console.warn(`[searchYouTube] ${toolName}: HTTP ${res.status} – ${reason}`);
+      return [];
+    }
     const data = await res.json() as {
       items?: {
         id: { videoId: string };
