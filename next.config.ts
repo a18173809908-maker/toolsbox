@@ -9,14 +9,19 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      // 裸域 aiboxpro.cn 永久重定向到 www.aiboxpro.cn（301 而非 307），
-      // 避免搜索引擎把两个域名视为重复内容、SEO 权重分散。
+      // 裸域 aiboxpro.cn 永久重定向到 www.aiboxpro.cn
       {
         source: '/:path*',
         has: [{ type: 'host', value: 'aiboxpro.cn' }],
         destination: 'https://www.aiboxpro.cn/:path*',
         permanent: true,
       },
+      // 重复对比页 → 保留版本（301 永久重定向）
+      { source: '/compare/claude-code-vs-cursor',    destination: '/compare/cursor-vs-claude-code',        permanent: true },
+      { source: '/compare/cursor-vs-trae',           destination: '/compare/trae-vs-cursor',               permanent: true },
+      { source: '/compare/cursor-vs-github-copilot', destination: '/compare/github-copilot-vs-cursor',     permanent: true },
+      { source: '/compare/jimeng-vs-kling',          destination: '/compare/kling-vs-jimeng',              permanent: true },
+      { source: '/compare/sora-vs-runway',           destination: '/compare/runway-vs-sora-cinematic',     permanent: true },
     ];
   },
 };
