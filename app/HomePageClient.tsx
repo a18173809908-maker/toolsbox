@@ -576,11 +576,9 @@ export function HomePageClient({ tools, categories, trending, articles, events }
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {weekTrending.length > 0 ? weekTrending.map((repo, index) => (
-                <a
+                <Link
                   key={repo.repo}
-                  href={`https://github.com/${repo.repo}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={`/trending/${repo.repo}`}
                   style={{
                     background: '#fff',
                     borderRadius: 12,
@@ -589,12 +587,6 @@ export function HomePageClient({ tools, categories, trending, articles, events }
                     textDecoration: 'none',
                     display: 'block',
                     transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = T.accent;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = T.rule;
                   }}
                 >
                   <div
@@ -688,7 +680,7 @@ export function HomePageClient({ tools, categories, trending, articles, events }
                       </span>
                     )}
                   </div>
-                </a>
+                </Link>
               )) : (
                 <div
                   style={{

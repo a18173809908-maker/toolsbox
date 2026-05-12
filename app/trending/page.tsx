@@ -224,13 +224,8 @@ export default async function TrendingPage({ searchParams }: Props) {
               const insights = r.aiInsights;
               const periodLabel = safe === 'today' ? '今日' : safe === 'week' ? '本周' : '本月';
               const fallback = buildFallbackCardCopy(r, periodLabel);
-              const summary = insights?.oneSentenceSummary || fallback.summary;
-              const useCase = insights?.useCase || fallback.useCase;
-              const keyPoints = insights?.keyPoints?.length
-                ? insights.keyPoints.slice(0, 3)
-                : fallback.keyPoints;
+              const desc = insights?.oneSentenceSummary || r.descriptionZh || r.description;
               const whyTrending = insights?.whyTrending || fallback.whyTrending;
-              const visiblePoints = keyPoints.filter((point) => !isSamePoint(point, summary)).slice(0, 2);
               return (
                 <div key={r.id}>
                   <div style={{
@@ -261,25 +256,13 @@ export default async function TrendingPage({ searchParams }: Props) {
                         )}
                       </div>
 
-                      {/* Summary */}
-                      <div style={{ display: 'grid', gap: 8, color: C.inkSoft, fontSize: 13, lineHeight: 1.7, marginBottom: 10 }}>
-                        <p style={{ margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
-                          <span style={{ color: C.ink, fontWeight: insights ? 650 : 400 }}>
-                            {buildNaturalSummary(summary, useCase)}
-                          </span>
+                      {/* Description + why trending */}
+                      <div style={{ marginBottom: 10 }}>
+                        <p style={{ margin: '0 0 6px', fontSize: 13, color: C.inkSoft, lineHeight: 1.6, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
+                          {desc}
                         </p>
-
-                        {visiblePoints.length > 0 && (
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                            {visiblePoints.map((point) => (
-                              <span key={point} style={{ padding: '4px 8px', borderRadius: 6, background: '#F8FAFC', color: C.inkSoft, fontWeight: 600 }}>
-                                {point}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-
-                        <p style={{ margin: 0, color: C.inkMuted, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' as const }}>
+                        <p style={{ margin: 0, fontSize: 12, color: C.inkMuted, lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
+                          <span style={{ color: C.accent, fontWeight: 600, marginRight: 4 }}>上榜理由</span>
                           {whyTrending}
                         </p>
                       </div>
@@ -293,15 +276,15 @@ export default async function TrendingPage({ searchParams }: Props) {
                             {periodLabel}
                           </span>
                         </span>
-                        <Pill tone="accent">{insights?.projectType || fallback.projectType}</Pill>
-                        <Pill tone="green">{insights?.maturity || fallback.maturity}</Pill>
-                        {(insights?.audience?.length ? insights.audience : fallback.audience).slice(0, 2).map((item) => <Pill key={item}>{item}</Pill>)}
+                        {insights?.projectType && <Pill tone="accent">{insights.projectType}</Pill>}
+                        {insights?.maturity && <Pill tone="green">{insights.maturity}</Pill>}
+                        {insights?.audience?.slice(0, 2).map((item) => <Pill key={item}>{item}</Pill>)}
                       </div>
                     </div>
 
                     {/* Arrow */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginTop: 0 }}>
-                      <ShareButton title={`${r.repo} GitHub ${periodLabel}趋势`} text={summary} path={`/trending/${r.repo}`} compact />
+                      <ShareButton title={`${r.repo} GitHub ${periodLabel}趋势`} text={desc} path={`/trending/${r.repo}`} compact />
                       <Link href={`/trending/${r.repo}`} style={{ color: C.inkMuted, fontSize: 16, textDecoration: 'none' }}>›</Link>
                     </div>
                   </div>
