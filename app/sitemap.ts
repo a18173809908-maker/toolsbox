@@ -1,5 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { alternativeTopics } from '@/lib/alternatives';
+import { scenes } from '@/lib/scenes';
+import { rankings } from '@/lib/rankings';
 
 const BASE = 'https://www.aiboxpro.cn';
 
@@ -15,7 +17,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/privacy`,       lastModified: new Date(), changeFrequency: 'yearly',  priority: 0.3 },
     { url: `${BASE}/submit-guide`,  lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
     { url: `${BASE}/disclaimer`,    lastModified: new Date(), changeFrequency: 'yearly',  priority: 0.3 },
+    { url: `${BASE}/scenes`,        lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.8 },
+    { url: `${BASE}/best`,          lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.8 },
   ];
+  const staticScenePages: MetadataRoute.Sitemap = scenes.map((s) => ({
+    url: `${BASE}/scenes/${s.slug}`,
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }));
+  const staticRankingPages: MetadataRoute.Sitemap = rankings.map((r) => ({
+    url: `${BASE}/best/${r.slug}`,
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }));
   const staticAlternativePages: MetadataRoute.Sitemap = alternativeTopics.map((topic) => ({
     url: `${BASE}/alternatives/${topic.slug}`,
     changeFrequency: 'weekly' as const,
@@ -23,7 +37,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   if (!process.env.DATABASE_URL) {
-    return [...statics, ...staticAlternativePages];
+    return [...statics, ...staticScenePages, ...staticRankingPages, ...staticAlternativePages];
   }
 
   const [{ db }, schemaModule, drizzleModule] = await Promise.all([
@@ -85,5 +99,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: 'weekly' as const,
     priority: 0.7,
   }));
-  return [...statics, ...toolPages, ...catPages, ...newsPages, ...repoPages, ...comparePages, ...staticAlternativePages];
+  return [...statics, ...staticScenePages, ...staticRankingPages, ...toolPages, ...catPages, ...newsPages, ...repoPages, ...comparePages, ...staticAlternativePages];
 }
