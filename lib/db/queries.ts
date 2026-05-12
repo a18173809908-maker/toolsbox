@@ -459,6 +459,8 @@ export async function loadToolsByIds(ids: string[]) {
 export type ComparisonWithTools = Comparison & {
   toolA: Tool;
   toolB: Tool;
+  /** Ordered tool list — from toolIds if set, otherwise [toolA, toolB] */
+  tools: Tool[];
 };
 
 function mapDbTool(row: DbTool): Tool {
@@ -505,7 +507,10 @@ function mapDbTool(row: DbTool): Tool {
 }
 
 async function attachComparisonTools(rows: Comparison[]): Promise<ComparisonWithTools[]> {
-  const ids = Array.from(new Set(rows.flatMap((row) => [row.toolAId, row.toolBId])));
+  const ids = Array.from(new Set(rows.flatMap((row) => {
+    const extra = row.toolIds ?? [];
+    return [row.toolAId, row.toolBId, ...extra];
+  })));
   if (ids.length === 0) return [];
 
   const toolRows = await db
@@ -518,7 +523,11 @@ async function attachComparisonTools(rows: Comparison[]): Promise<ComparisonWith
     const toolA = toolMap.get(row.toolAId);
     const toolB = toolMap.get(row.toolBId);
     if (!toolA || !toolB) return [];
-    return [{ ...row, toolA, toolB }];
+    // Build ordered tools list: prefer toolIds when set, else [toolA, toolB]
+    const orderedTools = row.toolIds && row.toolIds.length > 0
+      ? row.toolIds.map((id) => toolMap.get(id)).filter((t): t is Tool => t != null)
+      : [toolA, toolB];
+    return [{ ...row, toolA, toolB, tools: orderedTools }];
   });
 }
 

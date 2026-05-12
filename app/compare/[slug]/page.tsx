@@ -6,6 +6,7 @@ import sanitizeHtml from 'sanitize-html';
 import { SiteHeader } from '@/components/SiteHeader';
 import { AccessBadge, ToolIcon } from '@/components/ToolBadges';
 import { loadAllComparisonIds, loadAllComparisons, loadComparisonById } from '@/lib/db/queries';
+import type { ComparisonWithTools } from '@/lib/db/queries';
 import { scenes } from '@/lib/scenes';
 
 export const revalidate = 3600;
@@ -96,9 +97,6 @@ function extractFaqs(markdown?: string | null) {
     .slice(0, 6);
 }
 
-function pricingText(tool: { priceCny?: string; pricingDetail?: string; pricing: string }) {
-  return tool.priceCny ?? tool.pricingDetail ?? tool.pricing;
-}
 
 async function renderMarkdown(markdown?: string | null) {
   if (!markdown) return '<p>正文待补充。</p>';
@@ -128,6 +126,52 @@ function MethodologyItem({ label, value }: { label: string; value?: string | nul
 function AccessValue({ chinaAccess, chineseUi }: { chinaAccess?: string | null; chineseUi?: boolean }) {
   if (!chinaAccess || chinaAccess === 'unknown') return <span>{accessText(chinaAccess)}</span>;
   return <AccessBadge chinaAccess={chinaAccess} chineseUi={chineseUi} compact />;
+}
+
+type Tool = ComparisonWithTools['toolA'];
+
+function DimensionTable({ tools }: { tools: Tool[] }) {
+  const dims: { label: string; render: (t: Tool) => React.ReactNode }[] = [
+    { label: '价格', render: (t) => t.priceCny ?? t.pricingDetail ?? t.pricing },
+    { label: '国内访问', render: (t) => <AccessValue chinaAccess={t.chinaAccess} chineseUi={t.chineseUi ?? undefined} /> },
+    { label: '中文界面', render: (t) => t.chineseUi ? '✓ 支持' : '—' },
+    { label: '免费额度', render: (t) => t.freeQuota ?? '—' },
+    { label: 'API 可用', render: (t) => t.apiAvailable ? '✓' : '—' },
+    { label: '开源', render: (t) => t.openSource ? '✓ 开源' : '—' },
+    { label: '注册门槛', render: (t) => t.needsOverseasPhone ? '需海外手机号' : '—' },
+  ];
+  const colWidth = `${Math.floor(88 / tools.length)}%`;
+  return (
+    <div style={{ overflowX: 'auto' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: tools.length > 2 ? 480 : 'auto' }}>
+        <thead>
+          <tr style={{ background: '#FFFBF5', borderBottom: `1px solid ${C.ruleSoft}` }}>
+            <th style={{ padding: '10px 16px', width: '12%', textAlign: 'left', fontSize: 12, color: C.inkMuted, fontWeight: 700 }}>维度</th>
+            {tools.map((t) => (
+              <th key={t.id} style={{ padding: '10px 16px', width: colWidth, textAlign: 'left', fontSize: 13, color: C.ink, fontWeight: 800, borderLeft: `1px solid ${C.ruleSoft}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <ToolIcon name={t.name} mono={t.mono} brand={t.brand} url={t.url} size={20} />
+                  {t.name}
+                </div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {dims.map((dim, i) => (
+            <tr key={dim.label} style={{ borderTop: `1px solid ${C.ruleSoft}`, background: i % 2 === 0 ? '#FFFFFF' : '#FFFDF9' }}>
+              <td style={{ padding: '12px 16px', fontSize: 12, color: C.inkMuted, fontWeight: 700 }}>{dim.label}</td>
+              {tools.map((t) => (
+                <td key={t.id} style={{ padding: '12px 16px', fontSize: 14, color: C.ink, lineHeight: 1.55, borderLeft: `1px solid ${C.ruleSoft}` }}>
+                  {dim.render(t)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 function ReproducibleValue({ value }: { value?: boolean | null }) {
@@ -261,22 +305,7 @@ export default async function CompareDetailPage({ params }: Props) {
           )}
 
           <section style={{ background: C.panel, border: `1px solid ${C.rule}`, borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
-            {[
-              ['价格', pricingText(comparison.toolA), pricingText(comparison.toolB)],
-              ['国内可用性', accessText(comparison.toolA.chinaAccess), accessText(comparison.toolB.chinaAccess)],
-              ['中文支持', comparison.toolA.chineseUi ? '支持中文界面' : '未确认中文界面', comparison.toolB.chineseUi ? '支持中文界面' : '未确认中文界面'],
-              ['免费额度', comparison.toolA.freeQuota ?? '待补充', comparison.toolB.freeQuota ?? '待补充'],
-            ].map(([label, valueA, valueB], index) => (
-              <div key={label} style={{ display: 'grid', gridTemplateColumns: '160px minmax(0, 1fr) minmax(0, 1fr)', borderTop: index === 0 ? 'none' : `1px solid ${C.ruleSoft}` }}>
-                <div style={{ padding: 16, color: C.inkMuted, fontSize: 13, fontWeight: 800, background: '#FFFBF5' }}>{label}</div>
-                <div style={{ padding: 16, color: C.ink, fontSize: 14, lineHeight: 1.55 }}>
-                  {label === '国内可用性' ? <AccessValue chinaAccess={comparison.toolA.chinaAccess} chineseUi={comparison.toolA.chineseUi} /> : valueA}
-                </div>
-                <div style={{ padding: 16, color: C.ink, fontSize: 14, lineHeight: 1.55, borderLeft: `1px solid ${C.ruleSoft}` }}>
-                  {label === '国内可用性' ? <AccessValue chinaAccess={comparison.toolB.chinaAccess} chineseUi={comparison.toolB.chineseUi} /> : valueB}
-                </div>
-              </div>
-            ))}
+            <DimensionTable tools={comparison.tools} />
           </section>
 
           <section style={{ background: C.panel, border: `1px solid ${C.rule}`, borderRadius: 12, padding: 24, marginBottom: 24 }}>
