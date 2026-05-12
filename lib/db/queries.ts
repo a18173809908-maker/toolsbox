@@ -1,5 +1,5 @@
 import { db } from './index';
-import { categories, tools, githubTrending, articles, sources, sourceCandidates, toolCandidates, comparisons, toolConnectivity } from './schema';
+import { categories, tools, githubTrending, articles, sources, sourceCandidates, toolCandidates, comparisons, toolConnectivity, toolVerdicts, events, eventVerdicts, comparisonDrafts, sceneDrafts, rankingDrafts, alternativeDrafts, toolFieldDrafts } from './schema';
 import { desc, asc, eq, ilike, or, isNull, count, max, and, inArray, gt, sql, ne } from 'drizzle-orm';
 import type { TrendingPeriod, Tool, Category, RepoItem, HomepageStats } from '@/lib/data';
 import type { Comparison, Tool as DbTool } from './schema';
@@ -1260,4 +1260,262 @@ export async function loadAdminArticleById(id: number) {
     .leftJoin(sources, eq(articles.sourceId, sources.id))
     .where(eq(articles.id, id));
   return rows[0] ?? null;
+}
+
+// ── Tool Verdicts ─────────────────────────────────────────────────────────────
+
+export async function loadVerdictByToolId(toolId: string) {
+  const rows = await db
+    .select()
+    .from(toolVerdicts)
+    .where(and(eq(toolVerdicts.toolId, toolId), eq(toolVerdicts.status, 'published')))
+    .orderBy(desc(toolVerdicts.verdictUpdatedAt))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function loadPendingVerdicts(limit = 20, offset = 0) {
+  const [items, totalRows] = await Promise.all([
+    db.select().from(toolVerdicts)
+      .where(eq(toolVerdicts.status, 'ai_drafted'))
+      .orderBy(desc(toolVerdicts.createdAt))
+      .limit(limit).offset(offset),
+    db.select({ value: count() }).from(toolVerdicts)
+      .where(eq(toolVerdicts.status, 'ai_drafted')),
+  ]);
+  return { items, total: totalRows[0]?.value ?? 0 };
+}
+
+export async function loadVerdictById(id: string) {
+  const rows = await db.select().from(toolVerdicts).where(eq(toolVerdicts.id, id));
+  return rows[0] ?? null;
+}
+
+export async function publishVerdict(id: string) {
+  await db.update(toolVerdicts)
+    .set({ status: 'published', reviewedAt: new Date() })
+    .where(eq(toolVerdicts.id, id));
+}
+
+export async function rejectVerdict(id: string, reason: string) {
+  await db.update(toolVerdicts)
+    .set({ status: 'rejected', reviewedAt: new Date(), rejectReason: reason })
+    .where(eq(toolVerdicts.id, id));
+}
+
+// ── Events ────────────────────────────────────────────────────────────────────
+
+export async function loadPendingEvents(limit = 20, offset = 0) {
+  const [items, totalRows] = await Promise.all([
+    db.select().from(events)
+      .where(eq(events.status, 'ai_drafted'))
+      .orderBy(desc(events.createdAt))
+      .limit(limit).offset(offset),
+    db.select({ value: count() }).from(events)
+      .where(eq(events.status, 'ai_drafted')),
+  ]);
+  return { items, total: totalRows[0]?.value ?? 0 };
+}
+
+export async function loadEventById(id: string) {
+  const rows = await db.select().from(events).where(eq(events.id, id));
+  return rows[0] ?? null;
+}
+
+export async function publishEvent(id: string) {
+  await db.update(events)
+    .set({ status: 'published', reviewedAt: new Date(), publishedAt: new Date() })
+    .where(eq(events.id, id));
+}
+
+export async function rejectEvent(id: string, reason: string) {
+  await db.update(events)
+    .set({ status: 'rejected', reviewedAt: new Date(), rejectReason: reason })
+    .where(eq(events.id, id));
+}
+
+// ── Event Verdicts ────────────────────────────────────────────────────────────
+
+export async function loadPendingEventVerdicts(limit = 20, offset = 0) {
+  const [items, totalRows] = await Promise.all([
+    db.select().from(eventVerdicts)
+      .where(eq(eventVerdicts.status, 'ai_drafted'))
+      .orderBy(desc(eventVerdicts.createdAt))
+      .limit(limit).offset(offset),
+    db.select({ value: count() }).from(eventVerdicts)
+      .where(eq(eventVerdicts.status, 'ai_drafted')),
+  ]);
+  return { items, total: totalRows[0]?.value ?? 0 };
+}
+
+export async function loadEventVerdictById(id: string) {
+  const rows = await db.select().from(eventVerdicts).where(eq(eventVerdicts.id, id));
+  return rows[0] ?? null;
+}
+
+export async function publishEventVerdict(id: string) {
+  await db.update(eventVerdicts)
+    .set({ status: 'published', reviewedAt: new Date() })
+    .where(eq(eventVerdicts.id, id));
+}
+
+export async function rejectEventVerdict(id: string, reason: string) {
+  await db.update(eventVerdicts)
+    .set({ status: 'rejected', reviewedAt: new Date(), rejectReason: reason })
+    .where(eq(eventVerdicts.id, id));
+}
+
+// ── Comparison Drafts ─────────────────────────────────────────────────────────
+
+export async function loadComparisonDrafts(limit = 20, offset = 0) {
+  const [items, totalRows] = await Promise.all([
+    db.select().from(comparisonDrafts)
+      .where(eq(comparisonDrafts.status, 'ai_drafted'))
+      .orderBy(desc(comparisonDrafts.createdAt))
+      .limit(limit).offset(offset),
+    db.select({ value: count() }).from(comparisonDrafts)
+      .where(eq(comparisonDrafts.status, 'ai_drafted')),
+  ]);
+  return { items, total: totalRows[0]?.value ?? 0 };
+}
+
+export async function loadComparisonDraftById(id: string) {
+  const rows = await db.select().from(comparisonDrafts).where(eq(comparisonDrafts.id, id));
+  return rows[0] ?? null;
+}
+
+export async function publishComparisonDraft(id: string) {
+  await db.update(comparisonDrafts)
+    .set({ status: 'published', reviewedAt: new Date(), publishedAt: new Date() })
+    .where(eq(comparisonDrafts.id, id));
+}
+
+export async function rejectComparisonDraft(id: string, reason: string) {
+  await db.update(comparisonDrafts)
+    .set({ status: 'rejected', reviewedAt: new Date(), rejectReason: reason })
+    .where(eq(comparisonDrafts.id, id));
+}
+
+// ── Scene Drafts ──────────────────────────────────────────────────────────────
+
+export async function loadSceneDrafts(limit = 20, offset = 0) {
+  const [items, totalRows] = await Promise.all([
+    db.select().from(sceneDrafts)
+      .where(eq(sceneDrafts.status, 'ai_drafted'))
+      .orderBy(desc(sceneDrafts.createdAt))
+      .limit(limit).offset(offset),
+    db.select({ value: count() }).from(sceneDrafts)
+      .where(eq(sceneDrafts.status, 'ai_drafted')),
+  ]);
+  return { items, total: totalRows[0]?.value ?? 0 };
+}
+
+export async function loadSceneDraftById(id: string) {
+  const rows = await db.select().from(sceneDrafts).where(eq(sceneDrafts.id, id));
+  return rows[0] ?? null;
+}
+
+export async function publishSceneDraft(id: string) {
+  await db.update(sceneDrafts)
+    .set({ status: 'published', reviewedAt: new Date(), publishedAt: new Date() })
+    .where(eq(sceneDrafts.id, id));
+}
+
+export async function rejectSceneDraft(id: string, reason: string) {
+  await db.update(sceneDrafts)
+    .set({ status: 'rejected', reviewedAt: new Date(), rejectReason: reason })
+    .where(eq(sceneDrafts.id, id));
+}
+
+// ── Ranking Drafts ────────────────────────────────────────────────────────────
+
+export async function loadRankingDrafts(limit = 20, offset = 0) {
+  const [items, totalRows] = await Promise.all([
+    db.select().from(rankingDrafts)
+      .where(eq(rankingDrafts.status, 'ai_drafted'))
+      .orderBy(desc(rankingDrafts.createdAt))
+      .limit(limit).offset(offset),
+    db.select({ value: count() }).from(rankingDrafts)
+      .where(eq(rankingDrafts.status, 'ai_drafted')),
+  ]);
+  return { items, total: totalRows[0]?.value ?? 0 };
+}
+
+export async function loadRankingDraftById(id: string) {
+  const rows = await db.select().from(rankingDrafts).where(eq(rankingDrafts.id, id));
+  return rows[0] ?? null;
+}
+
+export async function publishRankingDraft(id: string) {
+  await db.update(rankingDrafts)
+    .set({ status: 'published', reviewedAt: new Date(), publishedAt: new Date() })
+    .where(eq(rankingDrafts.id, id));
+}
+
+export async function rejectRankingDraft(id: string, reason: string) {
+  await db.update(rankingDrafts)
+    .set({ status: 'rejected', reviewedAt: new Date(), rejectReason: reason })
+    .where(eq(rankingDrafts.id, id));
+}
+
+// ── Alternative Drafts ────────────────────────────────────────────────────────
+
+export async function loadAlternativeDrafts(limit = 20, offset = 0) {
+  const [items, totalRows] = await Promise.all([
+    db.select().from(alternativeDrafts)
+      .where(eq(alternativeDrafts.status, 'ai_drafted'))
+      .orderBy(desc(alternativeDrafts.createdAt))
+      .limit(limit).offset(offset),
+    db.select({ value: count() }).from(alternativeDrafts)
+      .where(eq(alternativeDrafts.status, 'ai_drafted')),
+  ]);
+  return { items, total: totalRows[0]?.value ?? 0 };
+}
+
+export async function loadAlternativeDraftById(id: string) {
+  const rows = await db.select().from(alternativeDrafts).where(eq(alternativeDrafts.id, id));
+  return rows[0] ?? null;
+}
+
+export async function publishAlternativeDraft(id: string) {
+  await db.update(alternativeDrafts)
+    .set({ status: 'published', reviewedAt: new Date(), publishedAt: new Date() })
+    .where(eq(alternativeDrafts.id, id));
+}
+
+export async function rejectAlternativeDraft(id: string, reason: string) {
+  await db.update(alternativeDrafts)
+    .set({ status: 'rejected', reviewedAt: new Date(), rejectReason: reason })
+    .where(eq(alternativeDrafts.id, id));
+}
+
+// ── Tool Field Drafts ─────────────────────────────────────────────────────────
+
+export async function loadToolFieldDrafts(limit = 20, offset = 0) {
+  const [items, totalRows] = await Promise.all([
+    db.select().from(toolFieldDrafts)
+      .where(eq(toolFieldDrafts.status, 'ai_drafted'))
+      .orderBy(desc(toolFieldDrafts.createdAt))
+      .limit(limit).offset(offset),
+    db.select({ value: count() }).from(toolFieldDrafts)
+      .where(eq(toolFieldDrafts.status, 'ai_drafted')),
+  ]);
+  return { items, total: totalRows[0]?.value ?? 0 };
+}
+
+export async function loadToolFieldDraftById(id: string) {
+  const rows = await db.select().from(toolFieldDrafts).where(eq(toolFieldDrafts.id, id));
+  return rows[0] ?? null;
+}
+
+export async function publishToolFieldDraft(id: string) {
+  await db.update(toolFieldDrafts)
+    .set({ status: 'published', reviewedAt: new Date(), publishedAt: new Date() })
+    .where(eq(toolFieldDrafts.id, id));
+}
+
+export async function rejectToolFieldDraft(id: string, reason: string) {
+  await db.update(toolFieldDrafts)
+    .set({ status: 'rejected', reviewedAt: new Date(), rejectReason: reason })
+    .where(eq(toolFieldDrafts.id, id));
 }

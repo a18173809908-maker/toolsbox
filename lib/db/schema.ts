@@ -246,6 +246,10 @@ export const comparisons = pgTable(
     id: text('id').primaryKey(),
     toolAId: text('tool_a_id').notNull(),
     toolBId: text('tool_b_id').notNull(),
+    // T2.1: N-tool support — prefer toolIds when present, fall back to [toolAId, toolBId]
+    toolIds: text('tool_ids').array(),
+    verdictOneLiner: text('verdict_one_liner'),
+    mentions: jsonb('mentions').$type<{ name: string; url: string }[]>(),
     title: text('title').notNull(),
     summary: text('summary'),
     body: text('body'),
@@ -318,6 +322,179 @@ export const toolVerdicts = pgTable(
   }),
 );
 
+// ── Events（事件主表）───────────────────────────────────────────────────────────
+
+export const events = pgTable(
+  'events',
+  {
+    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+    slug: text('slug').notNull().unique(),
+    title: text('title').notNull(),
+    summary: text('summary'),
+    body: text('body'),
+    articleIds: integer('article_ids').array(),
+    promptVersion: text('prompt_version'),
+    llmModel: text('llm_model'),
+    antiClicheScore: integer('anti_cliche_score'),
+    // status: 'ai_drafted' | 'published' | 'rejected'
+    status: text('status').notNull().default('ai_drafted'),
+    reviewedBy: text('reviewed_by'),
+    reviewedAt: timestamp('reviewed_at'),
+    rejectReason: text('reject_reason'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    publishedAt: timestamp('published_at'),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    statusIdx: index('events_status_idx').on(t.status),
+    slugIdx: index('events_slug_idx').on(t.slug),
+  }),
+);
+
+// ── Event Verdicts（事件立场字段）────────────────────────────────────────────────
+
+export const eventVerdicts = pgTable(
+  'event_verdicts',
+  {
+    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+    eventId: text('event_id').notNull().references(() => events.id),
+    verdictOneLiner: text('verdict_one_liner').notNull(),
+    whoShouldCare: text('who_should_care').array(),
+    // impactLevel: '颠覆性' | '重要' | '值得关注' | '炒作居多'
+    impactLevel: text('impact_level'),
+    chinaImpact: text('china_impact'),
+    relatedTools: jsonb('related_tools').$type<{ id: string; reason: string }[]>(),
+    caveats: text('caveats').array(),
+    promptVersion: text('prompt_version').notNull(),
+    llmModel: text('llm_model').notNull(),
+    antiClicheScore: integer('anti_cliche_score'),
+    status: text('status').notNull().default('ai_drafted'),
+    reviewedBy: text('reviewed_by'),
+    reviewedAt: timestamp('reviewed_at'),
+    rejectReason: text('reject_reason'),
+    expiresAt: timestamp('expires_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    eventIdx: index('event_verdicts_event_idx').on(t.eventId),
+    statusIdx: index('event_verdicts_status_idx').on(t.status),
+  }),
+);
+
+// ── Draft Tables（内容起草表，统一 ai_drafted→published/rejected 三态流）──────────
+// 每张表持有 aiDraft jsonb，审核通过后写入对应主表。
+
+export const comparisonDrafts = pgTable(
+  'comparison_drafts',
+  {
+    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+    slug: text('slug').notNull(),
+    sourceData: jsonb('source_data'),
+    aiDraft: jsonb('ai_draft'),
+    promptVersion: text('prompt_version').notNull(),
+    llmModel: text('llm_model').notNull(),
+    antiClicheScore: integer('anti_cliche_score'),
+    status: text('status').notNull().default('ai_drafted'),
+    reviewedBy: text('reviewed_by'),
+    reviewedAt: timestamp('reviewed_at'),
+    rejectReason: text('reject_reason'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    publishedAt: timestamp('published_at'),
+  },
+  (t) => ({
+    statusIdx: index('comparison_drafts_status_idx').on(t.status),
+    slugIdx: index('comparison_drafts_slug_idx').on(t.slug),
+  }),
+);
+
+export const sceneDrafts = pgTable(
+  'scene_drafts',
+  {
+    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+    slug: text('slug').notNull(),
+    sourceData: jsonb('source_data'),
+    aiDraft: jsonb('ai_draft'),
+    promptVersion: text('prompt_version').notNull(),
+    llmModel: text('llm_model').notNull(),
+    antiClicheScore: integer('anti_cliche_score'),
+    status: text('status').notNull().default('ai_drafted'),
+    reviewedBy: text('reviewed_by'),
+    reviewedAt: timestamp('reviewed_at'),
+    rejectReason: text('reject_reason'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    publishedAt: timestamp('published_at'),
+  },
+  (t) => ({
+    statusIdx: index('scene_drafts_status_idx').on(t.status),
+  }),
+);
+
+export const rankingDrafts = pgTable(
+  'ranking_drafts',
+  {
+    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+    slug: text('slug').notNull(),
+    sourceData: jsonb('source_data'),
+    aiDraft: jsonb('ai_draft'),
+    promptVersion: text('prompt_version').notNull(),
+    llmModel: text('llm_model').notNull(),
+    antiClicheScore: integer('anti_cliche_score'),
+    status: text('status').notNull().default('ai_drafted'),
+    reviewedBy: text('reviewed_by'),
+    reviewedAt: timestamp('reviewed_at'),
+    rejectReason: text('reject_reason'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    publishedAt: timestamp('published_at'),
+  },
+  (t) => ({
+    statusIdx: index('ranking_drafts_status_idx').on(t.status),
+  }),
+);
+
+export const alternativeDrafts = pgTable(
+  'alternative_drafts',
+  {
+    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+    slug: text('slug').notNull(),
+    sourceData: jsonb('source_data'),
+    aiDraft: jsonb('ai_draft'),
+    promptVersion: text('prompt_version').notNull(),
+    llmModel: text('llm_model').notNull(),
+    antiClicheScore: integer('anti_cliche_score'),
+    status: text('status').notNull().default('ai_drafted'),
+    reviewedBy: text('reviewed_by'),
+    reviewedAt: timestamp('reviewed_at'),
+    rejectReason: text('reject_reason'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    publishedAt: timestamp('published_at'),
+  },
+  (t) => ({
+    statusIdx: index('alternative_drafts_status_idx').on(t.status),
+  }),
+);
+
+export const toolFieldDrafts = pgTable(
+  'tool_field_drafts',
+  {
+    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+    slug: text('slug').notNull(),
+    sourceData: jsonb('source_data'),
+    aiDraft: jsonb('ai_draft'),
+    promptVersion: text('prompt_version').notNull(),
+    llmModel: text('llm_model').notNull(),
+    antiClicheScore: integer('anti_cliche_score'),
+    status: text('status').notNull().default('ai_drafted'),
+    reviewedBy: text('reviewed_by'),
+    reviewedAt: timestamp('reviewed_at'),
+    rejectReason: text('reject_reason'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    publishedAt: timestamp('published_at'),
+  },
+  (t) => ({
+    statusIdx: index('tool_field_drafts_status_idx').on(t.status),
+  }),
+);
+
 export type Category = typeof categories.$inferSelect;
 export type Tool = typeof tools.$inferSelect;
 export type RepoItem = typeof githubTrending.$inferSelect;
@@ -328,3 +505,10 @@ export type ToolCandidate = typeof toolCandidates.$inferSelect;
 export type Article = typeof articles.$inferSelect;
 export type Comparison = typeof comparisons.$inferSelect;
 export type ToolVerdict = typeof toolVerdicts.$inferSelect;
+export type Event = typeof events.$inferSelect;
+export type EventVerdict = typeof eventVerdicts.$inferSelect;
+export type ComparisonDraft = typeof comparisonDrafts.$inferSelect;
+export type SceneDraft = typeof sceneDrafts.$inferSelect;
+export type RankingDraft = typeof rankingDrafts.$inferSelect;
+export type AlternativeDraft = typeof alternativeDrafts.$inferSelect;
+export type ToolFieldDraft = typeof toolFieldDrafts.$inferSelect;
