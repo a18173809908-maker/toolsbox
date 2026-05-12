@@ -1,3 +1,9 @@
+export type AlternativeScenario = {
+  useCase: string;   // 使用场景描述
+  pick: string;      // 推荐工具名
+  reason: string;    // 一句话理由
+};
+
 export type AlternativeTopic = {
   slug: string;
   title: string;
@@ -5,6 +11,7 @@ export type AlternativeTopic = {
   fallbackToolIds: string[];
   scenario: string;
   why: string;
+  scenarios?: AlternativeScenario[];
 };
 
 export const alternativeTopics: AlternativeTopic[] = [
@@ -15,6 +22,12 @@ export const alternativeTopics: AlternativeTopic[] = [
     fallbackToolIds: ['trae', 'claude-code', 'github-copilot', 'windsurf'],
     scenario: 'AI 编程、代码补全、项目级重构',
     why: 'Cursor 适合深度 AI 编程，但国内用户常会遇到账号、网络、团队采购和中文资料不稳定的问题。替代方案不一定要完全复制 Cursor，而是要覆盖真实工作流：能不能直接登录，能不能理解中文需求，能不能在现有 IDE 或代码仓库里稳定协作。',
+    scenarios: [
+      { useCase: '没有 VPN，想免费用 Claude 写代码', pick: 'Trae', reason: '字节出品，国内直连，免费内置 Claude 3.5 Sonnet 和 GPT-4o，零门槛' },
+      { useCase: '想在终端里自主完成复杂任务', pick: 'Claude Code', reason: '自主读写整个代码库、执行命令、Git 操作，适合 agentic 工作流' },
+      { useCase: '已有 VS Code 习惯，团队统一采购', pick: 'GitHub Copilot', reason: '无缝集成 VS Code/JetBrains，企业版有合规隔离，支持 PR 自动审查' },
+      { useCase: '想要多文件协调编辑 + 类 Cursor 体验', pick: 'Windsurf', reason: 'Cascade 智能体流支持跨文件修改，免费版每月 50 次，体验接近 Cursor' },
+    ],
   },
   {
     slug: 'chatgpt',
@@ -46,7 +59,13 @@ export const alternativeTopics: AlternativeTopic[] = [
     subtitle: '文生视频、图生视频、短片素材和商业创意，先看国内能稳定使用的工具。',
     fallbackToolIds: ['kling-ai', 'hailuo-ai', 'jimeng-ai', 'pika', 'vidu-ai'],
     scenario: 'AI 视频生成、短视频素材、图生视频',
-    why: 'Runway 在海外视频生成工具里很有代表性，但国内用户经常面临三个障碍：访问需要代理、注册须绑定海外手机号、付款只支持境外信用卡。国产替代工具（可灵、即梦、海螺）在这三点上更顺手，且对中文提示词的理解更稳定，适合短视频素材、电商创意和日常内容生产。Pika 和 Vidu 作为国内可访问的海外选项，可作为补充。',
+    why: 'Runway 在海外视频生成工具里技术扎实，尤其是图生视频和摄像机运动控制领先，但国内用户面临三个硬门槛：需要代理访问、注册须绑境外手机号、付款只支持境外信用卡（最低 12 美元/月）。国产替代工具（可灵、即梦、海螺）在这三点上全部消除，且中文提示词理解更稳定，对短视频素材、电商创意和日常内容生产更直接。',
+    scenarios: [
+      { useCase: '电商产品视频 + 国内直连零成本开始', pick: '即梦 AI', reason: '字节账号直接登录，有免费额度，对产品图和中文提示词理解好' },
+      { useCase: '精细运动控制 + 图生视频质量优先', pick: '可灵 AI', reason: '快手出品，图生视频运动控制最细，国内工具里画质最稳，付费套餐人民币计费' },
+      { useCase: '写实风格短片 + 快速批量出素材', pick: '海螺 AI', reason: 'MiniMax 出品，写实画风独特，适合批量生成自然场景素材，有免费额度' },
+      { useCase: '预算充裕 + 想对标 Runway 画质', pick: 'Pika', reason: '国内可访问（需邮箱注册），画质接近 Runway，可以作为付费档位的备选' },
+    ],
   },
 ];
 

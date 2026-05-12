@@ -1511,6 +1511,14 @@ export async function loadAlternativeDraftById(id: string) {
   return rows[0] ?? null;
 }
 
+export async function loadPublishedAlternativeDraft(slug: string) {
+  const rows = await db.select().from(alternativeDrafts)
+    .where(and(eq(alternativeDrafts.slug, slug), eq(alternativeDrafts.status, 'published')))
+    .orderBy(desc(alternativeDrafts.publishedAt))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
 export async function publishAlternativeDraft(id: string) {
   await db.update(alternativeDrafts)
     .set({ status: 'published', reviewedAt: new Date(), publishedAt: new Date() })
