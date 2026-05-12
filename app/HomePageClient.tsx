@@ -33,7 +33,30 @@ const sceneSolutions = [
   { title: '写文案', icon: '✍️', desc: 'AI写作工具合集', cat: 'writing' },
 ];
 
-const quickTags = ['免费工具', '国内可用', 'AI写作', 'AI绘图', '编程助手', '视频创作', '办公效率'];
+const quickTags: { label: string; href: string }[] = [
+  { label: '免费工具',   href: '/tools?pricing=Free' },
+  { label: '国内可用',   href: '/tools?china=accessible' },
+  { label: 'AI写作',    href: '/tools?cat=writing' },
+  { label: 'AI绘图',    href: '/tools?cat=image' },
+  { label: '编程助手',   href: '/tools?cat=code' },
+  { label: '视频创作',   href: '/tools?cat=video' },
+  { label: '办公效率',   href: '/tools?cat=productivity' },
+];
+
+// 清洗 RSS 来源摘要里的 HTML 标签和实体（如 InfoQ feed 末尾的 "点击查看原文" <div> 标签）。
+// 这是渲染层护栏；底层数据由起草过滤器收紧（A 路径）+ 后续 cleanup 脚本清洗。
+function stripHtmlForDisplay(text: string): string {
+  return text
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 function formatTimeAgo(date: Date | null): string {
   if (!date) return '';
@@ -188,8 +211,8 @@ export function HomePageClient({ tools, categories, trending, articles }: HomePa
             <span style={{ fontSize: 14, color: T.inkMuted }}>热门搜索：</span>
             {quickTags.map((tag) => (
               <Link
-                key={tag}
-                href={`/tools?q=${encodeURIComponent(tag)}`}
+                key={tag.label}
+                href={tag.href}
                 style={{
                   padding: '6px 14px',
                   background: '#fff',
@@ -209,7 +232,7 @@ export function HomePageClient({ tools, categories, trending, articles }: HomePa
                   e.currentTarget.style.color = T.inkSoft;
                 }}
               >
-                {tag}
+                {tag.label}
               </Link>
             ))}
           </div>
@@ -556,22 +579,25 @@ export function HomePageClient({ tools, categories, trending, articles }: HomePa
                   >
                     {article.title}
                   </h3>
-                  {article.summary && (
-                    <p
-                      style={{
-                        fontSize: 13,
-                        color: T.inkSoft,
-                        margin: 0,
-                        lineHeight: 1.5,
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      {article.summary}
-                    </p>
-                  )}
+                  {article.summary && (() => {
+                    const clean = stripHtmlForDisplay(article.summary);
+                    return clean ? (
+                      <p
+                        style={{
+                          fontSize: 13,
+                          color: T.inkSoft,
+                          margin: 0,
+                          lineHeight: 1.5,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {clean}
+                      </p>
+                    ) : null;
+                  })()}
                 </Link>
               )) : (
                 <div
