@@ -145,30 +145,30 @@ type UpdateDraft = {
 async function synthesizeUpdate(
   toolName: string,
   video: YTVideo,
-  transcript: string,
+  transcript: string | null,
 ): Promise<UpdateDraft | null> {
-  const prompt = `你是专门为中文 AI 从业者写内容的编辑。根据以下 YouTube 视频字幕，写一篇关于「${toolName}」的中文文章。
+  const hasTranscript = !!transcript;
+  const contentSource = hasTranscript
+    ? `字幕内容：\n${transcript}`
+    : `视频描述：\n${video.description}\n\n注意：没有字幕，仅根据视频标题和描述撰写，内容以已知信息为主，避免猜测细节。`;
+
+  const prompt = `你是专门为中文 AI 从业者写内容的编辑。根据以下 YouTube 视频信息，写一篇关于「${toolName}」的中文文章。
 
 **判断内容类型**：
 - 如果视频主要讲工具的新功能/版本更新/最新动态 → contentType = "update"
 - 如果视频主要讲如何使用工具/教程/技巧 → contentType = "tutorial"
 
 **写作要求**：
-- 基于字幕内容，不要虚构功能
+- 只写能从提供信息中确认的内容，不要虚构功能
 - 用具体的操作步骤或功能点，不要空泛描述
-- 如有具体演示的操作/命令，保留下来
 - 中文读者看得懂、用得上
 
 **输出 JSON**（只返回 JSON）：
 {
   "titleZh": "中文标题，不超过30字，点明核心内容",
   "contentType": "update" 或 "tutorial",
-  "body": "完整中文文章，Markdown 格式，500-1200字"
+  "body": "完整中文文章，Markdown 格式，400-1000字"
 }
-
-**Markdown 结构参考**：
-- update 类型：## 更新了什么 → ## 具体功能 → ## 怎么用 / 影响
-- tutorial 类型：## 是什么 → ## 怎么做（步骤）→ ## 实际效果 / 注意事项
 
 ---
 
@@ -176,8 +176,7 @@ async function synthesizeUpdate(
 频道：${video.channelTitle}
 发布时间：${video.publishedAt.slice(0, 10)}
 
-字幕内容：
-${transcript}`;
+${contentSource}`;
 
   try {
     const raw = await chat([{ role: 'user', content: prompt }], { maxTokens: 1800, tier: 'premium' });
@@ -258,12 +257,8 @@ export async function fetchToolUpdates(): Promise<FetchToolUpdatesResult> {
         continue;
       }
 
-      // 抓字幕
+      // 抓字幕（失败时 fallback 到 description）
       const transcript = await fetchTranscript(video.videoId);
-      if (!transcript) {
-        result.skipped++;
-        continue;
-      }
 
       // LLM 合成
       const draft = await synthesizeUpdate(tool.name, video, transcript);
