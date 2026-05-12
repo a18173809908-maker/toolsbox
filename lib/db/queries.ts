@@ -137,6 +137,7 @@ export async function loadHomepageData(): Promise<{
       if (!trending[p]) continue;
       trending[p].push({
         repo: r.repo, desc: r.description, descZh: r.descriptionZh ?? undefined,
+        whyTrending: (r.aiInsights as { whyTrending?: string } | null)?.whyTrending ?? undefined,
         lang: r.lang, stars: r.stars, gained: r.gained,
       });
     }

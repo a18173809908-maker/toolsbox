@@ -54,6 +54,7 @@ export type RepoItem = {
   repo: string;
   desc: string;
   descZh?: string;
+  whyTrending?: string;
   lang: string;
   stars: number;
   gained: number;

@@ -635,7 +635,7 @@ export function HomePageClient({ tools, categories, trending, articles, events }
                     style={{
                       fontSize: 13,
                       color: T.inkSoft,
-                      margin: '0 0 12px',
+                      margin: '0 0 8px',
                       lineHeight: 1.5,
                       display: '-webkit-box',
                       WebkitLineClamp: 2,
@@ -645,6 +645,21 @@ export function HomePageClient({ tools, categories, trending, articles, events }
                   >
                     {repo.descZh || repo.desc}
                   </p>
+                  {repo.whyTrending && (
+                    <p style={{
+                      fontSize: 12,
+                      color: T.inkMuted,
+                      margin: '0 0 10px',
+                      lineHeight: 1.5,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                    }}>
+                      <span style={{ color: T.accent, fontWeight: 600, marginRight: 4 }}>上榜理由</span>
+                      {repo.whyTrending}
+                    </p>
+                  )}
                   <div
                     style={{
                       display: 'flex',
