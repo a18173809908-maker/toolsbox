@@ -131,7 +131,8 @@ export async function processToolCandidates(): Promise<{ processed: number; reje
   let skipped = 0;
 
   for (const candidate of pending) {
-    if (candidate.hotnessScore !== null && candidate.hotnessScore < 5) {
+    // Skip hotnessScore filter for aibot sources — article pages have naturally low likes.
+    if (candidate.sourceType !== 'aibot' && candidate.hotnessScore !== null && candidate.hotnessScore < 5) {
       await markToolCandidateRejected(candidate.id);
       rejected++;
       continue;

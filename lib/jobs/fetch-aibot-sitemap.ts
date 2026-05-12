@@ -62,7 +62,10 @@ function parseSitemap(xml: string) {
   return $('loc')
     .map((_, el) => $(el).text().trim())
     .get()
-    .filter((url) => /^https:\/\/ai-bot\.cn\/sites\/\d+\.html$/.test(url));
+    .filter((url) =>
+      /^https:\/\/ai-bot\.cn\/sites\/\d+\.html$/.test(url) ||
+      /^https:\/\/ai-bot\.cn\/[a-z0-9][a-z0-9-]+\/$/.test(url),
+    );
 }
 
 function cleanName(name: string) {
@@ -87,23 +90,52 @@ function externalUrl(url: string | undefined) {
 
 function parseToolPage(html: string) {
   const $ = load(html);
-  const name = cleanName($('.site-name').first().text() || $('h1').first().text());
-  const url = externalUrl($('.site-go-url a[href]').first().attr('href'));
-  const category = $('.btn-cat').first().text().trim();
   const likesText = $('.like-count').first().text().trim();
   const likes = Number.parseInt(likesText.replace(/[^\d]/g, ''), 10);
 
+  // Legacy /sites/xxx.html format
+  const legacyName = $('.site-name').first().text().trim();
+  if (legacyName) {
+    const name = cleanName(legacyName);
+    const url = externalUrl($('.site-go-url a[href]').first().attr('href'));
+    const category = $('.btn-cat').first().text().trim();
+    if (!name || !url) return null;
+    return {
+      name,
+      url,
+      description: category ? `${name} - ${category}` : name,
+      sourceName: 'ai-bot.cn',
+      sourceType: 'aibot',
+      votes: Number.isFinite(likes) ? likes : 0,
+      aibotLikes: Number.isFinite(likes) ? likes : 0,
+      hotnessScore: Number.isFinite(likes) ? Math.round(likes * 0.5) : undefined,
+    };
+  }
+
+  // New slug-based article format
+  const h1Raw = $('h1.h3').first().text() || $('h1').first().text();
+  // h1 format: "tool-name – description" (em dash or regular dash)
+  const dashIdx = h1Raw.search(/\s[–—-]\s/);
+  const rawName = dashIdx > 0 ? h1Raw.slice(0, dashIdx) : h1Raw;
+  const name = cleanName(rawName);
+
+  // URL: text like "项目官网：https://..." or "官网：https://..."
+  const bodyText = $('body').text();
+  const officialUrlMatch = bodyText.match(/(?:项目官网|官网|官方网站|Website)[：:]\s*(https?:\/\/[^\s\n]+)/);
+  const url = externalUrl(officialUrlMatch?.[1]?.replace(/[）)。，,]+$/, ''));
+
   if (!name || !url) return null;
 
+  // For new article-format pages, skip hotnessScore so the low-score filter doesn't auto-reject.
+  // LLM enrichment will decide if it's a real tool.
   return {
     name,
     url,
-    description: category ? `${name} - ${category}` : name,
+    description: name,
     sourceName: 'ai-bot.cn',
     sourceType: 'aibot',
     votes: Number.isFinite(likes) ? likes : 0,
     aibotLikes: Number.isFinite(likes) ? likes : 0,
-    hotnessScore: Number.isFinite(likes) ? Math.round(likes * 0.5) : undefined,
   };
 }
 
@@ -121,7 +153,7 @@ async function ensureAibotSource() {
     .onConflictDoNothing();
 }
 
-export async function fetchAibotSitemapCandidates(limit = DEFAULT_LIMIT): Promise<Result> {
+export async function fetchAibotSitemapCandidates(limit = DEFAULT_LIMIT, offset = 0): Promise<Result> {
   await ensureAibotSource();
   const active = await loadSources('aibot');
   if (active.length === 0) {
@@ -138,7 +170,9 @@ export async function fetchAibotSitemapCandidates(limit = DEFAULT_LIMIT): Promis
 
   const sitemapRes = await respectfulFetch(SITEMAP);
   if (!sitemapRes.ok) throw new Error(`sitemap HTTP ${sitemapRes.status}`);
-  const urls = parseSitemap(await sitemapRes.text()).filter((url) => !isDisallowed(url)).slice(0, capped);
+  const urls = parseSitemap(await sitemapRes.text())
+    .filter((url) => !isDisallowed(url))
+    .slice(offset, offset + capped);
 
   let fetched = 0;
   let skipped = 0;
@@ -151,12 +185,12 @@ export async function fetchAibotSitemapCandidates(limit = DEFAULT_LIMIT): Promis
       const res = await respectfulFetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const candidate = parseToolPage(await res.text());
+      consecutiveFailures = 0;
       if (!candidate) {
         skipped++;
         continue;
       }
       fetched += await upsertToolCandidates([candidate]);
-      consecutiveFailures = 0;
     } catch {
       failed++;
       consecutiveFailures++;
