@@ -44,9 +44,9 @@ export const alternativeTopics: AlternativeTopic[] = [
     slug: 'runway',
     title: 'Runway 的国产替代方案',
     subtitle: '文生视频、图生视频、短片素材和商业创意，先看国内能稳定使用的工具。',
-    fallbackToolIds: ['kling-ai', 'hailuo-ai', 'jimeng-ai'],
+    fallbackToolIds: ['kling-ai', 'hailuo-ai', 'jimeng-ai', 'pika', 'vidu-ai'],
     scenario: 'AI 视频生成、短视频素材、图生视频',
-    why: 'Runway 在海外视频生成工具里很有代表性，但国内团队更关心生成速度、访问稳定性、中文提示词和商用链路。国产视频工具在短视频、电商素材和中文创意表达上更贴近日常生产。',
+    why: 'Runway 在海外视频生成工具里很有代表性，但国内用户经常面临三个障碍：访问需要代理、注册须绑定海外手机号、付款只支持境外信用卡。国产替代工具（可灵、即梦、海螺）在这三点上更顺手，且对中文提示词的理解更稳定，适合短视频素材、电商创意和日常内容生产。Pika 和 Vidu 作为国内可访问的海外选项，可作为补充。',
   },
 ];
 

@@ -277,6 +277,47 @@ export const comparisons = pgTable(
   }),
 );
 
+// ── Tool Verdicts（立场字段，独立表，保留历史版本） ──────────────────────────
+
+export const toolVerdicts = pgTable(
+  'tool_verdicts',
+  {
+    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+    toolId: text('tool_id').notNull().references(() => tools.id),
+
+    // 立场字段（schema 与 prompts/tool-verdict/v1.md 输出对齐）
+    verdictOneLiner: text('verdict_one_liner').notNull(),
+    whoShouldPick: text('who_should_pick').array(),
+    whoShouldSkip: text('who_should_skip').array(),
+    vsAlternatives: jsonb('vs_alternatives').$type<{ alt: string; point: string }[]>(),
+    // positionToday 枚举：'国际第一梯队' | '国产第一梯队' | '仍领先' | '已被超越' | '观察中' | '小众但有差异化'
+    positionToday: text('position_today'),
+    caveats: text('caveats').array(),
+
+    // 起草元信息
+    promptVersion: text('prompt_version').notNull(),
+    llmModel: text('llm_model').notNull(),
+    antiClicheScore: integer('anti_cliche_score'),
+
+    // 审核状态：'ai_drafted' | 'published' | 'rejected'
+    status: text('status').notNull().default('ai_drafted'),
+    reviewedBy: text('reviewed_by'),
+    reviewedAt: timestamp('reviewed_at'),
+    rejectReason: text('reject_reason'),
+
+    // 时效（默认 180 天后过期，进 audit:freshness 重审队列）
+    verdictUpdatedAt: timestamp('verdict_updated_at').notNull().defaultNow(),
+    expiresAt: timestamp('expires_at'),
+
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    toolIdx: index('tool_verdicts_tool_idx').on(t.toolId),
+    statusIdx: index('tool_verdicts_status_idx').on(t.status),
+    expiresIdx: index('tool_verdicts_expires_idx').on(t.expiresAt),
+  }),
+);
+
 export type Category = typeof categories.$inferSelect;
 export type Tool = typeof tools.$inferSelect;
 export type RepoItem = typeof githubTrending.$inferSelect;
@@ -286,3 +327,4 @@ export type SourceCandidate = typeof sourceCandidates.$inferSelect;
 export type ToolCandidate = typeof toolCandidates.$inferSelect;
 export type Article = typeof articles.$inferSelect;
 export type Comparison = typeof comparisons.$inferSelect;
+export type ToolVerdict = typeof toolVerdicts.$inferSelect;
