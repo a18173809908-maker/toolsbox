@@ -1561,3 +1561,45 @@ export async function rejectToolFieldDraft(id: string, reason: string) {
     .set({ status: 'rejected', reviewedAt: new Date(), rejectReason: reason })
     .where(eq(toolFieldDrafts.id, id));
 }
+
+// ── Jobs status (inferred from table activity) ────────────────────────────────
+
+export async function loadJobsStatus() {
+  const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+  const [
+    articlesLatest, articlesRecent,
+    trendingLatest, trendingRecent,
+    eventsTotal, eventsLatest,
+    eventVerdictsTotal, eventVerdictsLatest,
+    toolVerdictsTotal, toolVerdictsLatest,
+    altDraftsTotal, altDraftsLatest,
+    compDraftsTotal, compDraftsLatest,
+  ] = await Promise.all([
+    db.select({ v: max(articles.fetchedAt) }).from(articles),
+    db.select({ v: count() }).from(articles).where(gt(articles.fetchedAt, since24h)),
+    db.select({ v: max(githubTrending.snapshotDate) }).from(githubTrending),
+    db.select({ v: count() }).from(githubTrending).where(gt(githubTrending.snapshotDate, since7d)),
+    db.select({ v: count() }).from(events),
+    db.select({ v: max(events.createdAt) }).from(events),
+    db.select({ v: count() }).from(eventVerdicts),
+    db.select({ v: max(eventVerdicts.createdAt) }).from(eventVerdicts),
+    db.select({ v: count() }).from(toolVerdicts),
+    db.select({ v: max(toolVerdicts.createdAt) }).from(toolVerdicts),
+    db.select({ v: count() }).from(alternativeDrafts),
+    db.select({ v: max(alternativeDrafts.createdAt) }).from(alternativeDrafts),
+    db.select({ v: count() }).from(comparisonDrafts),
+    db.select({ v: max(comparisonDrafts.createdAt) }).from(comparisonDrafts),
+  ]);
+
+  return [
+    { job: 'fetch-articles', desc: '资讯抓取', latestAt: articlesLatest[0]?.v ?? null, recentCount: articlesRecent[0]?.v ?? 0, recentLabel: '24h 新增' },
+    { job: 'fetch-trending', desc: 'GitHub Trending', latestAt: trendingLatest[0]?.v ?? null, recentCount: trendingRecent[0]?.v ?? 0, recentLabel: '7d 快照' },
+    { job: 'cluster-events', desc: '事件聚合', latestAt: eventsLatest[0]?.v ?? null, recentCount: eventsTotal[0]?.v ?? 0, recentLabel: '总条数' },
+    { job: 'draft-event-verdicts', desc: '事件立场起草', latestAt: eventVerdictsLatest[0]?.v ?? null, recentCount: eventVerdictsTotal[0]?.v ?? 0, recentLabel: '总条数' },
+    { job: 'draft-tool-verdicts', desc: '工具立场起草', latestAt: toolVerdictsLatest[0]?.v ?? null, recentCount: toolVerdictsTotal[0]?.v ?? 0, recentLabel: '总条数' },
+    { job: 'draft-alternatives', desc: '替代品起草', latestAt: altDraftsLatest[0]?.v ?? null, recentCount: altDraftsTotal[0]?.v ?? 0, recentLabel: '总条数' },
+    { job: 'draft-comparisons', desc: '对比页起草', latestAt: compDraftsLatest[0]?.v ?? null, recentCount: compDraftsTotal[0]?.v ?? 0, recentLabel: '总条数' },
+  ];
+}

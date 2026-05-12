@@ -17,11 +17,20 @@ type Article = {
   category: string | null;
 };
 
+type HomeEvent = {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  publishedAt: Date | null;
+};
+
 type HomePageClientProps = {
   tools: Tool[];
   categories: Category[];
   trending: Record<TrendingPeriod, RepoItem[]>;
   articles: Article[];
+  events: HomeEvent[];
 };
 
 const sceneSolutions = [
@@ -79,7 +88,7 @@ function pricingLabel(pricing: string): string {
   }
 }
 
-export function HomePageClient({ tools, categories, trending, articles }: HomePageClientProps) {
+export function HomePageClient({ tools, categories, trending, articles, events }: HomePageClientProps) {
   const [searchQuery, setSearchQuery] = useState('');
   
   const featuredTools = tools.filter((t) => t.featured).slice(0, 9);
@@ -760,6 +769,40 @@ export function HomePageClient({ tools, categories, trending, articles }: HomePa
             </div>
           </section>
         </div>
+
+        {events.length > 0 && (
+          <section style={{ marginBottom: 60 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ fontSize: 24 }}>⚡</span>
+                <h2 style={{ fontSize: 20, fontWeight: 700, color: T.ink, margin: 0 }}>最新 AI 事件</h2>
+              </div>
+              <Link href="/events" style={{ fontSize: 13, color: T.accent, textDecoration: 'none' }}>
+                查看全部 →
+              </Link>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 16 }}>
+              {events.map((ev) => (
+                <Link key={ev.id} href={`/events/${ev.slug}`} style={{ background: '#fff', border: `1px solid ${T.rule}`, borderRadius: 12, padding: 18, textDecoration: 'none', display: 'block', transition: 'border-color 0.2s' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = T.accent; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = T.rule; }}
+                >
+                  <div style={{ fontSize: 11, color: T.accent, fontWeight: 700, marginBottom: 6 }}>
+                    AI 事件 · {formatTimeAgo(ev.publishedAt)}
+                  </div>
+                  <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700, color: T.ink, lineHeight: 1.45 }}>
+                    {ev.title}
+                  </h3>
+                  {ev.summary && (
+                    <p style={{ margin: 0, fontSize: 13, color: T.inkSoft, lineHeight: 1.55, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' }}>
+                      {ev.summary}
+                    </p>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section style={{ marginBottom: 60 }}>
           <div style={{ marginBottom: 24 }}>

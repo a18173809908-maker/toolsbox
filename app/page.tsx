@@ -1,4 +1,4 @@
-import { loadHomepageData, loadArticles } from '@/lib/db/queries';
+import { loadHomepageData, loadArticles, loadPublishedEvents } from '@/lib/db/queries';
 import { HomePageClient } from './HomePageClient';
 
 export const dynamic = 'force-dynamic';
@@ -6,9 +6,10 @@ export const dynamic = 'force-dynamic';
 const BASE = 'https://www.aiboxpro.cn';
 
 export default async function Home() {
-  const [homeData, articles] = await Promise.all([
+  const [homeData, articles, recentEvents] = await Promise.all([
     loadHomepageData(),
     loadArticles({ limit: 3 }),
+    process.env.DATABASE_URL ? loadPublishedEvents(3) : Promise.resolve([]),
   ]);
 
   const jsonLd = {
@@ -36,6 +37,7 @@ export default async function Home() {
         categories={homeData.categories}
         trending={homeData.trending}
         articles={articles}
+        events={recentEvents.map((e) => ({ id: e.id, slug: e.slug, title: e.title, summary: e.summary, publishedAt: e.publishedAt }))}
       />
     </>
   );
