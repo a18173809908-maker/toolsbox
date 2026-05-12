@@ -702,10 +702,10 @@ export function HomePageClient({ tools, categories, trending, articles, events }
           }}
         >
           <h2 style={{ fontSize: 28, fontWeight: 700, margin: '0 0 12px' }}>
-            跟进热门工具的最新动态
+            热门 AI 工具，最新有什么变化？
           </h2>
           <p style={{ fontSize: 16, margin: '0 0 24px', opacity: 0.9 }}>
-            YouTube 视频、GitHub 项目、行业资讯，提炼成中文，每周更新
+            新功能、新玩法、实战技巧，持续跟进
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
             <Link
