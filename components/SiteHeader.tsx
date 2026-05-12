@@ -11,6 +11,7 @@ type SiteHeaderProps = {
 };
 
 const navItems: Array<{ label: string; href: string; comingSoon?: boolean }> = [
+  { label: '首页', href: '/' },
   { label: '工具', href: '/tools' },
   { label: 'AI 资讯', href: '/news' },
   { label: 'GitHub', href: '/trending' },
