@@ -880,6 +880,12 @@ export async function updateArticleAi(id: number, data: {
 
 // ── Tools list page ───────────────────────────────────────────────────────────
 
+export async function loadToolCount(): Promise<number> {
+  if (!process.env.DATABASE_URL) return AI_TOOLS.length;
+  const rows = await db.select({ value: count() }).from(tools);
+  return rows[0]?.value ?? 0;
+}
+
 export async function loadToolsPage(opts: {
   cat?: string;
   pricing?: string;

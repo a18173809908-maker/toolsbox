@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
 import { AccessBadge, ToolIcon } from '@/components/ToolBadges';
-import { loadToolsPage, loadAllCategories } from '@/lib/db/queries';
+import { loadToolsPage, loadAllCategories, loadToolCount } from '@/lib/db/queries';
 import { SearchInput } from './SearchInput';
 
 export const dynamic = 'force-dynamic';
@@ -109,13 +109,14 @@ export default async function ToolsPage({ searchParams }: Props) {
   const page    = Math.max(1, parseInt(sp.page ?? '1', 10) || 1);
   const pageSize = 24;
 
-  const [{ items, total }, cats] = await Promise.all([
+  const [{ items, total }, cats, toolCount] = await Promise.all([
     loadToolsPage({ cat: cat || undefined, pricing: pricing || undefined, china: china || undefined, q: q || undefined, page, pageSize }),
     loadAllCategories({ pricing: pricing || undefined, china: china || undefined, q: q || undefined }),
+    loadToolCount(),
   ]);
 
   const totalPages = Math.ceil(total / pageSize);
-  const allCatsTotal = cats.reduce((sum, c) => sum + c.count, 0);
+  const hasFilter = !!(cat || pricing || china || q);
   const categoryById = new Map(cats.map((c) => [c.id, c]));
 
   const jsonLd = {
@@ -140,9 +141,16 @@ export default async function ToolsPage({ searchParams }: Props) {
             <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'italic', fontSize: 'clamp(30px, 8vw, 38px)', color: C.ink, margin: '0 0 8px', letterSpacing: '-0.02em' }}>
               AI 工具库
             </h1>
-            <p style={{ fontSize: 15, color: C.inkSoft, margin: 0 }}>
-              精选 {allCatsTotal} 个 AI 工具，覆盖多种场景与需求
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginTop: 4 }}>
+              <p style={{ fontSize: 15, color: C.inkSoft, margin: 0 }}>
+                精选 {toolCount} 个 AI 工具，覆盖多种场景与需求
+              </p>
+              {hasFilter && (
+                <span style={{ fontSize: 13, color: C.accent, fontWeight: 700, background: C.primaryBg, padding: '2px 10px', borderRadius: 999 }}>
+                  筛选中：共 {total} 个结果
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Sidebar + Main Content Layout */}
@@ -189,7 +197,7 @@ export default async function ToolsPage({ searchParams }: Props) {
                       }}
                     >
                       全部
-                      <span style={{ float: 'right', opacity: 0.6 }}>{allCatsTotal}</span>
+                      <span style={{ float: 'right', opacity: 0.6 }}>{hasFilter ? total : toolCount}</span>
                     </Link>
                     {cats.map((c) => {
                       const active = cat === c.id;
