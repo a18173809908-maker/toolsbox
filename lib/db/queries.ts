@@ -1331,6 +1331,31 @@ export async function loadEventById(id: string) {
   return rows[0] ?? null;
 }
 
+export async function loadPublishedEvents(limit = 40) {
+  return db.select().from(events)
+    .where(eq(events.status, 'published'))
+    .orderBy(desc(events.publishedAt))
+    .limit(limit);
+}
+
+export async function loadEventBySlug(slug: string) {
+  const rows = await db.select().from(events)
+    .where(and(eq(events.slug, slug), eq(events.status, 'published')));
+  return rows[0] ?? null;
+}
+
+export async function loadAllEventSlugs(): Promise<string[]> {
+  const rows = await db.select({ slug: events.slug }).from(events)
+    .where(eq(events.status, 'published'));
+  return rows.map((r) => r.slug);
+}
+
+export async function loadEventVerdictByEventId(eventId: string) {
+  const rows = await db.select().from(eventVerdicts)
+    .where(and(eq(eventVerdicts.eventId, eventId), eq(eventVerdicts.status, 'published')));
+  return rows[0] ?? null;
+}
+
 export async function publishEvent(id: string) {
   await db.update(events)
     .set({ status: 'published', reviewedAt: new Date(), publishedAt: new Date() })

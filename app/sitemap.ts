@@ -19,6 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/disclaimer`,    lastModified: new Date(), changeFrequency: 'yearly',  priority: 0.3 },
     { url: `${BASE}/scenes`,        lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.8 },
     { url: `${BASE}/best`,          lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.8 },
+    { url: `${BASE}/events`,        lastModified: new Date(), changeFrequency: 'daily',   priority: 0.8 },
   ];
   const staticScenePages: MetadataRoute.Sitemap = scenes.map((s) => ({
     url: `${BASE}/scenes/${s.slug}`,
@@ -46,10 +47,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     import('drizzle-orm'),
   ]);
 
-  const { tools, categories, articles, githubTrending, comparisons } = schemaModule;
+  const { tools, categories, articles, githubTrending, comparisons, events } = schemaModule;
   const { eq, desc, asc } = drizzleModule;
 
-  const [ts, cats, arts, repos, comps] = await Promise.all([
+  const [ts, cats, arts, repos, comps, evs] = await Promise.all([
     db.select({ id: tools.id }).from(tools),
     db.select({ id: categories.id }).from(categories),
     db.select({ id: articles.id, publishedAt: articles.publishedAt })
@@ -66,6 +67,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .where(eq(comparisons.status, 'published'))
       .orderBy(desc(comparisons.publishedAt))
       .limit(500),
+    db.select({ slug: events.slug, updatedAt: events.updatedAt })
+      .from(events)
+      .where(eq(events.status, 'published'))
+      .orderBy(desc(events.publishedAt))
+      .limit(200),
   ]);
 
   const toolPages: MetadataRoute.Sitemap = ts.map((t) => ({
@@ -99,5 +105,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: 'weekly' as const,
     priority: 0.7,
   }));
-  return [...statics, ...staticScenePages, ...staticRankingPages, ...toolPages, ...catPages, ...newsPages, ...repoPages, ...comparePages, ...staticAlternativePages];
+
+  const eventPages: MetadataRoute.Sitemap = evs.map((e) => ({
+    url: `${BASE}/events/${e.slug}`,
+    lastModified: e.updatedAt,
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }));
+
+  return [...statics, ...staticScenePages, ...staticRankingPages, ...toolPages, ...catPages, ...newsPages, ...repoPages, ...comparePages, ...staticAlternativePages, ...eventPages];
 }

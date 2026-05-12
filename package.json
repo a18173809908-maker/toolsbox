@@ -50,7 +50,9 @@
     "draft:social": "tsx --env-file=.env.local scripts/draft-social.ts",
     "audit:comparisons": "tsx --env-file=.env.local scripts/audit-comparisons.ts",
     "eval:prompt": "tsx --env-file=.env.local scripts/eval-prompt.ts",
-    "batch:draft-verdicts": "tsx --env-file=.env.local scripts/batch-draft-verdicts.ts"
+    "batch:draft-verdicts": "tsx --env-file=.env.local scripts/batch-draft-verdicts.ts",
+    "seed:events": "tsx --env-file=.env.local scripts/seed-events.ts",
+    "cluster:events": "tsx --env-file=.env.local scripts/cluster-events.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
