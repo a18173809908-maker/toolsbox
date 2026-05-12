@@ -223,9 +223,8 @@ export default async function TrendingPage({ searchParams }: Props) {
               const langColor = LANG_COLOR[r.lang] || '#888';
               const insights = r.aiInsights;
               const periodLabel = safe === 'today' ? '今日' : safe === 'week' ? '本周' : '本月';
-              const fallback = buildFallbackCardCopy(r, periodLabel);
               const desc = insights?.oneSentenceSummary || r.descriptionZh || r.description;
-              const whyTrending = insights?.whyTrending || fallback.whyTrending;
+              const whyTrending = insights?.whyTrending ?? null;
               return (
                 <div key={r.id}>
                   <div style={{
@@ -258,13 +257,15 @@ export default async function TrendingPage({ searchParams }: Props) {
 
                       {/* Description + why trending */}
                       <div style={{ marginBottom: 10 }}>
-                        <p style={{ margin: '0 0 6px', fontSize: 13, color: C.inkSoft, lineHeight: 1.6, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
+                        <p style={{ margin: whyTrending ? '0 0 6px' : 0, fontSize: 13, color: C.inkSoft, lineHeight: 1.6, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
                           {desc}
                         </p>
-                        <p style={{ margin: 0, fontSize: 12, color: C.inkMuted, lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
-                          <span style={{ color: C.accent, fontWeight: 600, marginRight: 4 }}>上榜理由</span>
-                          {whyTrending}
-                        </p>
+                        {whyTrending && (
+                          <p style={{ margin: 0, fontSize: 12, color: C.inkMuted, lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
+                            <span style={{ color: C.accent, fontWeight: 600, marginRight: 4 }}>上榜理由</span>
+                            {whyTrending}
+                          </p>
+                        )}
                       </div>
 
                       {/* Stats row */}
@@ -278,7 +279,7 @@ export default async function TrendingPage({ searchParams }: Props) {
                         </span>
                         {insights?.projectType && <Pill tone="accent">{insights.projectType}</Pill>}
                         {insights?.maturity && <Pill tone="green">{insights.maturity}</Pill>}
-                        {insights?.audience?.slice(0, 2).map((item) => <Pill key={item}>{item}</Pill>)}
+                        {insights?.audience?.slice(0, 2).map((a) => <Pill key={a}>{a}</Pill>)}
                       </div>
                     </div>
 
