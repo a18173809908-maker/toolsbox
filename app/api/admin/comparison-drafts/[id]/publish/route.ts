@@ -10,5 +10,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   await publishComparisonDraft(id);
   revalidatePath('/admin/comparison-drafts');
   revalidatePath('/admin');
+  revalidatePath('/compare', 'layout');
+  revalidatePath('/compare/' + id);
   return NextResponse.json({ ok: true });
 }

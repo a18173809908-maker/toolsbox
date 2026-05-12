@@ -265,6 +265,8 @@ export const comparisons = pgTable(
     reproducible: boolean('reproducible').default(false),
     repoUrl: text('repo_url'),
     seoKeywords: text('seo_keywords').array(),
+    // cellWinners: dim label -> toolId or "tie"
+    cellWinners: jsonb('cell_winners').$type<Record<string, string>>(),
     // status 取值：'draft' / 'published' / 'rejected'
     status: text('status').notNull().default('draft'),
     publishedAt: timestamp('published_at'),

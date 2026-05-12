@@ -130,7 +130,29 @@ function AccessValue({ chinaAccess, chineseUi }: { chinaAccess?: string | null; 
 
 type Tool = ComparisonWithTools['toolA'];
 
-function DimensionTable({ tools }: { tools: Tool[] }) {
+type CellState = 'win' | 'tie' | 'normal';
+
+function cellStyle(state: CellState): React.CSSProperties {
+  if (state === 'win') return { background: '#DCFCE7', color: '#166534' };
+  if (state === 'tie') return { background: '#FEF9C3', color: '#92400E' };
+  return {};
+}
+
+function WinBadge({ state }: { state: CellState }) {
+  if (state === 'win') return (
+    <span style={{ display: 'inline-block', marginLeft: 6, padding: '1px 6px', borderRadius: 4, background: '#166534', color: '#fff', fontSize: 10, fontWeight: 800, verticalAlign: 'middle' }}>
+      赢
+    </span>
+  );
+  if (state === 'tie') return (
+    <span style={{ display: 'inline-block', marginLeft: 6, padding: '1px 6px', borderRadius: 4, background: '#92400E', color: '#fff', fontSize: 10, fontWeight: 800, verticalAlign: 'middle' }}>
+      平
+    </span>
+  );
+  return null;
+}
+
+function DimensionTable({ tools, cellWinners }: { tools: Tool[]; cellWinners?: Record<string, string> | null }) {
   const dims: { label: string; render: (t: Tool) => React.ReactNode }[] = [
     { label: '价格', render: (t) => t.priceCny ?? t.pricingDetail ?? t.pricing },
     { label: '国内访问', render: (t) => <AccessValue chinaAccess={t.chinaAccess} chineseUi={t.chineseUi ?? undefined} /> },
@@ -140,6 +162,16 @@ function DimensionTable({ tools }: { tools: Tool[] }) {
     { label: '开源', render: (t) => t.openSource ? '✓ 开源' : '—' },
     { label: '注册门槛', render: (t) => t.needsOverseasPhone ? '需海外手机号' : '—' },
   ];
+
+  function getState(dimLabel: string, toolId: string): CellState {
+    if (!cellWinners) return 'normal';
+    const w = cellWinners[dimLabel];
+    if (!w) return 'normal';
+    if (w === 'tie') return 'tie';
+    if (w === toolId) return 'win';
+    return 'normal';
+  }
+
   const colWidth = `${Math.floor(88 / tools.length)}%`;
   return (
     <div style={{ overflowX: 'auto' }}>
@@ -161,15 +193,25 @@ function DimensionTable({ tools }: { tools: Tool[] }) {
           {dims.map((dim, i) => (
             <tr key={dim.label} style={{ borderTop: `1px solid ${C.ruleSoft}`, background: i % 2 === 0 ? '#FFFFFF' : '#FFFDF9' }}>
               <td style={{ padding: '12px 16px', fontSize: 12, color: C.inkMuted, fontWeight: 700 }}>{dim.label}</td>
-              {tools.map((t) => (
-                <td key={t.id} style={{ padding: '12px 16px', fontSize: 14, color: C.ink, lineHeight: 1.55, borderLeft: `1px solid ${C.ruleSoft}` }}>
-                  {dim.render(t)}
-                </td>
-              ))}
+              {tools.map((t) => {
+                const state = getState(dim.label, t.id);
+                return (
+                  <td key={t.id} style={{ padding: '12px 16px', fontSize: 14, lineHeight: 1.55, borderLeft: `1px solid ${C.ruleSoft}`, color: C.ink, ...cellStyle(state) }}>
+                    {dim.render(t)}
+                    <WinBadge state={state} />
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>
       </table>
+      {cellWinners && (
+        <div style={{ padding: '8px 16px', borderTop: `1px solid ${C.ruleSoft}`, display: 'flex', gap: 16, fontSize: 11, color: C.inkMuted }}>
+          <span><span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 2, background: '#DCFCE7', border: '1px solid #86EFAC', marginRight: 4, verticalAlign: 'middle' }} />该维度更优</span>
+          <span><span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 2, background: '#FEF9C3', border: '1px solid #FDE047', marginRight: 4, verticalAlign: 'middle' }} />基本持平</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -305,7 +347,7 @@ export default async function CompareDetailPage({ params }: Props) {
           )}
 
           <section style={{ background: C.panel, border: `1px solid ${C.rule}`, borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
-            <DimensionTable tools={comparison.tools} />
+            <DimensionTable tools={comparison.tools} cellWinners={comparison.cellWinners ?? null} />
           </section>
 
           <section style={{ background: C.panel, border: `1px solid ${C.rule}`, borderRadius: 12, padding: 24, marginBottom: 24 }}>

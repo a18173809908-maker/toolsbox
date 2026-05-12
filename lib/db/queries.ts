@@ -1419,6 +1419,61 @@ export async function loadComparisonDraftById(id: string) {
 }
 
 export async function publishComparisonDraft(id: string) {
+  const draft = await loadComparisonDraftById(id);
+  if (!draft) throw new Error('Comparison draft not found: ' + id);
+
+  type AiDraftShape = {
+    title?: string;
+    verdictOneLiner?: string;
+    summary?: string;
+    sections?: { heading: string; body: string }[];
+    whoShouldPickA?: string[];
+    whoShouldPickB?: string[];
+    seoKeywords?: string[];
+    cellWinners?: Record<string, string>;
+  };
+  const ai = (draft.aiDraft ?? {}) as AiDraftShape;
+  const src = (draft.sourceData ?? {}) as { toolAId?: string; toolBId?: string };
+
+  if (!src.toolAId || !src.toolBId) {
+    throw new Error('sourceData missing toolAId / toolBId for draft: ' + id);
+  }
+
+  const body = ai.sections
+    ? ai.sections.map((s) => '## ' + s.heading + '\n\n' + s.body).join('\n\n')
+    : null;
+
+  // Upsert into live comparisons table
+  await db.insert(comparisons).values({
+    id: draft.slug,
+    toolAId: src.toolAId,
+    toolBId: src.toolBId,
+    title: ai.title ?? draft.slug,
+    summary: ai.summary ?? null,
+    body,
+    verdict: ai.verdictOneLiner ?? null,
+    verdictOneLiner: ai.verdictOneLiner ?? null,
+    seoKeywords: ai.seoKeywords ?? null,
+    cellWinners: ai.cellWinners ?? null,
+    status: 'published',
+    publishedAt: new Date(),
+    isLabReport: false,
+  }).onConflictDoUpdate({
+    target: comparisons.id,
+    set: {
+      title: ai.title ?? draft.slug,
+      summary: ai.summary ?? null,
+      body,
+      verdict: ai.verdictOneLiner ?? null,
+      verdictOneLiner: ai.verdictOneLiner ?? null,
+      seoKeywords: ai.seoKeywords ?? null,
+      cellWinners: ai.cellWinners ?? null,
+      status: 'published',
+      publishedAt: new Date(),
+      updatedAt: new Date(),
+    },
+  });
+
   await db.update(comparisonDrafts)
     .set({ status: 'published', reviewedAt: new Date(), publishedAt: new Date() })
     .where(eq(comparisonDrafts.id, id));
