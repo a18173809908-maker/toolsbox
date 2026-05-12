@@ -685,6 +685,7 @@ export async function loadArticleHotTopics(limit = 5, days = 3) {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
   const rows = await db
     .select({
+      id: articles.id,
       title: articles.title,
       titleZh: articles.titleZh,
       hotnessScore: articles.hotnessScore,
@@ -700,7 +701,7 @@ export async function loadArticleHotTopics(limit = 5, days = 3) {
     .limit(limit * 4);
 
   const seen = new Set<string>();
-  const topics: { topic: string; count: number; maxHotness: number; latestAt: Date | null; samples: string[] }[] = [];
+  const topics: { id: number; topic: string; maxHotness: number; latestAt: Date | null }[] = [];
 
   const normalizeKey = (title: string) => {
     const lower = title.toLowerCase();
@@ -726,11 +727,10 @@ export async function loadArticleHotTopics(limit = 5, days = 3) {
     if (!key || seen.has(key)) continue;
     seen.add(key);
     topics.push({
+      id: row.id,
       topic: title,
-      count: 1,
       maxHotness: row.hotnessScore ?? 0,
       latestAt: row.publishedAt,
-      samples: [title],
     });
     if (topics.length >= limit) break;
   }
