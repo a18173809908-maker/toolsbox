@@ -822,10 +822,10 @@ export function HomePageClient({ tools, categories, trending, articles, events }
             }}
           >
             {[
-              { title: '免费AI工具合集', icon: '💰', href: '/tools?pricing=Free' },
-              { title: '国内可用AI工具', icon: '🇨🇳', href: '/tools?china=accessible' },
-              { title: 'AI写作工具排行', icon: '✍️', href: '/tools?cat=writing' },
-              { title: 'AI编程工具排行', icon: '💻', href: '/tools?cat=code' },
+              { title: '免费AI工具推荐（全品类）', icon: '💰', href: '/best/free-ai-tools' },
+              { title: '国内可直连AI工具', icon: '🇨🇳', href: '/best/cn-accessible-tools' },
+              { title: 'AI写作工具推荐', icon: '✍️', href: '/best/ai-writing-tools' },
+              { title: 'AI编程工具推荐', icon: '💻', href: '/best/ai-coding-tools' },
             ].map((rank) => (
               <Link
                 key={rank.title}
