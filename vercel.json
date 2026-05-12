@@ -23,6 +23,10 @@
     {
       "path": "/api/cron/repo-spotlight",
       "schedule": "0 6 * * 1"
+    },
+    {
+      "path": "/api/cron/tool-updates",
+      "schedule": "0 7 * * *"
     }
   ]
 }

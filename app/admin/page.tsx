@@ -29,6 +29,7 @@ export default async function AdminPage() {
     { label: '替代品草稿', value: '→', href: '/admin/alternatives' },
     { label: '事件草稿', value: '→', href: '/admin/events' },
     { label: '工具字段草稿', value: '→', href: '/admin/tool-fields' },
+    { label: '工具动态', value: '⚡', href: '/admin/tool-updates' },
     { label: '仓库 Spotlight', value: '🔭', href: '/admin/spotlights' },
     { label: '自动化任务状态', value: '⚙', href: '/admin/jobs' },
   ];

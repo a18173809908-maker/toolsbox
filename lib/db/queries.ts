@@ -1,5 +1,5 @@
 import { db } from './index';
-import { categories, tools, githubTrending, articles, sources, sourceCandidates, toolCandidates, comparisons, toolConnectivity, toolVerdicts, events, eventVerdicts, comparisonDrafts, sceneDrafts, rankingDrafts, alternativeDrafts, toolFieldDrafts, repoSpotlights } from './schema';
+import { categories, tools, githubTrending, articles, sources, sourceCandidates, toolCandidates, comparisons, toolConnectivity, toolVerdicts, events, eventVerdicts, comparisonDrafts, sceneDrafts, rankingDrafts, alternativeDrafts, toolFieldDrafts, repoSpotlights, toolUpdates } from './schema';
 import { desc, asc, eq, ilike, or, isNull, count, max, and, inArray, gt, sql, ne } from 'drizzle-orm';
 import type { TrendingPeriod, Tool, Category, RepoItem, HomepageStats } from '@/lib/data';
 import type { Comparison, Tool as DbTool } from './schema';
@@ -1725,5 +1725,49 @@ export async function loadJobsStatus() {
     { job: 'draft-alternatives', desc: '替代品起草', latestAt: altDraftsLatest[0]?.v ?? null, recentCount: altDraftsTotal[0]?.v ?? 0, recentLabel: '总条数' },
     { job: 'draft-comparisons', desc: '对比页起草', latestAt: compDraftsLatest[0]?.v ?? null, recentCount: compDraftsTotal[0]?.v ?? 0, recentLabel: '总条数' },
     { job: 'repo-spotlight', desc: '仓库精选生成', latestAt: spotlightLatest[0]?.v ?? null, recentCount: spotlightTotal[0]?.v ?? 0, recentLabel: '总条数' },
+    { job: 'tool-updates', desc: '工具动态抓取', latestAt: null, recentCount: 0, recentLabel: '总条数' },
   ];
+}
+
+// ── Tool Updates ──────────────────────────────────────────────────────────────
+
+export async function loadToolUpdates(limit = 50, offset = 0) {
+  return db
+    .select()
+    .from(toolUpdates)
+    .orderBy(desc(toolUpdates.createdAt))
+    .limit(limit)
+    .offset(offset);
+}
+
+export async function loadPublishedToolUpdates(limit = 30) {
+  return db
+    .select({
+      id: toolUpdates.id,
+      toolName: toolUpdates.toolName,
+      toolId: toolUpdates.toolId,
+      contentType: toolUpdates.contentType,
+      titleZh: toolUpdates.titleZh,
+      sourceUrl: toolUpdates.sourceUrl,
+      sourceChannel: toolUpdates.sourceChannel,
+      snapshotWeek: toolUpdates.snapshotWeek,
+      publishedAt: toolUpdates.publishedAt,
+    })
+    .from(toolUpdates)
+    .where(eq(toolUpdates.status, 'published'))
+    .orderBy(desc(toolUpdates.publishedAt))
+    .limit(limit);
+}
+
+export async function loadToolUpdateById(id: number) {
+  const rows = await db.select().from(toolUpdates).where(eq(toolUpdates.id, id)).limit(1);
+  return rows[0] ?? null;
+}
+
+export async function publishToolUpdate(id: number) {
+  await db.update(toolUpdates).set({ status: 'published', publishedAt: new Date() }).where(eq(toolUpdates.id, id));
+}
+
+export async function rejectToolUpdate(id: number) {
+  await db.update(toolUpdates).set({ status: 'rejected' }).where(eq(toolUpdates.id, id));
 }
