@@ -57,7 +57,7 @@ async function main() {
   await runDraft({
     promptType: 'comparison-draft',
     inputData,
-    adminPath: '/admin/comparisons',
+    adminPath: '/admin/comparison-drafts',
     insertFn: async ({ parsed: draft, rawOutput, promptVersion, llmModel, antiClicheScore }) => {
       const result = await db
         .insert(comparisonDrafts)

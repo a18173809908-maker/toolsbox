@@ -11,6 +11,8 @@ const TAGS = ARTICLE_CATEGORIES;
 type ArticleTag = ArticleCategory;
 
 interface EnAiResult {
+  skip?: boolean;
+  skipReason?: string;
   titleZh: string;
   summary: string;
   summaryZh: string;
@@ -19,6 +21,8 @@ interface EnAiResult {
 }
 
 interface ZhAiResult {
+  skip?: boolean;
+  skipReason?: string;
   summaryZh: string;
   tag: ArticleTag;
   aiInsights: ArticleInsights;
@@ -108,7 +112,12 @@ async function updateArticleWithRetry(id: number, data: Partial<typeof articles.
 }
 
 async function processEnglish(title: string, summary: string | null, catalog: ToolBrief[]): Promise<EnAiResult | null> {
-  const prompt = `You are a bilingual AI tech editor. Given an English AI/tech news headline, return JSON:
+  const prompt = `You are a bilingual AI tech editor. Given an English AI/tech news headline, return JSON.
+
+First decide: is this article substantive enough for AI tool users (not pure company finance, sports, or unrelated tech)? If not, return {"skip":true,"skipReason":"<one sentence>"}.
+
+Otherwise return:
+- "skip": false
 - "titleZh": natural Simplified Chinese title translation, no more than 28 Chinese chars
 - "summary": English summary in 1 sentence, no more than 120 chars
 - "summaryZh": Simplified Chinese summary in 1 sentence, no more than 60 Chinese chars
@@ -132,6 +141,7 @@ Existing summary: ${summary ?? 'N/A'}`;
     const json = extractJson(raw);
     if (!json) return null;
     const parsed = JSON.parse(json) as Partial<EnAiResult>;
+    if (parsed.skip === true) return null;
     const aiInsights = normalizeInsights(parsed.aiInsights);
     if (!parsed.titleZh || !parsed.summary || !parsed.summaryZh || !aiInsights) return null;
     return {
@@ -147,16 +157,22 @@ Existing summary: ${summary ?? 'N/A'}`;
 }
 
 async function processChinese(title: string, summary: string | null, catalog: ToolBrief[]): Promise<ZhAiResult | null> {
-  const prompt = `你是 AI 科技资讯编辑。根据下面的中文标题，返回 JSON：
-- "summaryZh": 一句中文摘要，不超过 60 字，直接可读，不要用“本文”开头
-- "tag": 只能选一个：${TAGS.join('、')}
-- "aiInsights": {
-  "oneSentenceSummary": 一句中文摘要，不超过 38 字
-  "keyPoints": 3 条中文要点，每条不超过 32 字
-  "whyItMatters": 为什么这件事值得 AI 工具用户关注，不超过 90 字
-  "chinaImpact": 对中文/国内用户的影响或限制，不超过 90 字
-  "whoShouldCare": 2-4 个适合关注的人群
-  "relatedToolNames": 文中提到或强相关的 AI 工具/产品名，最多 5 个
+  const prompt = `你是 AI 科技资讯编辑。根据下面的中文标题，返回 JSON。
+
+首先判断：这篇文章对 AI 工具用户是否有实质价值（不是纯公司财报、体育、或与 AI 无关的科技内容）？
+如果不值得处理，返回 {“skip”:true,”skipReason”:”<一句说明>”}。
+
+否则返回：
+- “skip”: false
+- “summaryZh”: 一句中文摘要，不超过 60 字，直接可读，不要用”本文”开头
+- “tag”: 只能选一个：${TAGS.join('、')}
+- “aiInsights”: {
+  “oneSentenceSummary”: 一句中文摘要，不超过 38 字
+  “keyPoints”: 3 条中文要点，每条不超过 32 字
+  “whyItMatters”: 为什么这件事值得 AI 工具用户关注，不超过 90 字
+  “chinaImpact”: 对中文/国内用户的影响或限制，不超过 90 字
+  “whoShouldCare”: 2-4 个适合关注的人群
+  “relatedToolNames”: 文中提到或强相关的 AI 工具/产品名，最多 5 个
 }
 
 只返回 JSON，不要 markdown。
@@ -168,6 +184,7 @@ async function processChinese(title: string, summary: string | null, catalog: To
     const json = extractJson(raw);
     if (!json) return null;
     const parsed = JSON.parse(json) as Partial<ZhAiResult>;
+    if (parsed.skip === true) return null;
     const aiInsights = normalizeInsights(parsed.aiInsights);
     if (!parsed.summaryZh || !aiInsights) return null;
     return {

@@ -21,6 +21,14 @@ export default async function AdminPage() {
     { label: '待审核信息源', value: counts.pendingSources, href: '/admin/sources' },
     { label: '近 30 天资讯', value: counts.recentArticles, href: '/admin/articles' },
     { label: '编辑推荐管理', value: '★', href: '/admin/featured' },
+    { label: '工具立场草稿', value: '→', href: '/admin/verdicts' },
+    { label: '事件立场草稿', value: '→', href: '/admin/event-verdicts' },
+    { label: '对比页草稿', value: '→', href: '/admin/comparison-drafts' },
+    { label: '场景草稿', value: '→', href: '/admin/scenes' },
+    { label: '排行榜草稿', value: '→', href: '/admin/rankings' },
+    { label: '替代品草稿', value: '→', href: '/admin/alternatives' },
+    { label: '事件草稿', value: '→', href: '/admin/events' },
+    { label: '工具字段草稿', value: '→', href: '/admin/tool-fields' },
   ];
 
   return (

@@ -4,7 +4,8 @@ import type { Metadata } from 'next';
 import type React from 'react';
 import { SiteHeader } from '@/components/SiteHeader';
 import { AccessBadge, ToolIcon } from '@/components/ToolBadges';
-import { loadToolById, loadAllToolIds, loadToolsByCategory, loadRelatedArticles, loadToolsByIds, loadLabReportsByToolId, loadConnectivityByToolId, loadComparisonsByToolId } from '@/lib/db/queries';
+import { loadToolById, loadAllToolIds, loadToolsByCategory, loadRelatedArticles, loadToolsByIds, loadLabReportsByToolId, loadConnectivityByToolId, loadComparisonsByToolId, loadVerdictByToolId } from '@/lib/db/queries';
+import { VerdictBlock } from '@/components/VerdictBlock';
 import { normalizeArticleCategory } from '@/lib/article-categories';
 import { scenes } from '@/lib/scenes';
 
@@ -153,13 +154,14 @@ export default async function ToolDetailPage({ params }: Props) {
   const tool = await loadToolById(slug);
   if (!tool) notFound();
 
-  const [related, relatedArticles, alternativeTools, labReports, connectivity, relatedComparisons] = await Promise.all([
+  const [related, relatedArticles, alternativeTools, labReports, connectivity, relatedComparisons, verdict] = await Promise.all([
     loadToolsByCategory(tool.cat).then((ts) => ts.filter((t) => t.id !== tool.id).slice(0, 4)),
     loadRelatedArticles(tool.name, 5),
     loadToolsByIds(tool.cnAlternatives ?? []),
     loadLabReportsByToolId(tool.id),
     loadConnectivityByToolId(tool.id),
     loadComparisonsByToolId(tool.id, 5),
+    loadVerdictByToolId(tool.id),
   ]);
 
   const relatedScenes = scenes.filter((s) => s.toolIds.includes(tool.id));
@@ -263,6 +265,8 @@ export default async function ToolDetailPage({ params }: Props) {
               </div>
             </div>
           </div>
+
+          {verdict && <VerdictBlock verdict={verdict} />}
 
           <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E8D5B7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: 'clamp(20px, 4vw, 28px) clamp(18px, 5vw, 40px)', marginBottom: 24 }}>
             <h2 style={{ fontSize: 20, fontWeight: 850, color: '#1F2937', margin: '0 0 16px' }}>选择判断</h2>
