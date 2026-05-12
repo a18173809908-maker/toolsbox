@@ -106,19 +106,28 @@ async function main() {
         inputData,
         adminPath: '/admin/verdicts',
         insertFn: async ({ parsed, rawOutput, promptVersion, llmModel, antiClicheScore }) => {
-          const expiresAt = new Date();
-          expiresAt.setDate(expiresAt.getDate() + 180);
+          const d = parsed ?? {};
+          const verdictOneLiner =
+            typeof d.verdictOneLiner === 'string' ? d.verdictOneLiner : rawOutput.slice(0, 60).replace(/\n/g, ' ');
+          const whoShouldPick = Array.isArray(d.whoShouldPick) ? (d.whoShouldPick as string[]) : [];
+          const whoShouldSkip = Array.isArray(d.whoShouldSkip) ? (d.whoShouldSkip as string[]) : [];
+          const vsAlternatives = Array.isArray(d.vsAlternatives)
+            ? (d.vsAlternatives as { alt: string; point: string }[])
+            : null;
+          const positionToday = typeof d.positionToday === 'string' ? d.positionToday : null;
+          const caveats = Array.isArray(d.caveats) ? (d.caveats as string[]) : [];
+          const expiresAt = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000);
 
           const row = await db
             .insert(toolVerdicts)
             .values({
               toolId: tool.id,
-              verdictOneLiner: String(parsed?.verdictOneLiner ?? rawOutput.slice(0, 80)),
-              whoShouldPick: Array.isArray(parsed?.whoShouldPick) ? parsed.whoShouldPick : [],
-              whoShouldSkip: Array.isArray(parsed?.whoShouldSkip) ? parsed.whoShouldSkip : [],
-              vsAlternatives: Array.isArray(parsed?.vsAlternatives) ? parsed.vsAlternatives : [],
-              positionToday: parsed?.positionToday ?? null,
-              caveats: Array.isArray(parsed?.caveats) ? parsed.caveats : [],
+              verdictOneLiner,
+              whoShouldPick,
+              whoShouldSkip,
+              vsAlternatives,
+              positionToday,
+              caveats,
               promptVersion,
               llmModel,
               antiClicheScore,
