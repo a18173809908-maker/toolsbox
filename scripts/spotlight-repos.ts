@@ -9,4 +9,8 @@ void (async () => {
     console.log('  errors:');
     for (const e of result.errors) console.log(`    - ${e}`);
   }
+  // Exit 1 if nothing was generated or skipped (indicates a real failure)
+  if (result.generated === 0 && result.skipped === 0 && result.errors.length > 0) {
+    process.exit(1);
+  }
 })();

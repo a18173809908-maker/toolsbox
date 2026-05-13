@@ -27,5 +27,27 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check env vars
+        run: |
+          echo "DATABASE_URL set: ${{ secrets.DATABASE_URL != '' }}"
+          echo "DEEPSEEK_API_KEY set: ${{ secrets.DEEPSEEK_API_KEY != '' }}"
+          echo "LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}"
+          echo "LLM_MODEL: ${{ secrets.LLM_MODEL }}"
+
+      - name: Test DeepSeek API
+        run: |
+          npx tsx -e "
+          import { chat } from './lib/llm/index.ts';
+          void (async () => {
+            try {
+              const r = await chat([{ role: 'user', content: '回复OK' }], { maxTokens: 10 });
+              console.log('DeepSeek OK:', r);
+            } catch(e) {
+              console.error('DeepSeek FAILED:', e);
+              process.exit(1);
+            }
+          })();
+          "
+
       - name: Generate repo spotlights
         run: npx tsx scripts/spotlight-repos.ts
