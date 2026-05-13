@@ -11,6 +11,18 @@ const C = {
   accentSoft: '#D8C6AA',
 };
 
+function stripHtml(text: string): string {
+  return text
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 function relTime(iso: Date | null): string {
   if (!iso) return '';
   const ms = Date.now() - new Date(iso).getTime();
@@ -68,11 +80,12 @@ export type ArticleRow = {
 };
 
 export function ArticleCard({ art }: { art: ArticleRow }) {
-  const oneLine = art.aiInsights?.oneSentenceSummary || art.summaryZh || art.summary;
+  const cleanSummary = art.summary ? stripHtml(art.summary) : null;
+  const oneLine = art.aiInsights?.oneSentenceSummary || art.summaryZh || cleanSummary;
   const detailLine = [
     art.aiInsights?.keyPoints?.[0],
     art.summaryZh,
-    art.summary,
+    cleanSummary,
     art.aiInsights?.whyItMatters,
     art.aiInsights?.chinaImpact,
   ].find((item) => item && !isSamePoint(item, oneLine));

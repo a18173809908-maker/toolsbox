@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const art = await loadArticleById(Number(id));
   if (!art) return { title: 'Not Found' };
   const title = art.titleZh || art.title;
-  const desc = art.aiInsights?.oneSentenceSummary || art.summaryZh || art.summary || art.title;
+  const desc = art.aiInsights?.oneSentenceSummary || art.summaryZh || (art.summary ? art.summary.replace(/<[^>]*>/g, ' ').replace(/\s{2,}/g, ' ').trim() : null) || art.title;
   return {
     title,
     description: desc,
@@ -50,6 +50,13 @@ const C = {
   blue: '#3B82F6',
   blueBg: '#EFF6FF',
 };
+
+function stripHtml(text: string): string {
+  return text
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+    .replace(/\s{2,}/g, ' ').trim();
+}
 
 function fmt(iso: Date | null) {
   if (!iso) return '';
@@ -176,9 +183,10 @@ export default async function NewsDetailPage({ params }: Props) {
   const insights = art.aiInsights;
   const title = art.titleZh || art.title;
   const category = normalizeArticleCategory(art.tag);
-  const description = insights?.oneSentenceSummary || art.summaryZh || art.summary || art.title;
+  const cleanSummary = art.summary ? stripHtml(art.summary) : null;
+  const description = insights?.oneSentenceSummary || art.summaryZh || cleanSummary || art.title;
   const sourceTitle = art.titleZh && !isSamePoint(art.title, art.titleZh) ? art.title : null;
-  const eventBackground = [art.summaryZh, art.summary].find((item) => item && !isSamePoint(item, description) && !isSamePoint(item, title));
+  const eventBackground = [art.summaryZh, cleanSummary].find((item) => item && !isSamePoint(item, description) && !isSamePoint(item, title));
   const keyPoints = (insights?.keyPoints ?? [])
     .filter((item, index, arr) => !isSamePoint(item, description) && arr.findIndex((other) => isSamePoint(other, item)) === index)
     .slice(0, 4);
