@@ -1,12 +1,12 @@
 import { db } from '@/lib/db';
 import { githubTrending } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
 import { fetchTrending } from './github-trending';
 import type { TrendingPeriod } from '@/lib/data';
+import { sql } from 'drizzle-orm';
 
 export type RefreshResult = {
   period: TrendingPeriod;
-  inserted: number;
+  upserted: number;
   error?: string;
 }[];
 
@@ -18,23 +18,37 @@ export async function refreshAllTrending(): Promise<RefreshResult> {
     try {
       const repos = await fetchTrending(period);
       if (repos.length === 0) {
-        results.push({ period, inserted: 0, error: 'empty result' });
+        results.push({ period, upserted: 0, error: 'empty result' });
         continue;
       }
-      await db.delete(githubTrending).where(eq(githubTrending.period, period));
-      await db.insert(githubTrending).values(
-        repos.map((r) => ({
+
+      // Upsert: update volatile fields only, preserve descriptionZh + aiInsights
+      await db
+        .insert(githubTrending)
+        .values(repos.map((r) => ({
           period,
           repo: r.repo,
           description: r.description,
           lang: r.lang,
           stars: r.stars,
           gained: r.gained,
-        })),
-      );
-      results.push({ period, inserted: repos.length });
+          snapshotDate: new Date(),
+        })))
+        .onConflictDoUpdate({
+          target: [githubTrending.period, githubTrending.repo],
+          set: {
+            description: sql`excluded.description`,
+            lang: sql`excluded.lang`,
+            stars: sql`excluded.stars`,
+            gained: sql`excluded.gained`,
+            snapshotDate: sql`excluded.snapshot_date`,
+            // descriptionZh and aiInsights intentionally NOT overwritten
+          },
+        });
+
+      results.push({ period, upserted: repos.length });
     } catch (e) {
-      results.push({ period, inserted: 0, error: e instanceof Error ? e.message : String(e) });
+      results.push({ period, upserted: 0, error: e instanceof Error ? e.message : String(e) });
     }
   }
 

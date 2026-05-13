@@ -8,7 +8,7 @@ import { refreshAllTrending } from '@/lib/jobs/refresh-trending';
   const r = await refreshAllTrending();
   for (const row of r) {
     if (row.error) console.log(`  ✗ ${row.period}: ${row.error}`);
-    else console.log(`  ✓ ${row.period}: ${row.inserted} repos`);
+    else console.log(`  ✓ ${row.period}: ${row.upserted} repos`);
   }
 })().catch((e) => {
   console.error(e);

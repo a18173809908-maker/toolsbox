@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, text, integer, boolean, timestamp, serial, index, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, text, integer, boolean, timestamp, serial, index, uniqueIndex, jsonb } from 'drizzle-orm/pg-core';
 
 export const categories = pgTable('categories', {
   id: text('id').primaryKey(),
@@ -83,6 +83,7 @@ export const githubTrending = pgTable(
     snapshotDate: timestamp('snapshot_date').notNull().defaultNow(),
   },
   (t) => ({
+    periodRepoUq: uniqueIndex('gh_period_repo_uq').on(t.period, t.repo),
     periodIdx: index('gh_period_idx').on(t.period),
     gainedIdx: index('gh_gained_idx').on(t.gained),
   }),
