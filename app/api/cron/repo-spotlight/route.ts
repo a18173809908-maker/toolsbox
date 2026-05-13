@@ -11,8 +11,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
-  const { generateRepoSpotlights } = await import('@/lib/jobs/spotlight-repos');
-  const result = await generateRepoSpotlights();
-  const ok = result.errors.length === 0 || result.generated > 0;
-  return NextResponse.json({ ok, ...result }, { status: ok ? 200 : 500 });
+  try {
+    const { generateRepoSpotlights } = await import('@/lib/jobs/spotlight-repos');
+    const result = await generateRepoSpotlights();
+    const ok = result.errors.length === 0 || result.generated > 0;
+    return NextResponse.json({ ok, ...result }, { status: ok ? 200 : 500 });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error('[repo-spotlight] uncaught error:', msg);
+    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
+  }
 }

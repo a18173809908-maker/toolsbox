@@ -196,14 +196,21 @@ ${insightsSection}${readmeSection}${ytSection}${searchSection}`;
   try {
     const raw = await chat([{ role: 'user', content: prompt }], { maxTokens: 2000, tier: 'premium' });
     const jsonStr = extractJson(raw);
-    if (!jsonStr) return null;
+    if (!jsonStr) {
+      console.warn(`[spotlight] ${repo}: LLM returned no JSON. Raw: ${raw.slice(0, 200)}`);
+      return null;
+    }
     const parsed = JSON.parse(jsonStr) as Partial<SpotlightDraft>;
-    if (!parsed.titleZh || !parsed.body) return null;
+    if (!parsed.titleZh || !parsed.body) {
+      console.warn(`[spotlight] ${repo}: JSON missing titleZh or body. Keys: ${Object.keys(parsed)}`);
+      return null;
+    }
     return {
       titleZh: String(parsed.titleZh).trim().slice(0, 60),
       body: String(parsed.body).trim(),
     };
-  } catch {
+  } catch (e) {
+    console.error(`[spotlight] ${repo}: synthesize error:`, e);
     return null;
   }
 }
