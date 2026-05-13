@@ -5,6 +5,14 @@ on:
     - cron: '0 6 * * 1'   # weekly Monday 06:00 UTC
   workflow_dispatch:
 
+env:
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+  LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
+  LLM_MODEL: ${{ secrets.LLM_MODEL }}
+  LLM_MODEL_PREMIUM: ${{ secrets.LLM_MODEL_PREMIUM }}
+  YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+
 jobs:
   spotlight:
     runs-on: ubuntu-latest
@@ -20,11 +28,4 @@ jobs:
         run: npm ci
 
       - name: Generate repo spotlights
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
-          LLM_MODEL: ${{ secrets.LLM_MODEL }}
-          LLM_MODEL_PREMIUM: ${{ secrets.LLM_MODEL_PREMIUM }}
-          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-        run: npm run spotlight:repos
+        run: npx tsx scripts/spotlight-repos.ts

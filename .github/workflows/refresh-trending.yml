@@ -5,6 +5,12 @@ on:
     - cron: '0 * * * *'   # every hour
   workflow_dispatch:
 
+env:
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+  LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
+  LLM_MODEL: ${{ secrets.LLM_MODEL }}
+
 jobs:
   refresh:
     runs-on: ubuntu-latest
@@ -20,20 +26,10 @@ jobs:
         run: npm ci
 
       - name: Refresh trending + translate
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
-          LLM_MODEL: ${{ secrets.LLM_MODEL }}
         run: |
-          npm run fetch:trending
-          npm run translate:trending
+          npx tsx scripts/fetch-trending.ts
+          npx tsx scripts/translate-trending.ts
 
       - name: Enhance trending insights (today)
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
-          LLM_MODEL: ${{ secrets.LLM_MODEL }}
-        run: npm run enhance:trending -- today
+        run: npx tsx scripts/enhance-trending.ts today
         continue-on-error: true
