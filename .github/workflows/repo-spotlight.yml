@@ -1,0 +1,30 @@
+name: Repo Spotlight
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'   # weekly Monday 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  spotlight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate repo spotlights
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+          LLM_MODEL_PREMIUM: ${{ secrets.LLM_MODEL_PREMIUM }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: npm run spotlight:repos

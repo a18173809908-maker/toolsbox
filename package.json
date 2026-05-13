@@ -42,6 +42,7 @@
     "repair:36kr": "tsx --env-file=.env.local scripts/repair-36kr-articles.ts",
     "repair:producthunt-urls": "tsx --env-file=.env.local scripts/repair-producthunt-urls.ts",
     "seed:cn-tools": "tsx --env-file=.env.local scripts/seed-cn-tools.ts",
+    "spotlight:repos": "tsx --env-file=.env.local scripts/spotlight-repos.ts",
     "seed:domestic-categories": "tsx --env-file=.env.local scripts/seed-domestic-categories.ts",
     "seed:connectivity": "tsx --env-file=.env.local scripts/seed-connectivity.ts",
     "seed:video-tools": "tsx --env-file=.env.local scripts/seed-video-tools.ts",

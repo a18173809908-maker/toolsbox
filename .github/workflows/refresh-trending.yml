@@ -2,20 +2,38 @@ name: Refresh GitHub Trending
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '0 * * * *'   # every hour
   workflow_dispatch:
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
     steps:
-      - name: Call refresh endpoint
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Refresh trending + translate
         env:
-          APP_URL: ${{ secrets.APP_URL }}
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
         run: |
-          test -n "$APP_URL"
-          test -n "$CRON_SECRET"
-          curl --fail --show-error --silent \
-            --header "Authorization: Bearer $CRON_SECRET" \
-            "$APP_URL/api/cron/refresh-trending"
+          npm run fetch:trending
+          npm run translate:trending
+
+      - name: Enhance trending insights (today)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+        run: npm run enhance:trending -- today
+        continue-on-error: true
